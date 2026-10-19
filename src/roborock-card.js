@@ -862,6 +862,7 @@ class RoborockCard extends RoborockBase {
 
   _consumables(dev) {
     const rows = [];
+    const resets = this._config.show_controls !== false && CONSUMABLES.some(([key, , , , r]) => (dev.entities[key] || dev.dock[key]) && this._resetId(dev, r));
     for (const [key, label, icon, life, resetKey] of CONSUMABLES) {
       const s = this._s(dev.entities[key]) || this._s(dev.dock[key]);
       if (!s) continue;
@@ -883,10 +884,9 @@ class RoborockCard extends RoborockBase {
         ${svgIcon(icon)}<span class="lbl clickable" data-entity="${s.entity_id}">${esc(this._t(label))}</span>
         ${pct !== null ? `<div class="bar ${cls}"><div style="width:${Math.max(0, Math.min(100, pct))}%"></div></div>` : `<div class="nobar"></div>`}
         <span class="v clickable ${cls}" data-entity="${s.entity_id}">${esc(text)}</span>
-        ${this._resetButton(dev, resetKey, label)}`);
+        ${resets ? this._resetButton(dev, resetKey, label) : ""}`);
     }
     if (!rows.length) return "";
-    const resets = this._config.show_controls !== false && CONSUMABLES.some(([key, , , , r]) => (dev.entities[key] || dev.dock[key]) && this._resetId(dev, r));
     return `<div>
       <div class="section-title">${svgIcon(ICONS.brush)}${esc(this._t("consumables"))}</div>
       <div class="cons ${resets ? "with-reset" : ""}">${rows.join("")}</div>
@@ -901,7 +901,6 @@ class RoborockCard extends RoborockBase {
 
   // Reset button of a consumable, when the integration exposes one; an empty cell keeps the grid aligned.
   _resetButton(dev, key, label) {
-    if (this._config.show_controls === false) return "";
     const id = this._resetId(dev, key);
     if (!id) return `<span></span>`;
     return `<button class="reset" title="${esc(this._t("reset"))}" data-action="reset" data-entity="${id}" data-label="${esc(this._t(label))}">${svgIcon(ICONS.reset)}</button>`;

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+### 🐛 Fixes
+
+- Maintenance list misaligned on devices without reset buttons (such as the F25 Ultra).
+
 ## 1.0.0
 
 First release of the Roborock cards for Home Assistant, built for the [Roborock integration](https://www.home-assistant.io/integrations/roborock/).
