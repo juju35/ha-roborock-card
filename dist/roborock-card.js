@@ -1397,6 +1397,8 @@ class RoborockEditorBase extends HTMLElement {
     const data = { image: "auto", ...this.constructor.selects, ...this._config };
     if (data.show_map === true) data.show_map = "always";
     if (data.show_map === false) data.show_map = "never";
+    // The nested form of an expandable section needs an object, even when the option is not set.
+    for (const f of this.constructor.extraFields(() => "")) if (f.type === "expandable") data[f.name] = { ...data[f.name] };
     for (const [name, def] of toggles) if (data[name] === undefined) data[name] = def;
     if (!data.device) data.device = RoborockCard.getStubConfig(this._hass).device;
     this._form.hass = this._hass;
@@ -1437,6 +1439,7 @@ class RoborockCardEditor extends RoborockEditorBase {
         type: "expandable",
         name: "crop",
         title: tr("crop"),
+        icon: "mdi:crop",
         schema: ["top", "bottom", "left", "right"].map((name) => ({ name, selector: { number: { min: 0, mode: "box", unit_of_measurement: "px" } } })),
       },
     ];
