@@ -127,6 +127,7 @@ const STRINGS = {
     show_stats: "Show statistics",
     show_map: "Show map",
     crop: "Map crop (pixels)",
+    map_size: "Map image size: {w} × {h} px. Values are in pixels of this image.",
     top: "Top",
     bottom: "Bottom",
     left: "Left",
@@ -268,6 +269,7 @@ const STRINGS = {
     show_stats: "Afficher les statistiques",
     show_map: "Afficher la carte",
     crop: "Recadrage de la carte (pixels)",
+    map_size: "Taille de l'image de la carte : {w} × {h} px. Les valeurs sont en pixels de cette image.",
     top: "Haut",
     bottom: "Bas",
     left: "Gauche",
@@ -590,6 +592,11 @@ class RoborockBase extends HTMLElement {
     if (html !== this._html) {
       this._html = html;
       this.shadowRoot.innerHTML = html;
+      // Map size for the crop: read it from the image itself, already loaded (cache) or once loaded.
+      for (const img of this.shadowRoot.querySelectorAll("img[data-map]")) {
+        if (img.complete && img.naturalWidth) this._onLoad({ target: img });
+        else img.addEventListener("load", (ev) => this._onLoad(ev), { once: true });
+      }
     }
   }
 
@@ -618,7 +625,7 @@ class RoborockBase extends HTMLElement {
     const old = this._mapSizes?.[id];
     if (old && old.w === img.naturalWidth && old.h === img.naturalHeight) return;
     this._mapSizes = { ...this._mapSizes, [id]: { w: img.naturalWidth, h: img.naturalHeight } };
-    if (this._config.crop) this._update();
+    if (this._config.crop) setTimeout(() => this._update());
   }
 
   _onClick(ev) {
@@ -1185,7 +1192,12 @@ class RoborockCard extends RoborockBase {
     const crop = this._config.crop || {};
     const [t, b, l, r] = ["top", "bottom", "left", "right"].map((k) => Math.max(0, Number(crop[k]) || 0));
     const size = this._mapSizes?.[id];
-    if (!size || !(t || b || l || r) || size.w - l - r <= 0 || size.h - t - b <= 0) return null;
+    if (!size || !(t || b || l || r)) return null;
+    if (size.w - l - r <= 0 || size.h - t - b <= 0) {
+      if (!this._cropWarned) console.warn(`roborock-card: crop is larger than the map image (${size.w} × ${size.h} px)`);
+      this._cropWarned = true;
+      return null;
+    }
     const w = size.w - l - r;
     const h = size.h - t - b;
     const pct = (v) => `${((100 * v) / w).toFixed(4)}%`;
@@ -1377,6 +1389,8 @@ class RoborockEditorBase extends HTMLElement {
     if (!this._form) {
       this._form = document.createElement("ha-form");
       this._form.computeLabel = (s) => t(this._hass, this._config, s.name);
+      this._form.computeHelper = (s) =>
+        s.name === "crop" && this._mapSize ? t(this._hass, this._config, "map_size", { w: this._mapSize.w, h: this._mapSize.h }) : undefined;
       this._form.addEventListener("value-changed", (ev) => {
         ev.stopPropagation();
         const config = { ...ev.detail.value };
@@ -1404,6 +1418,22 @@ class RoborockEditorBase extends HTMLElement {
     this._form.hass = this._hass;
     this._form.data = data;
     this._form.schema = this._schema();
+    this._loadMapSize(data.device);
+  }
+
+  // Size of the map image of the selected device, shown in the crop section to help pick the values.
+  _loadMapSize(device) {
+    if (!this.constructor.extraFields(() => "").some((f) => f.name === "crop")) return;
+    const { dev } = findDevice(this._hass, { device });
+    const id = dev && (dev.extra.image || []).find((i) => this._hass.states[i]?.attributes?.entity_picture);
+    if (!id || this._mapSizeFor === id) return;
+    this._mapSizeFor = id;
+    const img = new Image();
+    img.onload = () => {
+      this._mapSize = { w: img.naturalWidth, h: img.naturalHeight };
+      if (this._form) this._form.schema = this._schema();
+    };
+    img.src = this._hass.states[id].attributes.entity_picture;
   }
 }
 

@@ -4,6 +4,7 @@
 
 ### 🐛 Fixes
 
+- Map crop not applied in some browsers: the map size is now read from the image itself, even when it comes from the cache. The visual editor shows the size of the map image to help pick the crop values.
 - Dock buttons show the requested state right away instead of waiting for the next update of the integration (up to about 30 s), and the drying tile shows "Running" until the remaining drying time is known.
 
 ## 1.2.0
