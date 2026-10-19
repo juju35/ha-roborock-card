@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### 🐛 Fixes
+
+- Statistics still at 0 are hidden, and the Statistics section too when all of them are (e.g. an F25 Ultra whose total cleaning time is 0).
+
 ## 1.2.1
 
 ### 🐛 Fixes

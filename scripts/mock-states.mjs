@@ -92,7 +92,7 @@ entity("sensor.balai_batterie", "f25", null, "87", { device_class: "battery", un
 entity("sensor.balai_erreur", "f25", "a01_error", "none");
 entity("sensor.balai_filtre", "f25", "filter_time_left", "95.95", { unit_of_measurement: "h", device_class: "duration" });
 entity("sensor.balai_rouleau", "f25", "brush_remaining", "95.95", { unit_of_measurement: "h", device_class: "duration" });
-entity("sensor.balai_duree_totale", "f25", "total_cleaning_time", "12.4", { unit_of_measurement: "h", device_class: "duration" });
+entity("sensor.balai_duree_totale", "f25", "total_cleaning_time", "0.0", { unit_of_measurement: "h", device_class: "duration" });
 
 // Same robot while it is cleaning, with the mop drying in the dock and the dirty water tank full.
 export const cleaning = {

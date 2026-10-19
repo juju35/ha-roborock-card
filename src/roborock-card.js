@@ -1146,18 +1146,20 @@ class RoborockCard extends RoborockBase {
   _stats(dev) {
     const e = dev.entities;
     const tiles = [];
+    // Counters still at 0 (device never used, or not reporting them) are left out, and the whole
+    // section when nothing is left.
     const area = this._s(e.cleaning_area);
     const time = this._s(e.cleaning_time);
-    if (valid(area) || valid(time)) {
+    if ((valid(area) && num(area)) || (valid(time) && num(time))) {
       const bits = [valid(area) ? `${fmtNum(num(area), 1, this._locale())} m²` : null, valid(time) ? fmtHours(hours(time)) : null].filter(Boolean);
       tiles.push(this._tile((area || time).entity_id, ICONS.clock, this._t("last_clean"), bits.join(" · ")));
     }
     const count = this._s(e.total_cleaning_count);
-    if (valid(count)) tiles.push(this._tile(count.entity_id, ICONS.count, this._t("total_count"), fmtNum(num(count), 0, this._locale())));
+    if (valid(count) && num(count)) tiles.push(this._tile(count.entity_id, ICONS.count, this._t("total_count"), fmtNum(num(count), 0, this._locale())));
     const tArea = this._s(e.total_cleaning_area);
-    if (valid(tArea)) tiles.push(this._tile(tArea.entity_id, ICONS.area, this._t("total_area"), `${fmtNum(num(tArea), 0, this._locale())} m²`));
+    if (valid(tArea) && num(tArea)) tiles.push(this._tile(tArea.entity_id, ICONS.area, this._t("total_area"), `${fmtNum(num(tArea), 0, this._locale())} m²`));
     const tTime = this._s(e.total_cleaning_time);
-    if (valid(tTime)) tiles.push(this._tile(tTime.entity_id, ICONS.clock, this._t("total_time"), fmtHours(hours(tTime))));
+    if (valid(tTime) && num(tTime)) tiles.push(this._tile(tTime.entity_id, ICONS.clock, this._t("total_time"), fmtHours(hours(tTime))));
     if (!tiles.length) return "";
     return `<div>
       <div class="section-title">${svgIcon(ICONS.stats)}${esc(this._t("statistics"))}</div>
