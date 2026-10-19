@@ -597,6 +597,7 @@ class RoborockBase extends HTMLElement {
     ev.stopPropagation();
     const { action, entity, label } = el.dataset;
     if (this._roomAction(action, entity, el.dataset.room)) return;
+    if (action === "zoom_map") return this._zoomMap(entity);
     if (action === "reset") {
       if (window.confirm(this._t("confirm_reset", { name: label }))) this._hass.callService("button", "press", { entity_id: entity });
     } else if (action === "routine") {
@@ -874,6 +875,7 @@ const FULL_STYLE = `
   .reset .icon { width: 18px; height: 18px; }
   .map img { width: 100%; border-radius: 10px; display: block; background: var(--secondary-background-color, rgba(127,127,127,.08)); }
   .map .crop { overflow: hidden; border-radius: 10px; }
+  .map { cursor: zoom-in; }
   .map .crop img { max-width: none; border-radius: 0; background: none; }
 `;
 
@@ -1104,20 +1106,55 @@ class RoborockCard extends RoborockBase {
     if (!maps.length) return "";
     const selected = this._s(dev.entities.selected_map)?.state;
     const map = (selected && maps.find((s) => (s.attributes.friendly_name || "").endsWith(selected))) || maps[0];
-    const img = `<img src="${esc(map.attributes.entity_picture)}" alt="${esc(this._t("map"))}" data-map="${map.entity_id}"`;
-    // crop: { top, bottom, left, right } in pixels of the map image. The image size is only known once
-    // it has loaded (see _onLoad), so the first render shows it uncropped.
+    const url = map.attributes.entity_picture;
+    const img = `<img src="${esc(url)}" alt="${esc(this._t("map"))}" data-map="${map.entity_id}"`;
+    const crop = this._mapCrop(map.entity_id);
+    const attrs = `class="map clickable" data-action="zoom_map" data-entity="${map.entity_id}" title="${esc(this._t("map"))}"`;
+    if (!crop) return `<div ${attrs}>${img}></div>`;
+    return `<div ${attrs}><div class="crop" style="aspect-ratio:${crop.ratio}">${img} style="${crop.img}"></div></div>`;
+  }
+
+  // crop: { top, bottom, left, right } in pixels of the map image. The image size is only known once
+  // it has loaded (see _onLoad), so until then the map is shown uncropped.
+  _mapCrop(id) {
     const crop = this._config.crop || {};
     const [t, b, l, r] = ["top", "bottom", "left", "right"].map((k) => Math.max(0, Number(crop[k]) || 0));
-    const size = this._mapSizes?.[map.entity_id];
-    if (!size || !(t || b || l || r) || size.w - l - r <= 0 || size.h - t - b <= 0)
-      return `<div class="map clickable" data-entity="${map.entity_id}">${img}></div>`;
+    const size = this._mapSizes?.[id];
+    if (!size || !(t || b || l || r) || size.w - l - r <= 0 || size.h - t - b <= 0) return null;
     const w = size.w - l - r;
     const h = size.h - t - b;
     const pct = (v) => `${((100 * v) / w).toFixed(4)}%`;
-    return `<div class="map clickable" data-entity="${map.entity_id}"><div class="crop" style="aspect-ratio:${w} / ${h}">${img} style="width:${pct(
-      size.w
-    )};margin-left:-${pct(l)};margin-top:-${pct(t)}"></div></div>`;
+    return { ratio: `${w} / ${h}`, w, h, img: `width:${pct(size.w)};max-width:none;margin-left:-${pct(l)};margin-top:-${pct(t)};display:block` };
+  }
+
+  // Enlarged map, appended to the document body so that it is not clipped or offset by the card
+  // (themes with blur or transforms). Closes on click or Escape.
+  _zoomMap(id) {
+    const s = this._s(id);
+    const url = s?.attributes?.entity_picture;
+    if (!url) return;
+    const size = this._mapSizes?.[id];
+    const crop = this._mapCrop(id);
+    const ratio = crop ? crop.w / crop.h : size ? size.w / size.h : 16 / 9;
+    const overlay = document.createElement("div");
+    overlay.style.cssText =
+      "position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.82);cursor:zoom-out;padding:16px;box-sizing:border-box";
+    const box = document.createElement("div");
+    box.style.cssText = `width:min(96vw, calc(92vh * ${ratio}));aspect-ratio:${ratio};overflow:hidden;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5)`;
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = this._t("map");
+    img.style.cssText = crop ? crop.img : "width:100%;height:100%;object-fit:contain;display:block";
+    box.appendChild(img);
+    overlay.appendChild(box);
+    const close = () => {
+      overlay.remove();
+      window.removeEventListener("keydown", onKey);
+    };
+    const onKey = (ev) => ev.key === "Escape" && close();
+    overlay.addEventListener("click", close);
+    window.addEventListener("keydown", onKey);
+    document.body.appendChild(overlay);
   }
 }
 

@@ -30,7 +30,7 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 - Dock: clean and dirty water tanks, detergent, auto-empty mode, mop drying
 - Maintenance: main brush, side brush, filter, sensors, dock strainer… with remaining time and a reset button (with confirmation) when the integration provides one
 - Statistics: last clean, number of cleanings, total area and time
-- Map of the current floor while the robot is cleaning (or always, or never), with optional cropping
+- Map of the current floor while the robot is cleaning (or always, or never), with optional cropping, enlarged full screen on click
 - Click any value to open its Home Assistant history (more-info dialog)
 - Click the Roborock logo to open [roborock.com](https://www.roborock.com)
 - Visual editor in the dashboard UI for both cards (no YAML needed)
@@ -151,6 +151,8 @@ crop:
 ```
 
 In the visual editor, the values are under **Map crop (pixels)**.
+
+Click the map to open it full screen; click anywhere or press Escape to close it.
 
 ## Screenshots
 
