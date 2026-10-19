@@ -103,3 +103,16 @@ export const cleaning = {
   "binary_sensor.station_eau_sale": { state: "on" },
   "sensor.station_erreur": { state: "waste_water_tank_full" },
 };
+
+// Response of the roborock.get_maps service, used by the room selector.
+export const maps = {
+  "vacuum.aspirateur": {
+    maps: [
+      {
+        flag: 0,
+        name: "Appartement",
+        rooms: { 1: "Chambre Léa", 2: "Salon", 3: "Chambre Enfants", 4: "Couloir", 5: "Entrée", 6: "Chambre Parents", 7: "Salle de bains", 8: "Toilettes", 9: "Salle à manger", 11: "Cuisine" },
+      },
+    ],
+  },
+};

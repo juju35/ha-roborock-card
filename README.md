@@ -25,6 +25,7 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 - Battery, status, current room, cleaning progress and errors
 - Cleaning settings: mode, suction power, mop intensity and route
 - Start / pause, stop, return to dock and locate buttons
+- Room selector: the Start button lets you pick the rooms to clean (or the whole home)
 - Routines from the Roborock app as one-tap buttons (with confirmation)
 - Dock: clean and dirty water tanks, detergent, auto-empty mode, mop drying
 - Maintenance: main brush, side brush, filter, sensors, dock strainer… with remaining time and a reset button (with confirmation) when the integration provides one
@@ -91,6 +92,7 @@ title: Saros
 image: auto
 show_logo: true
 show_controls: true
+room_selection: true
 show_modes: true
 show_routines: true
 show_dock: true
@@ -107,6 +109,7 @@ title: F25
 image: auto
 show_logo: true
 show_controls: true
+room_selection: true
 language: fr
 ```
 
@@ -119,6 +122,7 @@ language: fr
 | `image` | both | `auto` | Device picture: `auto` (per model), `saros_20`, `f25_ultra`, `none`, or the URL of your own picture (e.g. `/local/my-robot.png`) |
 | `show_logo` | both | `true` | Show the Roborock logo (opens [roborock.com](https://www.roborock.com) in a new tab) |
 | `show_controls` | both | `true` | Start / pause, stop, dock and locate buttons (robot vacuums), and maintenance reset buttons |
+| `room_selection` | both | `true` | The Start button opens the room selector; `false` starts a full cleaning right away |
 | `show_modes` | full | `true` | Cleaning mode, suction power, mop intensity and route |
 | `show_routines` | full | `true` | Routines buttons |
 | `show_dock` | full | `true` | Dock status |
@@ -134,6 +138,10 @@ language: fr
 | ![card](screenshots/card.png) | ![card dark](screenshots/card-dark.png) |
 | ![mini card](screenshots/mini-card.png) | ![mini card dark](screenshots/mini-card-dark.png) |
 
+Room selector (opened by the Start button):
+
+![room selector](screenshots/card-rooms.png)
+
 Wet-dry vacuum (F25 Ultra):
 
 | Roborock Card | Roborock Mini Card |
@@ -147,6 +155,8 @@ The cards read the Home Assistant entity and device registries instead of entity
 States and errors are shown with the card's own translations when available, otherwise with Home Assistant's translation of the integration.
 
 The device picture is chosen from the model: robot vacuums show the Saros 20, wet-dry vacuums (`roborock.wdv.*`) show the F25 Ultra. Use the `image` option to pick another one or your own.
+
+The room selector reads the rooms of the current map (the one chosen in the integration's **Selected map** select) with the `roborock.get_maps` service, then cleans the selected rooms with the same `app_segment_clean` command the integration uses. When the robot is paused, the Start button resumes the cleaning instead.
 
 Routines created in the Roborock app appear as buttons in the integration; the card lists them and asks for confirmation before running one.
 

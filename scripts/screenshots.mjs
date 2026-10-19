@@ -3,7 +3,7 @@
 import { chromium } from "playwright";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { states, entities, devices, cleaning } from "./mock-states.mjs";
+import { states, entities, devices, cleaning, maps } from "./mock-states.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const cardJs = readFileSync(`${root}dist/roborock-card.js`, "utf8");
@@ -47,6 +47,8 @@ const page_html = (theme, width) => `<!doctype html><html><head><meta charset="u
 const shots = [
   { file: "card", type: "roborock-card", theme: "light", width: 460, config: {} },
   { file: "card-dark", type: "roborock-card", theme: "dark", width: 460, config: { language: "fr" }, overrides: cleaning },
+  { file: "card-rooms", type: "roborock-card", theme: "light", width: 460, config: { language: "fr", show_routines: false, show_dock: false, show_consumables: false, show_stats: false },
+    clicks: ['[data-action="open_rooms"]', '[data-room="2"]', '[data-room="11"]', '[data-room="9"]'] },
   { file: "card-f25", type: "roborock-card", theme: "light", width: 460, config: { device: "Roborock F25 Ultra" } },
   { file: "mini-card", type: "roborock-mini-card", theme: "light", width: 380, config: {} },
   { file: "mini-card-dark", type: "roborock-mini-card", theme: "dark", width: 380, config: { language: "fr" }, overrides: cleaning },
@@ -62,15 +64,22 @@ for (const s of shots) {
   await page.addScriptTag({ content: HA_CARD });
   await page.addScriptTag({ content: cardJs });
   await page.evaluate(
-    ({ type, config, states, entities, devices, overrides }) => {
+    ({ type, config, states, entities, devices, overrides, maps }) => {
       for (const [id, o] of Object.entries(overrides || {})) states[id] = { ...states[id], ...o };
       const el = document.createElement(type);
       el.setConfig({ type: `custom:${type}`, ...config });
-      el.hass = { states, entities, devices, language: "en", locale: { language: "en" }, callService: () => {} };
+      el.hass = {
+        states, entities, devices, language: "en", locale: { language: "en" }, callService: () => {},
+        callWS: async () => ({ response: maps }),
+      };
       document.getElementById("root").appendChild(el);
     },
-    { type: s.type, config: s.config, states, entities, devices, overrides: s.overrides }
+    { type: s.type, config: s.config, states, entities, devices, overrides: s.overrides, maps }
   );
+  for (const sel of s.clicks || []) {
+    await page.evaluate((sel) => document.querySelector("#root").firstElementChild.shadowRoot.querySelector(sel).click(), sel);
+    await page.waitForTimeout(100);
+  }
   await page.waitForTimeout(800);
   const box = await page.locator("#root").boundingBox();
   await page.screenshot({

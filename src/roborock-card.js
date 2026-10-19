@@ -65,6 +65,14 @@ const STRINGS = {
     progress: "Progress",
     routines: "Routines",
     run_routine: "Run routine {name}?",
+    choose_rooms: "Rooms to clean",
+    clean_rooms: "Clean ({n})",
+    whole_home: "Whole home",
+    select_all: "All",
+    cancel: "Cancel",
+    rooms_loading: "Loading rooms…",
+    rooms_error: "Could not get the rooms from the robot.",
+    room_selection: "Start button opens the room selector",
     reset: "Reset",
     confirm_reset: "Reset {name} counter? Do it after replacing or cleaning the part.",
     station: "Dock",
@@ -188,6 +196,14 @@ const STRINGS = {
     progress: "Progression",
     routines: "Routines",
     run_routine: "Lancer la routine {name} ?",
+    choose_rooms: "Pièces à nettoyer",
+    clean_rooms: "Nettoyer ({n})",
+    whole_home: "Toute la maison",
+    select_all: "Toutes",
+    cancel: "Annuler",
+    rooms_loading: "Chargement des pièces…",
+    rooms_error: "Impossible de récupérer les pièces du robot.",
+    room_selection: "Le bouton Nettoyer ouvre le choix des pièces",
     reset: "Réinitialiser",
     confirm_reset: "Réinitialiser le compteur {name} ? À faire après avoir remplacé ou nettoyé la pièce.",
     station: "Station",
@@ -493,6 +509,19 @@ const BASE_STYLE = `
   .btn.primary { background: var(--rr-red); color: #fff; }
   .btn .icon { width: 18px; height: 18px; }
   .btn.round { width: 36px; height: 36px; padding: 0; border-radius: 50%; }
+  .btn.disabled { opacity: .45; cursor: default; }
+  .rooms { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 12px;
+           border: 1px solid var(--divider-color, rgba(127,127,127,.25)); }
+  .rooms-title { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; }
+  .rooms-title .icon { width: 18px; height: 18px; color: var(--rr-red); }
+  .rooms-msg { font-size: 13px; color: var(--secondary-text-color); }
+  .room-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .room { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 16px; cursor: pointer; color: var(--primary-text-color);
+          background: transparent; border: 1px solid var(--divider-color, rgba(127,127,127,.35)); }
+  .room.on { background: color-mix(in srgb, var(--rr-red) 14%, transparent); border-color: var(--rr-red); color: var(--rr-red); font-weight: 500; }
+  .room.all { color: var(--secondary-text-color); }
+  .room.all.on { color: var(--rr-red); }
+  .rooms-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 `;
 
 class RoborockBase extends HTMLElement {
@@ -545,6 +574,7 @@ class RoborockBase extends HTMLElement {
     if (!el) return;
     ev.stopPropagation();
     const { action, entity, label } = el.dataset;
+    if (this._roomAction(action, entity, el.dataset.room)) return;
     if (action === "reset") {
       if (window.confirm(this._t("confirm_reset", { name: label }))) this._hass.callService("button", "press", { entity_id: entity });
     } else if (action === "routine") {
@@ -660,12 +690,114 @@ class RoborockBase extends HTMLElement {
         round ? "" : `<span>${esc(label)}</span>`
       }</button>`;
     const list = [
-      cleaning ? btn("pause", ICONS.pause, this._t("pause"), "primary") : btn("start", ICONS.play, this._t("start"), "primary"),
+      cleaning
+        ? btn("pause", ICONS.pause, this._t("pause"), "primary")
+        : btn(this._config.room_selection !== false && vac.state !== "paused" ? "open_rooms" : "start", ICONS.play, this._t("start"), "primary"),
       round ? "" : btn("stop", ICONS.stop, this._t("stop")),
       btn("return_to_base", ICONS.home, this._t("dock")),
       round ? "" : btn("locate", ICONS.locate, this._t("locate")),
     ];
     return list.join("");
+  }
+
+  // ----- Room selector -----------------------------------------------------
+  // Rooms come from the integration's roborock.get_maps service (current map, as chosen in the
+  // "selected map" select); the selected rooms are cleaned with app_segment_clean, like the
+  // integration's own segment cleaning.
+
+  _roomAction(action, entity, room) {
+    const r = this._rooms;
+    switch (action) {
+      case "open_rooms":
+        this._rooms = { entity, selected: [], loading: true };
+        this._update();
+        this._loadRooms(entity);
+        return true;
+      case "close_rooms":
+        this._rooms = null;
+        this._update();
+        return true;
+      case "toggle_room":
+        if (!r) return true;
+        r.selected = r.selected.includes(room) ? r.selected.filter((x) => x !== room) : [...r.selected, room];
+        this._update();
+        return true;
+      case "all_rooms":
+        if (!r?.list) return true;
+        r.selected = r.selected.length === r.list.length ? [] : r.list.map((x) => x.id);
+        this._update();
+        return true;
+      case "clean_rooms":
+        if (!r?.selected.length) return true;
+        this._hass.callService("vacuum", "send_command", {
+          entity_id: entity,
+          command: "app_segment_clean",
+          params: [{ segments: r.selected.map(Number) }],
+        });
+        this._rooms = null;
+        this._update();
+        return true;
+      case "clean_all":
+        this._hass.callService("vacuum", "start", { entity_id: entity });
+        this._rooms = null;
+        this._update();
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  async _loadRooms(entity) {
+    try {
+      const res = await this._hass.callWS({
+        type: "call_service",
+        domain: "roborock",
+        service: "get_maps",
+        target: { entity_id: entity },
+        return_response: true,
+      });
+      const maps = res?.response?.[entity]?.maps || [];
+      const selected = this._s(this._dev?.entities.selected_map)?.state;
+      const map = maps.find((m) => m.name === selected) || maps[0];
+      const list = Object.entries(map?.rooms || {})
+        .map(([id, name]) => ({ id, name: name || `#${id}` }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      if (this._rooms?.entity !== entity) return;
+      this._rooms = { ...this._rooms, loading: false, list, error: !list.length };
+    } catch (e) {
+      if (this._rooms?.entity !== entity) return;
+      this._rooms = { ...this._rooms, loading: false, list: [], error: true };
+    }
+    this._update();
+  }
+
+  _roomPanel(dev) {
+    const r = this._rooms;
+    if (!r || r.entity !== dev.vacuum) return "";
+    let body;
+    if (r.loading) body = `<div class="rooms-msg">${esc(this._t("rooms_loading"))}</div>`;
+    else if (r.error) body = `<div class="rooms-msg">${esc(this._t("rooms_error"))}</div>`;
+    else
+      body = `<div class="room-list">
+        <button class="room all ${r.selected.length === r.list.length ? "on" : ""}" data-action="all_rooms" data-entity="${dev.vacuum}">${esc(this._t("select_all"))}</button>
+        ${r.list
+          .map(
+            (x) =>
+              `<button class="room ${r.selected.includes(x.id) ? "on" : ""}" data-action="toggle_room" data-entity="${dev.vacuum}" data-room="${esc(x.id)}">${esc(x.name)}</button>`
+          )
+          .join("")}
+      </div>`;
+    return `<div class="rooms">
+      <div class="rooms-title">${svgIcon(ICONS.room)}${esc(this._t("choose_rooms"))}</div>
+      ${body}
+      <div class="rooms-actions">
+        <button class="btn" data-action="close_rooms" data-entity="${dev.vacuum}"><span>${esc(this._t("cancel"))}</span></button>
+        <button class="btn" data-action="clean_all" data-entity="${dev.vacuum}">${svgIcon(ICONS.home)}<span>${esc(this._t("whole_home"))}</span></button>
+        <button class="btn primary ${r.selected.length ? "" : "disabled"}" data-action="clean_rooms" data-entity="${dev.vacuum}" ${
+          r.selected.length ? "" : "disabled"
+        }>${svgIcon(ICONS.play)}<span>${esc(this._t("clean_rooms", { n: r.selected.length }))}</span></button>
+      </div>
+    </div>`;
   }
 }
 
@@ -743,10 +875,11 @@ class RoborockCard extends RoborockBase {
   _render() {
     const { dev, error } = findDevice(this._hass, this._config);
     if (error) return this._errorCard(error);
+    this._dev = dev;
     const c = this._config;
     const status = this._status(dev);
     const parts = [this._hero(dev)];
-    if (dev.vacuum && c.show_controls !== false) parts.push(`<div class="controls">${this._controls(dev)}</div>`);
+    if (dev.vacuum && c.show_controls !== false) parts.push(`<div class="controls">${this._controls(dev)}</div>`, this._roomPanel(dev));
     if (c.show_routines !== false) parts.push(this._routines(dev));
     if (c.show_dock !== false) parts.push(this._dock(dev));
     if (c.show_consumables !== false) parts.push(this._consumables(dev));
@@ -971,6 +1104,7 @@ const MINI_STYLE = `
   .line .icon { width: 14px; height: 14px; }
   .line span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .controls { display: flex; gap: 6px; flex: none; }
+  .rooms-wrap { padding: 0 12px 12px; }
 `;
 
 class RoborockMiniCard extends RoborockBase {
@@ -993,6 +1127,7 @@ class RoborockMiniCard extends RoborockBase {
   _render() {
     const { dev, error } = findDevice(this._hass, this._config);
     if (error) return this._errorCard(error);
+    this._dev = dev;
     const e = dev.entities;
     const status = this._status(dev);
     const pic = this._picture(dev);
@@ -1022,6 +1157,7 @@ class RoborockMiniCard extends RoborockBase {
           </div>
           ${dev.vacuum && this._config.show_controls !== false ? `<div class="controls">${this._controls(dev, true)}</div>` : ""}
         </div>
+        ${this._rooms ? `<div class="rooms-wrap">${this._roomPanel(dev)}</div>` : ""}
       </ha-card>`;
   }
 }
@@ -1130,6 +1266,7 @@ class RoborockCardEditor extends RoborockEditorBase {
   static get toggles() {
     return [
       ["show_controls", true],
+      ["room_selection", true],
       ["show_modes", true],
       ["show_routines", true],
       ["show_dock", true],
@@ -1159,7 +1296,10 @@ class RoborockCardEditor extends RoborockEditorBase {
 
 class RoborockMiniCardEditor extends RoborockEditorBase {
   static get toggles() {
-    return [["show_controls", true]];
+    return [
+      ["show_controls", true],
+      ["room_selection", true],
+    ];
   }
 }
 
