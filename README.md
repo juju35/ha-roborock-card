@@ -29,7 +29,7 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 - Dock: clean and dirty water tanks, detergent, auto-empty mode, mop drying
 - Maintenance: main brush, side brush, filter, sensors, dock strainer… with remaining time and a reset button (with confirmation) when the integration provides one
 - Statistics: last clean, number of cleanings, total area and time
-- Optional map
+- Map of the current floor while the robot is cleaning (or always, or never)
 - Click any value to open its Home Assistant history (more-info dialog)
 - Click the Roborock logo to open [roborock.com](https://www.roborock.com)
 - Visual editor in the dashboard UI for both cards (no YAML needed)
@@ -96,7 +96,7 @@ show_routines: true
 show_dock: true
 show_consumables: true
 show_stats: true
-show_map: false
+show_map: cleaning
 language: fr
 ```
 
@@ -124,12 +124,12 @@ language: fr
 | `show_dock` | full | `true` | Dock status |
 | `show_consumables` | full | `true` | Maintenance (remaining time of brushes, filter, sensors…) |
 | `show_stats` | full | `true` | Cleaning statistics |
-| `show_map` | full | `false` | Map of the current floor |
+| `show_map` | full | `cleaning` | Map of the current floor: `cleaning` (only while the robot is cleaning), `always` (or `true`) or `never` (or `false`) |
 | `language` | both | Auto | Force language: `fr` or `en` (auto-detects from HA settings) |
 
 ## Screenshots
 
-| Light | Dark (French, cleaning, with map) |
+| Light | Dark (French, cleaning: the map is shown) |
 |---|---|
 | ![card](screenshots/card.png) | ![card dark](screenshots/card-dark.png) |
 | ![mini card](screenshots/mini-card.png) | ![mini card dark](screenshots/mini-card-dark.png) |

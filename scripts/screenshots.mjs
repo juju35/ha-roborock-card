@@ -46,7 +46,7 @@ const page_html = (theme, width) => `<!doctype html><html><head><meta charset="u
 
 const shots = [
   { file: "card", type: "roborock-card", theme: "light", width: 460, config: {} },
-  { file: "card-dark", type: "roborock-card", theme: "dark", width: 460, config: { language: "fr", show_map: true }, overrides: cleaning },
+  { file: "card-dark", type: "roborock-card", theme: "dark", width: 460, config: { language: "fr" }, overrides: cleaning },
   { file: "card-f25", type: "roborock-card", theme: "light", width: 460, config: { device: "Roborock F25 Ultra" } },
   { file: "mini-card", type: "roborock-mini-card", theme: "light", width: 380, config: {} },
   { file: "mini-card-dark", type: "roborock-mini-card", theme: "dark", width: 380, config: { language: "fr" }, overrides: cleaning },

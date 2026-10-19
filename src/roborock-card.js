@@ -111,6 +111,9 @@ const STRINGS = {
     show_consumables: "Show maintenance",
     show_stats: "Show statistics",
     show_map: "Show map",
+    map_never: "Never",
+    map_cleaning: "While cleaning",
+    map_always: "Always",
     language: "Language",
     lang_auto: "Automatic",
     // States and values
@@ -230,6 +233,9 @@ const STRINGS = {
     show_consumables: "Afficher l'entretien",
     show_stats: "Afficher les statistiques",
     show_map: "Afficher la carte",
+    map_never: "Jamais",
+    map_cleaning: "Pendant le nettoyage",
+    map_always: "Toujours",
     language: "Langue",
     lang_auto: "Automatique",
     s_charging: "En charge",
@@ -745,7 +751,7 @@ class RoborockCard extends RoborockBase {
     if (c.show_dock !== false) parts.push(this._dock(dev));
     if (c.show_consumables !== false) parts.push(this._consumables(dev));
     if (c.show_stats !== false) parts.push(this._stats(dev));
-    if (c.show_map === true) parts.push(this._map(dev));
+    if (this._showMap(dev)) parts.push(this._map(dev));
     return `<style>${BASE_STYLE}${FULL_STYLE}</style>
       <ha-card>
         ${this._header(dev, status, this._lastClean(dev))}
@@ -928,6 +934,14 @@ class RoborockCard extends RoborockBase {
     </div>`;
   }
 
+  // show_map: true / "always", false / "never", or "cleaning" (default) to show it only during a cleaning job.
+  _showMap(dev) {
+    const m = this._config.show_map ?? "cleaning";
+    if (m === true || m === "always") return true;
+    if (m !== "cleaning") return false;
+    return this._s(dev.vacuum)?.state === "cleaning" || this._s(dev.entities.in_cleaning)?.state === "on";
+  }
+
   _map(dev) {
     const maps = (dev.extra.image || []).map((id) => this._s(id)).filter((s) => s?.attributes?.entity_picture);
     if (!maps.length) return "";
@@ -1022,6 +1036,14 @@ class RoborockEditorBase extends HTMLElement {
     return [];
   }
 
+  static get selects() {
+    return {};
+  }
+
+  static extraFields() {
+    return [];
+  }
+
   setConfig(config) {
     this._config = { ...config };
     this._render();
@@ -1052,6 +1074,7 @@ class RoborockEditorBase extends HTMLElement {
           },
         },
       },
+      ...this.constructor.extraFields(tr),
       {
         type: "grid",
         name: "",
@@ -1082,7 +1105,7 @@ class RoborockEditorBase extends HTMLElement {
       this._form.addEventListener("value-changed", (ev) => {
         ev.stopPropagation();
         const config = { ...ev.detail.value };
-        const defaults = { ...Object.fromEntries(toggles), image: "auto" };
+        const defaults = { ...Object.fromEntries(toggles), image: "auto", ...this.constructor.selects };
         for (const [k, v] of Object.entries(config)) {
           // Keep the YAML minimal: drop empty values and options left at their default.
           if (v === "" || v === undefined || v === null || (k in defaults && v === defaults[k])) delete config[k];
@@ -1092,7 +1115,9 @@ class RoborockEditorBase extends HTMLElement {
       });
       this.appendChild(this._form);
     }
-    const data = { image: "auto", ...this._config };
+    const data = { image: "auto", ...this.constructor.selects, ...this._config };
+    if (data.show_map === true) data.show_map = "always";
+    if (data.show_map === false) data.show_map = "never";
     for (const [name, def] of toggles) if (data[name] === undefined) data[name] = def;
     if (!data.device) data.device = RoborockCard.getStubConfig(this._hass).device;
     this._form.hass = this._hass;
@@ -1110,7 +1135,24 @@ class RoborockCardEditor extends RoborockEditorBase {
       ["show_dock", true],
       ["show_consumables", true],
       ["show_stats", true],
-      ["show_map", false],
+    ];
+  }
+
+  static get selects() {
+    return { show_map: "cleaning" };
+  }
+
+  static extraFields(tr) {
+    return [
+      {
+        name: "show_map",
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: ["never", "cleaning", "always"].map((v) => ({ value: v, label: tr(`map_${v}`) })),
+          },
+        },
+      },
     ];
   }
 }

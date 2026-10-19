@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0
+
+### ✨ Features
+
+- The map is now shown while the robot is cleaning and hidden otherwise. The `show_map` option (a list in the visual editor) accepts `cleaning` (default), `always` / `true` or `never` / `false`.
+
 ## 1.0.1
 
 ### 🐛 Fixes
