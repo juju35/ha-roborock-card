@@ -10,7 +10,7 @@ First release of the Roborock cards for Home Assistant, built for the [Roborock 
 
 ### ✨ Features
 
-- **Roborock Card** (`custom:roborock-card`): device picture, battery, status, current room, cleaning progress, cleaning settings, start / pause / stop / dock / locate buttons, routines, dock (water tanks, detergent, auto-empty, mop drying), maintenance (brushes, filter, sensors…), statistics and optional map.
+- **Roborock Card** (`custom:roborock-card`): device picture, battery, status, current room, cleaning progress, cleaning settings, start / pause / stop / dock / locate buttons, routines, dock (water tanks, detergent, auto-empty, mop drying), maintenance (brushes, filter, sensors…) with reset buttons, statistics and optional map.
 - **Roborock Mini Card** (`custom:roborock-mini-card`): compact overview with picture, battery, room or error and quick start / pause and dock buttons.
 - Robot vacuums (Saros 20 picture) and wet-dry vacuums (F25 Ultra picture), picked automatically per model, or a picture of your own.
 - **Automatic discovery** through the entity and device registries: no entity to pick, several devices supported, dock entities merged with their robot, works with entity ids in any language.

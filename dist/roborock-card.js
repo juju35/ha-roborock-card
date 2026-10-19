@@ -49,6 +49,7 @@ const ICONS = {
   stats: "M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z",
   map: "M15,19L9,16.89V5L15,7.11M20.5,3C20.44,3 20.39,3 20.34,3L15,5.1L9,3L3.36,4.9C3.15,4.97 3,5.15 3,5.38V20.5A0.5,0.5 0 0,0 3.5,21C3.55,21 3.61,21 3.66,20.97L9,18.9L15,21L20.64,19.1C20.85,19 21,18.85 21,18.62V3.5A0.5,0.5 0 0,0 20.5,3Z",
   alert: "M13 14H11V9H13M13 18H11V16H13M1 21H23L12 2L1 21Z",
+  reset: "M12,4C14.1,4 16.1,4.8 17.6,6.3C20.7,9.4 20.7,14.5 17.6,17.6C15.8,19.5 13.3,20.2 10.9,19.9L11.4,17.9C13.1,18.1 14.9,17.5 16.2,16.2C18.5,13.9 18.5,10.1 16.2,7.7C15.1,6.6 13.5,6 12,6V10.6L7,5.6L12,0.6V4M6.3,17.6C3.7,15 3.3,11 5.1,7.9L6.6,9.4C5.5,11.6 5.9,14.4 7.8,16.2C8.3,16.7 8.9,17.1 9.6,17.4L9,19.4C8,19 7.1,18.4 6.3,17.6Z",
 };
 
 const STRINGS = {
@@ -64,6 +65,8 @@ const STRINGS = {
     progress: "Progress",
     routines: "Routines",
     run_routine: "Run routine {name}?",
+    reset: "Reset",
+    confirm_reset: "Reset {name} counter? Do it after replacing or cleaning the part.",
     station: "Dock",
     consumables: "Maintenance",
     statistics: "Statistics",
@@ -182,6 +185,8 @@ const STRINGS = {
     progress: "Progression",
     routines: "Routines",
     run_routine: "Lancer la routine {name} ?",
+    reset: "Réinitialiser",
+    confirm_reset: "Réinitialiser le compteur {name} ? À faire après avoir remplacé ou nettoyé la pièce.",
     station: "Station",
     consumables: "Entretien",
     statistics: "Statistiques",
@@ -288,20 +293,21 @@ const STRINGS = {
   },
 };
 
-// Consumables: [translation_key, label, icon, lifetime in hours for the robot ("pct" when the sensor is a percentage)]
+// Consumables: [translation_key, label, icon, lifetime in hours for the robot ("pct" when the sensor is a percentage),
+//               translation_key of the integration's reset button]
 const CONSUMABLES = [
-  ["main_brush_time_left", "main_brush", ICONS.brush, 300],
-  ["side_brush_time_left", "side_brush", ICONS.brush, 200],
-  ["filter_time_left", "filter", ICONS.filter, 150],
-  ["sensor_time_left", "sensors", ICONS.sensor, 30],
+  ["main_brush_time_left", "main_brush", ICONS.brush, 300, "reset_main_brush_consumable"],
+  ["side_brush_time_left", "side_brush", ICONS.brush, 200, "reset_side_brush_consumable"],
+  ["filter_time_left", "filter", ICONS.filter, 150, "reset_air_filter_consumable"],
+  ["sensor_time_left", "sensors", ICONS.sensor, 30, "reset_sensor_consumable"],
   ["mop_life_time_left", "mop", ICONS.water, null],
   ["brush_remaining", "roller", ICONS.brush, null],
   ["main_brush_life", "main_brush", ICONS.brush, "pct"],
   ["side_brush_life", "side_brush", ICONS.brush, "pct"],
   ["filter_life", "filter", ICONS.filter, "pct"],
   ["sensor_life", "sensors", ICONS.sensor, "pct"],
-  ["strainer_time_left", "strainer", ICONS.filter, null],
-  ["cleaning_brush_time_left", "cleaning_brush", ICONS.brush, null],
+  ["strainer_time_left", "strainer", ICONS.filter, null, "reset_dock_strainer_consumable"],
+  ["cleaning_brush_time_left", "cleaning_brush", ICONS.brush, null, "reset_dock_cleaning_brush_consumable"],
 ];
 
 // ---------------------------------------------------------------------------
@@ -533,7 +539,9 @@ class RoborockBase extends HTMLElement {
     if (!el) return;
     ev.stopPropagation();
     const { action, entity, label } = el.dataset;
-    if (action === "routine") {
+    if (action === "reset") {
+      if (window.confirm(this._t("confirm_reset", { name: label }))) this._hass.callService("button", "press", { entity_id: entity });
+    } else if (action === "routine") {
       if (window.confirm(this._t("run_routine", { name: label }))) this._hass.callService("button", "press", { entity_id: entity });
     } else if (action) {
       this._hass.callService("vacuum", action, { entity_id: entity });
@@ -699,6 +707,11 @@ const FULL_STYLE = `
   .cons .v { text-align: right; font-weight: 500; white-space: nowrap; }
   .cons .v.warn, .cons .v.crit { color: var(--c); }
   .cons .nobar { height: 6px; }
+  .cons.with-reset { grid-template-columns: 18px minmax(0, 1fr) 90px 56px 28px; }
+  .reset { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: none; border-radius: 50%;
+           background: transparent; color: var(--secondary-text-color); cursor: pointer; padding: 0; }
+  .reset:hover { background: var(--secondary-background-color, rgba(127,127,127,.12)); color: var(--rr-red); }
+  .reset .icon { width: 18px; height: 18px; }
   .map img { width: 100%; border-radius: 10px; display: block; background: var(--secondary-background-color, rgba(127,127,127,.08)); }
 `;
 
@@ -849,7 +862,7 @@ class RoborockCard extends RoborockBase {
 
   _consumables(dev) {
     const rows = [];
-    for (const [key, label, icon, life] of CONSUMABLES) {
+    for (const [key, label, icon, life, resetKey] of CONSUMABLES) {
       const s = this._s(dev.entities[key]) || this._s(dev.dock[key]);
       if (!s) continue;
       let pct = null;
@@ -869,13 +882,29 @@ class RoborockCard extends RoborockBase {
       rows.push(`
         ${svgIcon(icon)}<span class="lbl clickable" data-entity="${s.entity_id}">${esc(this._t(label))}</span>
         ${pct !== null ? `<div class="bar ${cls}"><div style="width:${Math.max(0, Math.min(100, pct))}%"></div></div>` : `<div class="nobar"></div>`}
-        <span class="v clickable ${cls}" data-entity="${s.entity_id}">${esc(text)}</span>`);
+        <span class="v clickable ${cls}" data-entity="${s.entity_id}">${esc(text)}</span>
+        ${this._resetButton(dev, resetKey, label)}`);
     }
     if (!rows.length) return "";
+    const resets = this._config.show_controls !== false && CONSUMABLES.some(([key, , , , r]) => (dev.entities[key] || dev.dock[key]) && this._resetId(dev, r));
     return `<div>
       <div class="section-title">${svgIcon(ICONS.brush)}${esc(this._t("consumables"))}</div>
-      <div class="cons">${rows.join("")}</div>
+      <div class="cons ${resets ? "with-reset" : ""}">${rows.join("")}</div>
     </div>`;
+  }
+
+  _resetId(dev, key) {
+    const id = key && (dev.entities[key] || dev.dock[key]);
+    const s = this._s(id);
+    return s && s.state !== "unavailable" ? id : null;
+  }
+
+  // Reset button of a consumable, when the integration exposes one; an empty cell keeps the grid aligned.
+  _resetButton(dev, key, label) {
+    if (this._config.show_controls === false) return "";
+    const id = this._resetId(dev, key);
+    if (!id) return `<span></span>`;
+    return `<button class="reset" title="${esc(this._t("reset"))}" data-action="reset" data-entity="${id}" data-label="${esc(this._t(label))}">${svgIcon(ICONS.reset)}</button>`;
   }
 
   _stats(dev) {

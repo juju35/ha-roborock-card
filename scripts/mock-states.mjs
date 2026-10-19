@@ -53,6 +53,9 @@ entity("sensor.aspirateur_brosse_principale", "saros", "main_brush_time_left", "
 entity("sensor.aspirateur_brosse_laterale", "saros", "side_brush_time_left", "192.0", { unit_of_measurement: "h", device_class: "duration" });
 entity("sensor.aspirateur_filtre", "saros", "filter_time_left", "146.4", { unit_of_measurement: "h", device_class: "duration" });
 entity("sensor.aspirateur_capteurs", "saros", "sensor_time_left", "2.5", { unit_of_measurement: "h", device_class: "duration" });
+for (const k of ["main_brush", "side_brush", "air_filter", "sensor"])
+  entity(`button.aspirateur_reinitialiser_${k}`, "saros", `reset_${k}_consumable`, "unknown");
+entity("button.station_reinitialiser_crepine", "saros_dock", "reset_dock_strainer_consumable", "unknown");
 entity("binary_sensor.aspirateur_penurie_d_eau", "saros", "water_shortage", "off");
 entity("binary_sensor.aspirateur_nettoyage", "saros", "in_cleaning", "off");
 entity("select.aspirateur_mode", "saros", "cleaning_mode", "vac_and_mop", { options: ["vacuum", "vac_and_mop", "mop"] });

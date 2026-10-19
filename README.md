@@ -27,7 +27,7 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 - Start / pause, stop, return to dock and locate buttons
 - Routines from the Roborock app as one-tap buttons (with confirmation)
 - Dock: clean and dirty water tanks, detergent, auto-empty mode, mop drying
-- Maintenance: main brush, side brush, filter, sensors, dock strainer… with remaining time
+- Maintenance: main brush, side brush, filter, sensors, dock strainer… with remaining time and a reset button (with confirmation) when the integration provides one
 - Statistics: last clean, number of cleanings, total area and time
 - Optional map
 - Click any value to open its Home Assistant history (more-info dialog)
@@ -118,7 +118,7 @@ language: fr
 | `title` | both | Device name | Card title |
 | `image` | both | `auto` | Device picture: `auto` (per model), `saros_20`, `f25_ultra`, `none`, or the URL of your own picture (e.g. `/local/my-robot.png`) |
 | `show_logo` | both | `true` | Show the Roborock logo (opens [roborock.com](https://www.roborock.com) in a new tab) |
-| `show_controls` | both | `true` | Start / pause, stop, dock and locate buttons (robot vacuums) |
+| `show_controls` | both | `true` | Start / pause, stop, dock and locate buttons (robot vacuums), and maintenance reset buttons |
 | `show_modes` | full | `true` | Cleaning mode, suction power, mop intensity and route |
 | `show_routines` | full | `true` | Routines buttons |
 | `show_dock` | full | `true` | Dock status |
@@ -149,6 +149,8 @@ States and errors are shown with the card's own translations when available, oth
 The device picture is chosen from the model: robot vacuums show the Saros 20, wet-dry vacuums (`roborock.wdv.*`) show the F25 Ultra. Use the `image` option to pick another one or your own.
 
 Routines created in the Roborock app appear as buttons in the integration; the card lists them and asks for confirmation before running one.
+
+Each maintenance line has a reset button when the integration exposes the matching **Reset … consumable** button (main brush, side brush, filter, sensors, dock strainer, dock brush). It asks for confirmation before resetting the counter.
 
 Maintenance thresholds: the remaining time turns orange under 10 % of the part lifetime (or under 10 h when the lifetime is unknown), and red when it reaches 0. Bars use the Roborock lifetimes: main brush 300 h, side brush 200 h, filter 150 h, sensors 30 h.
 
