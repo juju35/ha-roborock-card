@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.0
 
 First release of the Roborock cards for Home Assistant, built for the [Roborock integration](https://www.home-assistant.io/integrations/roborock/).
 
