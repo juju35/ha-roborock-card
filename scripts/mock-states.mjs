@@ -80,6 +80,9 @@ entity("binary_sensor.station_eau_sale", "saros_dock", "dirty_box_full", "off");
 entity("binary_sensor.station_detergent", "saros_dock", "clean_fluid_empty", "off");
 entity("select.station_vidage", "saros_dock", "dust_collection_mode", "smart");
 entity("sensor.station_sechage", "saros_dock", "mop_drying_remaining_time", "0", { unit_of_measurement: "s", device_class: "duration" });
+entity("switch.station_vidage_de_la_poussiere", "saros_dock", "dust_emptying", "off");
+entity("switch.station_lavage_de_la_serpilliere", "saros_dock", "mop_washing", "off");
+entity("switch.station_sechage_de_la_serpilliere", "saros_dock", "mop_drying", "off");
 entity("sensor.station_crepine", "saros_dock", "strainer_time_left", "59", { unit_of_measurement: "h", device_class: "duration" });
 
 // F25 Ultra
@@ -101,6 +104,8 @@ export const cleaning = {
   "sensor.aspirateur_surface": { state: "18.2" },
   "sensor.aspirateur_duree": { state: "16" },
   "binary_sensor.station_eau_sale": { state: "on" },
+  "switch.station_sechage_de_la_serpilliere": { state: "on" },
+  "sensor.station_sechage": { state: "4800" },
   "sensor.station_erreur": { state: "waste_water_tank_full" },
 };
 

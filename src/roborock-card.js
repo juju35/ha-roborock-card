@@ -65,6 +65,11 @@ const STRINGS = {
     progress: "Progress",
     routines: "Routines",
     run_routine: "Run routine {name}?",
+    empty_bin: "Empty bin",
+    wash_mop: "Wash mop",
+    dry_mop: "Dry mop",
+    start_action: "Start: {name}",
+    stop_action: "Stop: {name}",
     choose_rooms: "Rooms to clean",
     clean_rooms: "Clean ({n})",
     whole_home: "Whole home",
@@ -201,6 +206,11 @@ const STRINGS = {
     progress: "Progression",
     routines: "Routines",
     run_routine: "Lancer la routine {name} ?",
+    empty_bin: "Vidage",
+    wash_mop: "Lavage serpillière",
+    dry_mop: "Séchage",
+    start_action: "Lancer : {name}",
+    stop_action: "Arrêter : {name}",
     choose_rooms: "Pièces à nettoyer",
     clean_rooms: "Nettoyer ({n})",
     whole_home: "Toute la maison",
@@ -598,6 +608,10 @@ class RoborockBase extends HTMLElement {
     const { action, entity, label } = el.dataset;
     if (this._roomAction(action, entity, el.dataset.room)) return;
     if (action === "zoom_map") return this._zoomMap(entity);
+    if (action === "dock_toggle") {
+      const on = this._s(entity)?.state === "on";
+      return this._hass.callService("switch", on ? "turn_off" : "turn_on", { entity_id: entity });
+    }
     if (action === "reset") {
       if (window.confirm(this._t("confirm_reset", { name: label }))) this._hass.callService("button", "press", { entity_id: entity });
     } else if (action === "routine") {
@@ -876,6 +890,11 @@ const FULL_STYLE = `
   .map img { width: 100%; border-radius: 10px; display: block; background: var(--secondary-background-color, rgba(127,127,127,.08)); }
   .map .crop { overflow: hidden; border-radius: 10px; }
   .map { cursor: zoom-in; }
+  .dock-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .dock-actions .btn { flex: 1 1 auto; }
+  .dock-actions .btn .icon { color: var(--rr-red); }
+  .dock-actions .btn.running { background: color-mix(in srgb, var(--rr-active) 16%, transparent); color: var(--rr-active); }
+  .dock-actions .btn.running .icon { color: var(--rr-active); }
   .map .crop img { max-width: none; border-radius: 0; background: none; }
 `;
 
@@ -1018,11 +1037,32 @@ class RoborockCard extends RoborockBase {
     const dry = this._s(d.mop_drying_remaining_time);
     const dryH = hours(dry);
     if (dryH > 0) tiles.push(this._tile(dry.entity_id, ICONS.fan, this._t("drying"), fmtHours(dryH), "active"));
-    if (!tiles.length) return "";
+    const actions = this._dockActions(dev);
+    if (!tiles.length && !actions) return "";
     return `<div>
       <div class="section-title">${svgIcon(ICONS.dock)}${esc(this._t("station"))}</div>
-      <div class="tiles">${tiles.join("")}</div>
+      ${tiles.length ? `<div class="tiles">${tiles.join("")}</div>` : ""}
+      ${actions}
     </div>`;
+  }
+
+  // Dock action switches of the integration: on while the action runs, the dock stops it on its own.
+  _dockActions(dev) {
+    if (this._config.show_controls === false) return "";
+    const btns = [
+      ["dust_emptying", ICONS.bin, "empty_bin"],
+      ["mop_washing", ICONS.water, "wash_mop"],
+      ["mop_drying", ICONS.fan, "dry_mop"],
+    ]
+      .map(([key, icon, label]) => {
+        const s = this._s(this._dev?.dock[key] || dev.dock[key]);
+        if (!s || s.state === "unavailable") return "";
+        const on = s.state === "on";
+        return `<button class="btn ${on ? "running" : ""}" title="${esc(this._t(on ? "stop_action" : "start_action", { name: this._t(label) }))}"
+          data-action="dock_toggle" data-entity="${s.entity_id}">${svgIcon(on ? ICONS.stop : icon)}<span>${esc(this._t(label))}</span></button>`;
+      })
+      .filter(Boolean);
+    return btns.length ? `<div class="dock-actions">${btns.join("")}</div>` : "";
   }
 
   _consumables(dev) {

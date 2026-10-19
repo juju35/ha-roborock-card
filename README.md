@@ -27,7 +27,7 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 - Start / pause, stop, return to dock and locate buttons
 - Room selector: the Start button lets you pick the rooms to clean (or the whole home)
 - Routines from the Roborock app as one-tap buttons (with confirmation)
-- Dock: clean and dirty water tanks, detergent, auto-empty mode, mop drying
+- Dock: clean and dirty water tanks, detergent, auto-empty mode, mop drying, and Empty bin / Wash mop / Dry mop buttons
 - Maintenance: main brush, side brush, filter, sensors, dock strainer… with remaining time and a reset button (with confirmation) when the integration provides one
 - Statistics: last clean, number of cleanings, total area and time
 - Map of the current floor while the robot is cleaning (or always, or never), with optional cropping, enlarged full screen on click
@@ -126,7 +126,7 @@ language: fr
 | `title` | both | Device name | Card title |
 | `image` | both | `auto` | Device picture: `auto` (per model), `saros_20`, `f25_ultra`, `none`, or the URL of your own picture (e.g. `/local/my-robot.png`) |
 | `show_logo` | both | `true` | Show the Roborock logo (opens [roborock.com](https://www.roborock.com) in a new tab) |
-| `show_controls` | both | `true` | Start / pause, stop, dock and locate buttons (robot vacuums), and maintenance reset buttons |
+| `show_controls` | both | `true` | Start / pause, stop, dock and locate buttons (robot vacuums), dock actions (empty bin, wash and dry mop) and maintenance reset buttons |
 | `room_selection` | both | `true` | The Start button opens the room selector; `false` starts a full cleaning right away |
 | `show_modes` | full | `true` | Cleaning mode, suction power, mop intensity and route |
 | `show_routines` | full | `true` | Routines buttons |

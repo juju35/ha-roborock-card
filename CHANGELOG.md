@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0
+
+### ✨ Features
+
+- **Dock actions**: Empty bin, Wash mop and Dry mop buttons in the dock section, using the integration's dock switches. A running action is highlighted and its button stops it. Hidden with `show_controls: false`.
+
 ## 1.1.0
 
 ### ✨ Features
