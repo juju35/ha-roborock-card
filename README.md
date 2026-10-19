@@ -30,7 +30,7 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 - Dock: clean and dirty water tanks, detergent, auto-empty mode, mop drying
 - Maintenance: main brush, side brush, filter, sensors, dock strainer… with remaining time and a reset button (with confirmation) when the integration provides one
 - Statistics: last clean, number of cleanings, total area and time
-- Map of the current floor while the robot is cleaning (or always, or never)
+- Map of the current floor while the robot is cleaning (or always, or never), with optional cropping
 - Click any value to open its Home Assistant history (more-info dialog)
 - Click the Roborock logo to open [roborock.com](https://www.roborock.com)
 - Visual editor in the dashboard UI for both cards (no YAML needed)
@@ -99,6 +99,11 @@ show_dock: true
 show_consumables: true
 show_stats: true
 show_map: cleaning
+crop:
+  top: 170
+  bottom: 190
+  left: 180
+  right: 150
 language: fr
 ```
 
@@ -129,7 +134,23 @@ language: fr
 | `show_consumables` | full | `true` | Maintenance (remaining time of brushes, filter, sensors…) |
 | `show_stats` | full | `true` | Cleaning statistics |
 | `show_map` | full | `cleaning` | Map of the current floor: `cleaning` (only while the robot is cleaning), `always` (or `true`) or `never` (or `false`) |
+| `crop` | full | — | Crop the map, in pixels of the map image: `top`, `bottom`, `left` and/or `right` (see below) |
 | `language` | both | Auto | Force language: `fr` or `en` (auto-detects from HA settings) |
+
+### Cropping the map
+
+The map image of the integration usually has wide empty borders. Remove them with `crop`, in pixels of the original image (all four values are optional):
+
+```yaml
+type: custom:roborock-card
+crop:
+  top: 170
+  bottom: 190
+  left: 180
+  right: 150
+```
+
+In the visual editor, the values are under **Map crop (pixels)**.
 
 ## Screenshots
 

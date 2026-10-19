@@ -119,6 +119,11 @@ const STRINGS = {
     show_consumables: "Show maintenance",
     show_stats: "Show statistics",
     show_map: "Show map",
+    crop: "Map crop (pixels)",
+    top: "Top",
+    bottom: "Bottom",
+    left: "Left",
+    right: "Right",
     map_never: "Never",
     map_cleaning: "While cleaning",
     map_always: "Always",
@@ -249,6 +254,11 @@ const STRINGS = {
     show_consumables: "Afficher l'entretien",
     show_stats: "Afficher les statistiques",
     show_map: "Afficher la carte",
+    crop: "Recadrage de la carte (pixels)",
+    top: "Haut",
+    bottom: "Bas",
+    left: "Gauche",
+    right: "Droite",
     map_never: "Jamais",
     map_cleaning: "Pendant le nettoyage",
     map_always: "Toujours",
@@ -530,6 +540,7 @@ class RoborockBase extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._html = "";
     this.shadowRoot.addEventListener("click", (ev) => this._onClick(ev));
+    this.shadowRoot.addEventListener("load", (ev) => this._onLoad(ev), true);
   }
 
   set hass(hass) {
@@ -567,6 +578,17 @@ class RoborockBase extends HTMLElement {
       this._html = html;
       this.shadowRoot.innerHTML = html;
     }
+  }
+
+  // Remember the natural size of the map image, needed to crop it.
+  _onLoad(ev) {
+    const img = ev.target;
+    const id = img?.dataset?.map;
+    if (!id || !img.naturalWidth) return;
+    const old = this._mapSizes?.[id];
+    if (old && old.w === img.naturalWidth && old.h === img.naturalHeight) return;
+    this._mapSizes = { ...this._mapSizes, [id]: { w: img.naturalWidth, h: img.naturalHeight } };
+    if (this._config.crop) this._update();
   }
 
   _onClick(ev) {
@@ -851,6 +873,8 @@ const FULL_STYLE = `
   .reset:hover { background: var(--secondary-background-color, rgba(127,127,127,.12)); color: var(--rr-red); }
   .reset .icon { width: 18px; height: 18px; }
   .map img { width: 100%; border-radius: 10px; display: block; background: var(--secondary-background-color, rgba(127,127,127,.08)); }
+  .map .crop { overflow: hidden; border-radius: 10px; }
+  .map .crop img { max-width: none; border-radius: 0; background: none; }
 `;
 
 class RoborockCard extends RoborockBase {
@@ -1080,7 +1104,20 @@ class RoborockCard extends RoborockBase {
     if (!maps.length) return "";
     const selected = this._s(dev.entities.selected_map)?.state;
     const map = (selected && maps.find((s) => (s.attributes.friendly_name || "").endsWith(selected))) || maps[0];
-    return `<div class="map clickable" data-entity="${map.entity_id}"><img src="${esc(map.attributes.entity_picture)}" alt="${esc(this._t("map"))}"></div>`;
+    const img = `<img src="${esc(map.attributes.entity_picture)}" alt="${esc(this._t("map"))}" data-map="${map.entity_id}"`;
+    // crop: { top, bottom, left, right } in pixels of the map image. The image size is only known once
+    // it has loaded (see _onLoad), so the first render shows it uncropped.
+    const crop = this._config.crop || {};
+    const [t, b, l, r] = ["top", "bottom", "left", "right"].map((k) => Math.max(0, Number(crop[k]) || 0));
+    const size = this._mapSizes?.[map.entity_id];
+    if (!size || !(t || b || l || r) || size.w - l - r <= 0 || size.h - t - b <= 0)
+      return `<div class="map clickable" data-entity="${map.entity_id}">${img}></div>`;
+    const w = size.w - l - r;
+    const h = size.h - t - b;
+    const pct = (v) => `${((100 * v) / w).toFixed(4)}%`;
+    return `<div class="map clickable" data-entity="${map.entity_id}"><div class="crop" style="aspect-ratio:${w} / ${h}">${img} style="width:${pct(
+      size.w
+    )};margin-left:-${pct(l)};margin-top:-${pct(t)}"></div></div>`;
   }
 }
 
@@ -1242,9 +1279,13 @@ class RoborockEditorBase extends HTMLElement {
         ev.stopPropagation();
         const config = { ...ev.detail.value };
         const defaults = { ...Object.fromEntries(toggles), image: "auto", ...this.constructor.selects };
-        for (const [k, v] of Object.entries(config)) {
+        for (let [k, v] of Object.entries(config)) {
           // Keep the YAML minimal: drop empty values and options left at their default.
-          if (v === "" || v === undefined || v === null || (k in defaults && v === defaults[k])) delete config[k];
+          if (v && typeof v === "object" && !Array.isArray(v)) {
+            v = config[k] = { ...v };
+            for (const [sk, sv] of Object.entries(v)) if (sv === "" || sv === undefined || sv === null || sv === 0) delete v[sk];
+            if (!Object.keys(v).length) delete config[k];
+          } else if (v === "" || v === undefined || v === null || (k in defaults && v === defaults[k])) delete config[k];
         }
         this._config = config;
         this.dispatchEvent(new CustomEvent("config-changed", { detail: { config }, bubbles: true, composed: true }));
@@ -1289,6 +1330,12 @@ class RoborockCardEditor extends RoborockEditorBase {
             options: ["never", "cleaning", "always"].map((v) => ({ value: v, label: tr(`map_${v}`) })),
           },
         },
+      },
+      {
+        type: "expandable",
+        name: "crop",
+        title: tr("crop"),
+        schema: ["top", "bottom", "left", "right"].map((name) => ({ name, selector: { number: { min: 0, mode: "box", unit_of_measurement: "px" } } })),
       },
     ];
   }

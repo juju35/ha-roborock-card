@@ -6,6 +6,7 @@
 
 - **Room selector**: the Start button no longer starts the robot right away. It opens the list of rooms of the current map: pick one or more rooms and start cleaning them, or clean the whole home. Rooms come from the integration (`roborock.get_maps`). Set `room_selection: false` to start directly as before.
 - The map is now shown while the robot is cleaning and hidden otherwise. The `show_map` option (a list in the visual editor) accepts `cleaning` (default), `always` / `true` or `never` / `false`.
+- **Map crop**: the new `crop` option (`top`, `bottom`, `left`, `right`, in pixels of the map image) trims the empty borders of the map. Also in the visual editor.
 
 ## 1.0.1
 
