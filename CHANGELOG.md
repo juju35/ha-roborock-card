@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### 🐛 Fixes
+
+- Dock buttons show the requested state right away instead of waiting for the next update of the integration (up to about 30 s), and the drying tile shows "Running" until the remaining drying time is known.
+
 ## 1.2.0
 
 ### ✨ Features

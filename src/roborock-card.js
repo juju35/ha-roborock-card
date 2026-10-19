@@ -14,6 +14,7 @@ const IMAGES = {
   f25_ultra: "__IMG_F25_ULTRA__",
 };
 const ROBOROCK_SITE = "https://www.roborock.com";
+const PENDING_MS = 45000;
 
 const ICONS = {
   play: "M8,5.14V19.14L19,12.14L8,5.14Z",
@@ -66,6 +67,7 @@ const STRINGS = {
     routines: "Routines",
     run_routine: "Run routine {name}?",
     empty_bin: "Empty bin",
+    running: "Running",
     wash_mop: "Wash mop",
     dry_mop: "Dry mop",
     start_action: "Start: {name}",
@@ -207,6 +209,7 @@ const STRINGS = {
     routines: "Routines",
     run_routine: "Lancer la routine {name} ?",
     empty_bin: "Vidage",
+    running: "En cours",
     wash_mop: "Lavage serpillière",
     dry_mop: "Séchage",
     start_action: "Lancer : {name}",
@@ -590,6 +593,23 @@ class RoborockBase extends HTMLElement {
     }
   }
 
+  // Dock switches only change state on the next poll of the integration (up to ~30 s): the requested
+  // state is shown meanwhile, until the entity reports it or the delay runs out.
+  _setPending(id, state) {
+    this._pending = { ...this._pending, [id]: { state, until: Date.now() + PENDING_MS } };
+    clearTimeout(this._pendingTimer);
+    this._pendingTimer = setTimeout(() => this._update(), PENDING_MS + 100);
+    this._update();
+  }
+
+  _isOn(id) {
+    const s = this._s(id);
+    const p = this._pending?.[id];
+    if (p && (Date.now() > p.until || s?.state === p.state)) delete this._pending[id];
+    else if (p) return p.state === "on";
+    return s?.state === "on";
+  }
+
   // Remember the natural size of the map image, needed to crop it.
   _onLoad(ev) {
     const img = ev.target;
@@ -609,7 +629,8 @@ class RoborockBase extends HTMLElement {
     if (this._roomAction(action, entity, el.dataset.room)) return;
     if (action === "zoom_map") return this._zoomMap(entity);
     if (action === "dock_toggle") {
-      const on = this._s(entity)?.state === "on";
+      const on = this._isOn(entity);
+      this._setPending(entity, on ? "off" : "on");
       return this._hass.callService("switch", on ? "turn_off" : "turn_on", { entity_id: entity });
     }
     if (action === "reset") {
@@ -1034,9 +1055,13 @@ class RoborockCard extends RoborockBase {
     flag("clean_fluid_empty", ICONS.fluid, "cleaning_fluid", "empty");
     const dust = this._s(d.dust_collection_mode);
     if (valid(dust)) tiles.push(this._tile(dust.entity_id, ICONS.bin, this._t("dust_mode"), this._fmt(dust)));
+    // Drying: the remaining time only refreshes on the next poll of the integration (about 30 s after
+    // the dryer starts), so the tile also shows while the drying switch or status is on.
     const dry = this._s(d.mop_drying_remaining_time);
     const dryH = hours(dry);
-    if (dryH > 0) tiles.push(this._tile(dry.entity_id, ICONS.fan, this._t("drying"), fmtHours(dryH), "active"));
+    const drying = [d.mop_drying, d.mop_drying_status].some((id) => this._isOn(id));
+    if (dryH > 0 || drying)
+      tiles.push(this._tile(dry?.entity_id || d.mop_drying, ICONS.fan, this._t("drying"), dryH > 0 ? fmtHours(dryH) : this._t("running"), "active"));
     const actions = this._dockActions(dev);
     if (!tiles.length && !actions) return "";
     return `<div>
@@ -1057,7 +1082,7 @@ class RoborockCard extends RoborockBase {
       .map(([key, icon, label]) => {
         const s = this._s(this._dev?.dock[key] || dev.dock[key]);
         if (!s || s.state === "unavailable") return "";
-        const on = s.state === "on";
+        const on = this._isOn(s.entity_id);
         return `<button class="btn ${on ? "running" : ""}" title="${esc(this._t(on ? "stop_action" : "start_action", { name: this._t(label) }))}"
           data-action="dock_toggle" data-entity="${s.entity_id}">${svgIcon(on ? ICONS.stop : icon)}<span>${esc(this._t(label))}</span></button>`;
       })
