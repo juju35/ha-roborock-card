@@ -1066,6 +1066,8 @@ class RoborockCard extends RoborockBase {
   }
 
   _defaultCollapsed(key) {
+    // A dock reporting a problem is always shown unfolded (it can still be folded by hand).
+    if (key === "dock" && this._dev && this._dockProblem(this._dev)) return false;
     const c = this._config.collapsed ?? DEFAULT_COLLAPSED;
     return (Array.isArray(c) ? c : [c]).includes(key);
   }
@@ -1113,6 +1115,13 @@ class RoborockCard extends RoborockBase {
       ${this._sectionTitle("dock", ICONS.dock, this._t("station"))}
       ${this._isCollapsed("dock") ? "" : `${tiles.length ? `<div class="tiles">${tiles.join("")}</div>` : ""}${actions}`}
     </div>`;
+  }
+
+  _dockProblem(dev) {
+    const d = dev.dock;
+    const err = this._s(d.dock_error);
+    if (valid(err) && err.state !== "ok") return true;
+    return ["clean_box_empty", "dirty_box_full", "clean_fluid_empty"].some((k) => this._s(d[k])?.state === "on");
   }
 
   // Dock action switches of the integration: on while the action runs, the dock stops it on its own.

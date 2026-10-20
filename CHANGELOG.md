@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### ✨ Features
+
+- The Dock section unfolds on its own when the dock reports a problem (dock error, clean water tank empty, dirty water tank full, detergent empty), even when it is folded by default.
+
 ## 1.3.0
 
 ### ✨ Features
