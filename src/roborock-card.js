@@ -15,6 +15,7 @@ const IMAGES = {
 };
 const ROBOROCK_SITE = "https://www.roborock.com";
 const PENDING_MS = 45000;
+const DEFAULT_COLLAPSED = ["stats", "dock"];
 
 const ICONS = {
   play: "M8,5.14V19.14L19,12.14L8,5.14Z",
@@ -50,6 +51,8 @@ const ICONS = {
   stats: "M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z",
   map: "M15,19L9,16.89V5L15,7.11M20.5,3C20.44,3 20.39,3 20.34,3L15,5.1L9,3L3.36,4.9C3.15,4.97 3,5.15 3,5.38V20.5A0.5,0.5 0 0,0 3.5,21C3.55,21 3.61,21 3.66,20.97L9,18.9L15,21L20.64,19.1C20.85,19 21,18.85 21,18.62V3.5A0.5,0.5 0 0,0 20.5,3Z",
   alert: "M13 14H11V9H13M13 18H11V16H13M1 21H23L12 2L1 21Z",
+  chevron_down: "M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z",
+  chevron_up: "M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z",
   reset: "M12,4C14.1,4 16.1,4.8 17.6,6.3C20.7,9.4 20.7,14.5 17.6,17.6C15.8,19.5 13.3,20.2 10.9,19.9L11.4,17.9C13.1,18.1 14.9,17.5 16.2,16.2C18.5,13.9 18.5,10.1 16.2,7.7C15.1,6.6 13.5,6 12,6V10.6L7,5.6L12,0.6V4M6.3,17.6C3.7,15 3.3,11 5.1,7.9L6.6,9.4C5.5,11.6 5.9,14.4 7.8,16.2C8.3,16.7 8.9,17.1 9.6,17.4L9,19.4C8,19 7.1,18.4 6.3,17.6Z",
 };
 
@@ -126,6 +129,7 @@ const STRINGS = {
     show_consumables: "Show maintenance",
     show_stats: "Show statistics",
     show_map: "Show map",
+    collapsed: "Sections folded by default",
     crop: "Map crop (pixels)",
     map_size: "Map image size: {w} × {h} px. Values are in pixels of this image.",
     top: "Top",
@@ -268,6 +272,7 @@ const STRINGS = {
     show_consumables: "Afficher l'entretien",
     show_stats: "Afficher les statistiques",
     show_map: "Afficher la carte",
+    collapsed: "Sections repliées par défaut",
     crop: "Recadrage de la carte (pixels)",
     map_size: "Taille de l'image de la carte : {w} × {h} px. Les valeurs sont en pixels de cette image.",
     top: "Haut",
@@ -635,6 +640,13 @@ class RoborockBase extends HTMLElement {
     const { action, entity, label } = el.dataset;
     if (this._roomAction(action, entity, el.dataset.room)) return;
     if (action === "zoom_map") return this._zoomMap(entity);
+    if (action === "toggle_section") {
+      const key = el.dataset.section;
+      this._toggled = new Set(this._toggled);
+      if (this._toggled.has(key)) this._toggled.delete(key);
+      else this._toggled.add(key);
+      return this._update();
+    }
     if (action === "dock_toggle") {
       const on = this._isOn(entity);
       this._setPending(entity, on ? "off" : "on");
@@ -893,6 +905,9 @@ const FULL_STYLE = `
   .section-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; text-transform: uppercase;
                    letter-spacing: .04em; color: var(--secondary-text-color); margin-bottom: 8px; }
   .section-title .icon { width: 16px; height: 16px; }
+  .section-title.toggle { cursor: pointer; user-select: none; }
+  .section-title.toggle[aria-expanded="false"] { margin-bottom: 0; }
+  .section-title .chevron { margin-left: auto; width: 20px; height: 20px; }
   .routines { display: flex; flex-wrap: wrap; gap: 8px; }
   .routines .btn { font-weight: 400; padding: 6px 12px 6px 8px; }
   .routines .btn .icon { color: var(--rr-red); }
@@ -1032,11 +1047,34 @@ class RoborockCard extends RoborockBase {
     });
     items.sort((a, b) => a.name.localeCompare(b.name));
     return `<div>
-      <div class="section-title">${svgIcon(ICONS.routine)}${esc(this._t("routines"))}</div>
-      <div class="routines">${items
-        .map((r) => `<button class="btn" data-action="routine" data-entity="${r.id}" data-label="${esc(r.name)}">${svgIcon(ICONS.routine)}<span>${esc(r.name)}</span></button>`)
-        .join("")}</div>
+      ${this._sectionTitle("routines", ICONS.routine, this._t("routines"))}
+      ${
+        this._isCollapsed("routines")
+          ? ""
+          : `<div class="routines">${items
+              .map((r) => `<button class="btn" data-action="routine" data-entity="${r.id}" data-label="${esc(r.name)}">${svgIcon(ICONS.routine)}<span>${esc(r.name)}</span></button>`)
+              .join("")}</div>`
+      }
     </div>`;
+  }
+
+  // Collapsible sections: `collapsed` lists the sections folded by default (stats and dock unless
+  // set); a click on a section title folds or unfolds it for this card until the page is reloaded.
+  _isCollapsed(key) {
+    if (this._toggled?.has(key)) return !this._defaultCollapsed(key);
+    return this._defaultCollapsed(key);
+  }
+
+  _defaultCollapsed(key) {
+    const c = this._config.collapsed ?? DEFAULT_COLLAPSED;
+    return (Array.isArray(c) ? c : [c]).includes(key);
+  }
+
+  _sectionTitle(key, icon, label) {
+    const closed = this._isCollapsed(key);
+    return `<div class="section-title toggle" data-action="toggle_section" data-section="${key}" aria-expanded="${!closed}">${svgIcon(icon)}${esc(
+      label
+    )}${svgIcon(closed ? ICONS.chevron_down : ICONS.chevron_up, "chevron")}</div>`;
   }
 
   _tile(id, icon, label, value, cls = "") {
@@ -1072,9 +1110,8 @@ class RoborockCard extends RoborockBase {
     const actions = this._dockActions(dev);
     if (!tiles.length && !actions) return "";
     return `<div>
-      <div class="section-title">${svgIcon(ICONS.dock)}${esc(this._t("station"))}</div>
-      ${tiles.length ? `<div class="tiles">${tiles.join("")}</div>` : ""}
-      ${actions}
+      ${this._sectionTitle("dock", ICONS.dock, this._t("station"))}
+      ${this._isCollapsed("dock") ? "" : `${tiles.length ? `<div class="tiles">${tiles.join("")}</div>` : ""}${actions}`}
     </div>`;
   }
 
@@ -1125,8 +1162,8 @@ class RoborockCard extends RoborockBase {
     }
     if (!rows.length) return "";
     return `<div>
-      <div class="section-title">${svgIcon(ICONS.brush)}${esc(this._t("consumables"))}</div>
-      <div class="cons ${resets ? "with-reset" : ""}">${rows.join("")}</div>
+      ${this._sectionTitle("consumables", ICONS.brush, this._t("consumables"))}
+      ${this._isCollapsed("consumables") ? "" : `<div class="cons ${resets ? "with-reset" : ""}">${rows.join("")}</div>`}
     </div>`;
   }
 
@@ -1162,8 +1199,8 @@ class RoborockCard extends RoborockBase {
     if (valid(tTime) && num(tTime)) tiles.push(this._tile(tTime.entity_id, ICONS.clock, this._t("total_time"), fmtHours(hours(tTime))));
     if (!tiles.length) return "";
     return `<div>
-      <div class="section-title">${svgIcon(ICONS.stats)}${esc(this._t("statistics"))}</div>
-      <div class="tiles two">${tiles.join("")}</div>
+      ${this._sectionTitle("stats", ICONS.stats, this._t("statistics"))}
+      ${this._isCollapsed("stats") ? "" : `<div class="tiles two">${tiles.join("")}</div>`}
     </div>`;
   }
 
@@ -1403,7 +1440,7 @@ class RoborockEditorBase extends HTMLElement {
             v = config[k] = { ...v };
             for (const [sk, sv] of Object.entries(v)) if (sv === "" || sv === undefined || sv === null || sv === 0) delete v[sk];
             if (!Object.keys(v).length) delete config[k];
-          } else if (v === "" || v === undefined || v === null || (k in defaults && v === defaults[k])) delete config[k];
+          } else if (v === "" || v === undefined || v === null || (k in defaults && JSON.stringify(v) === JSON.stringify(defaults[k]))) delete config[k];
         }
         this._config = config;
         this.dispatchEvent(new CustomEvent("config-changed", { detail: { config }, bubbles: true, composed: true }));
@@ -1453,7 +1490,7 @@ class RoborockCardEditor extends RoborockEditorBase {
   }
 
   static get selects() {
-    return { show_map: "cleaning" };
+    return { show_map: "cleaning", collapsed: DEFAULT_COLLAPSED };
   }
 
   static extraFields(tr) {
@@ -1464,6 +1501,21 @@ class RoborockCardEditor extends RoborockEditorBase {
           select: {
             mode: "dropdown",
             options: ["never", "cleaning", "always"].map((v) => ({ value: v, label: tr(`map_${v}`) })),
+          },
+        },
+      },
+      {
+        name: "collapsed",
+        selector: {
+          select: {
+            multiple: true,
+            mode: "list",
+            options: [
+              ["routines", "routines"],
+              ["dock", "station"],
+              ["consumables", "consumables"],
+              ["stats", "statistics"],
+            ].map(([value, label]) => ({ value, label: tr(label) })),
           },
         },
       },

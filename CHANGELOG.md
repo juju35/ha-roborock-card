@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+
+### ✨ Features
+
+- **Collapsible sections**: click the title of Routines, Dock, Maintenance or Statistics to fold or unfold it. Statistics and Dock are folded by default; choose the sections folded by default with the new `collapsed` option (also in the visual editor, `collapsed: []` to unfold everything).
+
 ## 1.2.2
 
 ### 🐛 Fixes

@@ -31,6 +31,7 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 - Dock: clean and dirty water tanks, detergent, auto-empty mode, mop drying, and Empty bin / Wash mop / Dry mop buttons
 - Maintenance: main brush, side brush, filter, sensors, dock strainer… with remaining time and a reset button (with confirmation) when the integration provides one
 - Statistics: last clean, number of cleanings, total area and time
+- Collapsible sections (statistics and dock folded by default)
 - Map of the current floor while the robot is cleaning (or always, or never), with optional cropping, enlarged full screen on click
 - Click any value to open its Home Assistant history (more-info dialog)
 - Click the Roborock logo to open [roborock.com](https://www.roborock.com)
@@ -100,6 +101,9 @@ show_dock: true
 show_consumables: true
 show_stats: true
 show_map: cleaning
+collapsed:
+  - stats
+  - dock
 crop:
   top: 170
   bottom: 190
@@ -135,6 +139,7 @@ language: fr
 | `show_consumables` | full | `true` | Maintenance (remaining time of brushes, filter, sensors…) |
 | `show_stats` | full | `true` | Cleaning statistics |
 | `show_map` | full | `cleaning` | Map of the current floor: `cleaning` (only while the robot is cleaning), `always` (or `true`) or `never` (or `false`) |
+| `collapsed` | full | `[stats, dock]` | Sections folded by default, among `routines`, `dock`, `consumables` and `stats` (`[]` to unfold everything). Click a section title to fold or unfold it |
 | `crop` | full | — | Crop the map, in pixels of the map image: `top`, `bottom`, `left` and/or `right` (see below) |
 | `language` | both | Auto | Force language: `fr` or `en` (auto-detects from HA settings) |
 
