@@ -41,7 +41,7 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 
 ## Prerequisites
 
-The [Roborock integration](https://www.home-assistant.io/integrations/roborock/) must be configured, with Home Assistant 2024.1 or later.
+The [Roborock integration](https://www.home-assistant.io/integrations/roborock/) must be configured, with Home Assistant 2024.8 or later.
 
 ## Installation
 
