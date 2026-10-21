@@ -52,7 +52,6 @@ const ICONS = {
   map: "M15,19L9,16.89V5L15,7.11M20.5,3C20.44,3 20.39,3 20.34,3L15,5.1L9,3L3.36,4.9C3.15,4.97 3,5.15 3,5.38V20.5A0.5,0.5 0 0,0 3.5,21C3.55,21 3.61,21 3.66,20.97L9,18.9L15,21L20.64,19.1C20.85,19 21,18.85 21,18.62V3.5A0.5,0.5 0 0,0 20.5,3Z",
   alert: "M13 14H11V9H13M13 18H11V16H13M1 21H23L12 2L1 21Z",
   chevron_down: "M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z",
-  chevron_up: "M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z",
   reset: "M12,4C14.1,4 16.1,4.8 17.6,6.3C20.7,9.4 20.7,14.5 17.6,17.6C15.8,19.5 13.3,20.2 10.9,19.9L11.4,17.9C13.1,18.1 14.9,17.5 16.2,16.2C18.5,13.9 18.5,10.1 16.2,7.7C15.1,6.6 13.5,6 12,6V10.6L7,5.6L12,0.6V4M6.3,17.6C3.7,15 3.3,11 5.1,7.9L6.6,9.4C5.5,11.6 5.9,14.4 7.8,16.2C8.3,16.7 8.9,17.1 9.6,17.4L9,19.4C8,19 7.1,18.4 6.3,17.6Z",
 };
 
@@ -572,6 +571,21 @@ class RoborockBase extends HTMLElement {
     return this._hass;
   }
 
+  // A click elsewhere on the page folds the sections back to their defaults (as in ha-carburants-france).
+  // A click, not a pointerdown: folding on press would shift the layout under the pointer before the click.
+  connectedCallback() {
+    this._onOutside ??= (ev) => {
+      if (!this._toggled?.size || ev.composedPath().includes(this)) return;
+      this._toggled = new Set();
+      this._update();
+    };
+    document.addEventListener("click", this._onOutside, true);
+  }
+
+  disconnectedCallback() {
+    document.removeEventListener("click", this._onOutside, true);
+  }
+
   setConfig(config) {
     if (!config) throw new Error("Invalid configuration");
     this._config = { ...config };
@@ -907,7 +921,8 @@ const FULL_STYLE = `
   .section-title .icon { width: 16px; height: 16px; }
   .section-title.toggle { cursor: pointer; user-select: none; }
   .section-title.toggle[aria-expanded="false"] { margin-bottom: 0; }
-  .section-title .chevron { margin-left: auto; width: 20px; height: 20px; }
+  .section-title .chevron { margin-left: auto; width: 20px; height: 20px; transition: transform .2s ease; }
+  .section-title.toggle[aria-expanded="false"] .chevron { transform: rotate(-90deg); }
   .routines { display: flex; flex-wrap: wrap; gap: 8px; }
   .routines .btn { font-weight: 400; padding: 6px 12px 6px 8px; }
   .routines .btn .icon { color: var(--rr-red); }
@@ -1059,7 +1074,7 @@ class RoborockCard extends RoborockBase {
   }
 
   // Collapsible sections: `collapsed` lists the sections folded by default (stats and dock unless
-  // set); a click on a section title folds or unfolds it for this card until the page is reloaded.
+  // set); a click on a section title folds or unfolds it, and a click elsewhere on the page folds it back.
   _isCollapsed(key) {
     if (this._toggled?.has(key)) return !this._defaultCollapsed(key);
     return this._defaultCollapsed(key);
@@ -1076,7 +1091,7 @@ class RoborockCard extends RoborockBase {
     const closed = this._isCollapsed(key);
     return `<div class="section-title toggle" data-action="toggle_section" data-section="${key}" aria-expanded="${!closed}">${svgIcon(icon)}${esc(
       label
-    )}${svgIcon(closed ? ICONS.chevron_down : ICONS.chevron_up, "chevron")}</div>`;
+    )}${svgIcon(ICONS.chevron_down, "chevron")}</div>`;
   }
 
   _tile(id, icon, label, value, cls = "") {

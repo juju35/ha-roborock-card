@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0
+
+### ✨ Features
+
+- Sections fold like the other ha-* cards: the chevron points right when folded and down when unfolded, and a click anywhere else on the page folds the sections back to their defaults (`collapsed`), as in ha-carburants-france.
+
 ## 1.4.1
 
 ### Development
