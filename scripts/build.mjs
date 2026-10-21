@@ -1,7 +1,7 @@
 // Bundles src/roborock-card.js into the single HACS file dist/roborock-card.js,
 // inlining the Roborock logo and device pictures so the card needs no extra resource.
-// Usage: node scripts/build.mjs [--check]
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+// Usage: node scripts/build.mjs  (dist/ is not committed: CI and the release workflow build it)
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -15,13 +15,6 @@ const out = readFileSync(`${root}src/roborock-card.js`, "utf8")
   .replace("__IMG_F25_ULTRA__", `data:image/webp;base64,${b64("f25-ultra.webp")}`);
 
 const target = `${root}dist/roborock-card.js`;
-if (process.argv.includes("--check")) {
-  if (!existsSync(target) || readFileSync(target, "utf8") !== out) {
-    console.error("dist/roborock-card.js is out of date: run `npm run build` and commit the result.");
-    process.exit(1);
-  }
-  console.log("dist/roborock-card.js is up to date.");
-} else {
-  writeFileSync(target, out);
-  console.log(`Built dist/roborock-card.js (${(out.length / 1024).toFixed(1)} KB)`);
-}
+mkdirSync(`${root}dist`, { recursive: true });
+writeFileSync(target, out);
+console.log(`Built dist/roborock-card.js (${(out.length / 1024).toFixed(1)} KB)`);
