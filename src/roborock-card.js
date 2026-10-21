@@ -511,7 +511,7 @@ const findDevice = (hass, config) => {
 // ---------------------------------------------------------------------------
 
 const BASE_STYLE = `
-  :host { --rr-red: #ea0029; --rr-ok: var(--success-color, #43a047); --rr-warn: var(--warning-color, #ffa000);
+  :host { --rr-red: #ea0029; --rr-ok: var(--success-color, #43a047); --rr-warn: var(--warning-color, #ffa600);
           --rr-crit: var(--error-color, #db4437); --rr-idle: var(--disabled-text-color, #9e9e9e); --rr-active: var(--info-color, #039be5); }
   ha-card { overflow: hidden; }
   .icon { width: 18px; height: 18px; fill: currentColor; flex: none; }
