@@ -1,12 +1,12 @@
 {
   "name": "ha-roborock-card",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Lovelace cards for Home Assistant to monitor and control Roborock robot vacuums and wet-dry vacuums.",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "check": "node scripts/build.mjs --check && node --check dist/roborock-card.js",
+    "check": "node scripts/build.mjs && node --check dist/roborock-card.js",
     "screenshots": "node scripts/screenshots.mjs"
   },
   "license": "MIT",
