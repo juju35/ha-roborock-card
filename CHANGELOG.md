@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.2
+
+### 💄 Style
+
+- The Roborock logo only shows the symbol, without the "roborock" text.
+
 ## 1.3.1
 
 ### ✨ Features

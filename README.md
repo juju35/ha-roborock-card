@@ -6,7 +6,7 @@
 [![Release](https://img.shields.io/github/v/release/juju35/ha-roborock-card)](https://github.com/juju35/ha-roborock-card/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-<p align="center"><img src="images/logo.svg" alt="Roborock" width="160"></p>
+<p align="center"><img src="images/logo.svg" alt="Roborock" width="80"></p>
 
 Lovelace cards for Home Assistant to monitor and control [Roborock](https://www.roborock.com) robot vacuums and wet-dry vacuums: status, battery, room, routines, dock, maintenance and statistics at a glance.
 
