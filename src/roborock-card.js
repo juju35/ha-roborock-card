@@ -369,7 +369,7 @@ const esc = (v) =>
   String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 const lang = (hass, config) => {
-  const l = (config && config.language) || (hass && (hass.locale?.language || hass.language)) || "en";
+  const l = (config?.language) || (hass && (hass.locale?.language || hass.language)) || "en";
   return STRINGS[l] ? l : STRINGS[l.split("-")[0]] ? l.split("-")[0] : "en";
 };
 
@@ -474,7 +474,7 @@ const resolve = (hass) => {
     if (isDock(d)) docks.push({ d, item });
     else {
       const vacuum = item.entities.roborock || item.entities._vacuum;
-      const kind = vacuum && vacuum.startsWith("vacuum.") ? "robot" : /\.wdv\./.test(d.model || "") ? "wetdry" : "other";
+      const kind = vacuum?.startsWith("vacuum.") ? "robot" : /\.wdv\./.test(d.model || "") ? "wetdry" : "other";
       devices.push({ id, name: devName(d), rawName: d.name, model: d.model, kind, vacuum, entities: item.entities, extra: item.extra, dock: {} });
     }
   }
@@ -688,7 +688,7 @@ class RoborockBase extends HTMLElement {
     if (stateObj && value === undefined && this._hass.formatEntityState) {
       try {
         return this._hass.formatEntityState(stateObj);
-      } catch (e) {
+      } catch (_e) {
         /* older Home Assistant */
       }
     }
@@ -855,7 +855,7 @@ class RoborockBase extends HTMLElement {
         .sort((a, b) => a.name.localeCompare(b.name));
       if (this._rooms?.entity !== entity) return;
       this._rooms = { ...this._rooms, loading: false, list, error: !list.length };
-    } catch (e) {
+    } catch (_e) {
       if (this._rooms?.entity !== entity) return;
       this._rooms = { ...this._rooms, loading: false, list: [], error: true };
     }
