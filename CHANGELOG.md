@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0
+
+### Changes
+- More compact layout with the same information, like the other ha-* cards: 12 px card padding, 36 px header icon, 16 px name and 12 px subtitle, 11 px pills, tighter tiles and sections.
+- Vacuum picture 120 × 132 → 96 × 104 px, battery 28 → 24 px, lower buttons, 12 px consumables.
+- The mini card picks up the smaller pills and subtitle.
+
 ## 1.6.1
 
 ### Changes
