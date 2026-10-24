@@ -397,13 +397,16 @@ const hours = (s) => {
   return u === "min" ? v / 60 : u === "s" ? v / 3600 : u === "d" ? v * 24 : v;
 };
 
+// Rounded to the minute first, so that 1.995 h reads "2 h" (not "1 h 60") and 0.999 h "1 h" (not "60 min").
 const fmtHours = (h) => {
   if (h === null || h === undefined) return "—";
   if (h <= 0) return "0 h";
-  if (h < 1) return `${Math.max(1, Math.round(h * 60))} min`;
-  if (h < 10) {
-    const m = Math.round((h % 1) * 60);
-    return m ? `${Math.floor(h)} h ${String(m).padStart(2, "0")}` : `${Math.floor(h)} h`;
+  const total = Math.round(h * 60);
+  if (total < 60) return `${Math.max(1, total)} min`;
+  if (total < 600) {
+    const m = total % 60;
+    const H = Math.floor(total / 60);
+    return m ? `${H} h ${String(m).padStart(2, "0")}` : `${H} h`;
   }
   return `${Math.round(h)} h`;
 };
@@ -553,6 +556,21 @@ const BASE_STYLE = `
   .rooms-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 `;
 
+// In-card confirmation popup, as in ha-system-monitor-card and ha-iptv: a backdrop over the card with a
+// small dialog at the top of the card, so that it stays in view when the card is long.
+const DIALOG_STYLE = `
+  ha-card.dialog-open { position: relative; min-height: 160px; }
+  .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-start; justify-content: center;
+              padding-top: 12px; box-sizing: border-box; z-index: 9; border-radius: inherit; }
+  .modal { background: var(--card-background-color, #1c1c1c); color: var(--primary-text-color); width: min(92%, 340px); max-height: calc(100% - 24px);
+           box-sizing: border-box; border-radius: 14px; padding: 16px; box-shadow: 0 8px 30px rgba(0,0,0,.4); display: flex; flex-direction: column; gap: 12px; }
+  .modal .msg { font-size: 14px; line-height: 1.4; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+`;
+
+// Element names of Home Assistant dialogs (more-info opened from the card, among others).
+const DIALOG_TAGS = new Set(["HA-MORE-INFO-DIALOG", "HA-DIALOG", "DIALOG"]);
+
 class RoborockBase extends HTMLElement {
   constructor() {
     super();
@@ -560,11 +578,35 @@ class RoborockBase extends HTMLElement {
     this._html = "";
     this.shadowRoot.addEventListener("click", (ev) => this._onClick(ev));
     this.shadowRoot.addEventListener("load", (ev) => this._onLoad(ev), true);
+    // Escape closes the confirmation popup (as Cancel).
+    this.shadowRoot.addEventListener("keydown", (ev) => {
+      if (ev.key !== "Escape" || !this._confirm) return;
+      ev.stopPropagation();
+      this._closeConfirm();
+    });
   }
 
+  // Home Assistant pushes a new hass on every state change of the whole instance: the card is only
+  // rebuilt when something it shows changed (see _deps).
   set hass(hass) {
     this._hass = hass;
+    const deps = this._deps();
+    const prev = this._lastDeps;
+    if (deps && prev && deps.length === prev.length && deps.every((d, i) => d === prev[i])) return;
+    this._lastDeps = deps;
     this._update();
+  }
+
+  // What a render reads from hass: the registries, the language, the state objects of the device's
+  // entities (HA replaces a state object whenever its state or attributes change) and the relative
+  // "last clean" time, which moves on its own. null (no device found): always render.
+  _deps() {
+    const h = this._hass;
+    if (!h || !this._config) return null;
+    const { dev } = findDevice(h, this._config);
+    if (!dev) return null;
+    const ids = [dev.vacuum, ...Object.values(dev.entities), ...Object.values(dev.dock), ...Object.values(dev.extra).flat()];
+    return [h.entities, h.devices, h.language, h.locale, h.localize, h.formatEntityState, this._lastClean(dev), ...ids.map((id) => h.states[id])];
   }
 
   get hass() {
@@ -574,9 +616,13 @@ class RoborockBase extends HTMLElement {
   // A click elsewhere on the page folds the sections back to their defaults (as in ha-carburants-france).
   // A click, not a pointerdown: folding on press would shift the layout under the pointer before the click.
   connectedCallback() {
+    // Clicks inside a dialog (the more-info opened from the card) leave the card as it is.
     this._onOutside ??= (ev) => {
-      if (!this._toggled?.size || ev.composedPath().includes(this)) return;
+      if (!this._toggled?.size && !this._confirm) return;
+      const path = ev.composedPath();
+      if (path.includes(this) || path.some((n) => DIALOG_TAGS.has(n.tagName))) return;
       this._toggled = new Set();
+      this._confirm = null;
       this._update();
     };
     document.addEventListener("click", this._onOutside, true);
@@ -590,6 +636,7 @@ class RoborockBase extends HTMLElement {
     if (!config) throw new Error("Invalid configuration");
     this._config = { ...config };
     this._html = "";
+    this._lastDeps = null;
     this._update();
   }
 
@@ -607,7 +654,10 @@ class RoborockBase extends HTMLElement {
 
   _update() {
     if (!this._hass || !this._config) return;
-    const html = this._render();
+    let html = this._render();
+    if (this._confirm) {
+      html = html.replace(/<ha-card>([\s\S]*)<\/ha-card>\s*$/, (_, inner) => `<ha-card class="dialog-open">${inner}${this._confirmHtml()}</ha-card>`);
+    }
     if (html !== this._html) {
       this._html = html;
       this.shadowRoot.innerHTML = html;
@@ -648,7 +698,21 @@ class RoborockBase extends HTMLElement {
   }
 
   _onClick(ev) {
-    const el = ev.composedPath().find((n) => n.dataset && (n.dataset.entity || n.dataset.action));
+    const path = ev.composedPath();
+    const el = path.find((n) => n.dataset && (n.dataset.entity || n.dataset.action));
+    // Confirmation popup open: only its buttons and the backdrop itself (outside the dialog) act.
+    if (this._confirm) {
+      ev.stopPropagation();
+      const action = el?.dataset.action;
+      if (action === "confirm_ok") {
+        const { entity } = this._confirm;
+        this._closeConfirm();
+        this._hass.callService("button", "press", { entity_id: entity });
+      } else if (action === "confirm_cancel" || (action === "confirm_backdrop" && path[0] === el)) {
+        this._closeConfirm();
+      }
+      return;
+    }
     if (!el) return;
     ev.stopPropagation();
     const { action, entity, label } = el.dataset;
@@ -667,14 +731,39 @@ class RoborockBase extends HTMLElement {
       return this._hass.callService("switch", on ? "turn_off" : "turn_on", { entity_id: entity });
     }
     if (action === "reset") {
-      if (window.confirm(this._t("confirm_reset", { name: label }))) this._hass.callService("button", "press", { entity_id: entity });
+      this._openConfirm({ entity, text: this._t("confirm_reset", { name: label }), ok: this._t("reset") });
     } else if (action === "routine") {
-      if (window.confirm(this._t("run_routine", { name: label }))) this._hass.callService("button", "press", { entity_id: entity });
+      this._openConfirm({ entity, text: this._t("run_routine", { name: label }), ok: this._t("start") });
     } else if (action) {
       this._hass.callService("vacuum", action, { entity_id: entity });
     } else if (entity) {
       this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: entity }, bubbles: true, composed: true }));
     }
+  }
+
+  // Confirmation before pressing a button entity (routine, consumable reset): Cancel does nothing.
+  _openConfirm(confirm) {
+    this._confirm = confirm;
+    this._update();
+    this.shadowRoot.querySelector(".modal .primary")?.focus();
+  }
+
+  _closeConfirm() {
+    this._confirm = null;
+    this._update();
+  }
+
+  _confirmHtml() {
+    const c = this._confirm;
+    return `<style>${DIALOG_STYLE}</style><div class="backdrop" data-action="confirm_backdrop">
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="msg">${esc(c.text)}</div>
+        <div class="modal-actions">
+          <button class="btn" data-action="confirm_cancel"><span>${esc(this._t("cancel"))}</span></button>
+          <button class="btn primary" data-action="confirm_ok"><span>${esc(c.ok)}</span></button>
+        </div>
+      </div>
+    </div>`;
   }
 
   // Translated state: card strings first (they follow the language option), then Home Assistant's
@@ -749,7 +838,7 @@ class RoborockBase extends HTMLElement {
         </div>
         ${
           status
-            ? `<span class="chip clickable ${statusClass(status.state)}" data-entity="${status.entity}"><span class="dot"></span>${esc(status.text)}</span>`
+            ? `<span class="chip clickable ${statusClass(status.state)}" data-entity="${esc(status.entity)}"><span class="dot"></span>${esc(status.text)}</span>`
             : ""
         }
       </div>`;
@@ -777,7 +866,7 @@ class RoborockBase extends HTMLElement {
     if (!vac || this._config.show_controls === false) return "";
     const cleaning = vac.state === "cleaning";
     const btn = (action, icon, label, cls = "") =>
-      `<button class="btn ${round ? "round" : ""} ${cls}" title="${esc(label)}" data-action="${action}" data-entity="${vac.entity_id}">${svgIcon(icon)}${
+      `<button class="btn ${round ? "round" : ""} ${cls}" title="${esc(label)}" data-action="${action}" data-entity="${esc(vac.entity_id)}">${svgIcon(icon)}${
         round ? "" : `<span>${esc(label)}</span>`
       }</button>`;
     const list = [
@@ -870,11 +959,11 @@ class RoborockBase extends HTMLElement {
     else if (r.error) body = `<div class="rooms-msg">${esc(this._t("rooms_error"))}</div>`;
     else
       body = `<div class="room-list">
-        <button class="room all ${r.selected.length === r.list.length ? "on" : ""}" data-action="all_rooms" data-entity="${dev.vacuum}">${esc(this._t("select_all"))}</button>
+        <button class="room all ${r.selected.length === r.list.length ? "on" : ""}" data-action="all_rooms" data-entity="${esc(dev.vacuum)}">${esc(this._t("select_all"))}</button>
         ${r.list
           .map(
             (x) =>
-              `<button class="room ${r.selected.includes(x.id) ? "on" : ""}" data-action="toggle_room" data-entity="${dev.vacuum}" data-room="${esc(x.id)}">${esc(x.name)}</button>`
+              `<button class="room ${r.selected.includes(x.id) ? "on" : ""}" data-action="toggle_room" data-entity="${esc(dev.vacuum)}" data-room="${esc(x.id)}">${esc(x.name)}</button>`
           )
           .join("")}
       </div>`;
@@ -882,9 +971,9 @@ class RoborockBase extends HTMLElement {
       <div class="rooms-title">${svgIcon(ICONS.room)}${esc(this._t("choose_rooms"))}</div>
       ${body}
       <div class="rooms-actions">
-        <button class="btn" data-action="close_rooms" data-entity="${dev.vacuum}"><span>${esc(this._t("cancel"))}</span></button>
-        <button class="btn" data-action="clean_all" data-entity="${dev.vacuum}">${svgIcon(ICONS.home)}<span>${esc(this._t("whole_home"))}</span></button>
-        <button class="btn primary ${r.selected.length ? "" : "disabled"}" data-action="clean_rooms" data-entity="${dev.vacuum}" ${
+        <button class="btn" data-action="close_rooms" data-entity="${esc(dev.vacuum)}"><span>${esc(this._t("cancel"))}</span></button>
+        <button class="btn" data-action="clean_all" data-entity="${esc(dev.vacuum)}">${svgIcon(ICONS.home)}<span>${esc(this._t("whole_home"))}</span></button>
+        <button class="btn primary ${r.selected.length ? "" : "disabled"}" data-action="clean_rooms" data-entity="${esc(dev.vacuum)}" ${
           r.selected.length ? "" : "disabled"
         }>${svgIcon(ICONS.play)}<span>${esc(this._t("clean_rooms", { n: r.selected.length }))}</span></button>
       </div>
@@ -1005,7 +1094,7 @@ class RoborockCard extends RoborockBase {
     const lines = [];
 
     const room = this._s(e.current_room);
-    if (valid(room)) lines.push(`<div class="line clickable" data-entity="${room.entity_id}">${svgIcon(ICONS.room)}<span>${esc(room.state)}</span></div>`);
+    if (valid(room)) lines.push(`<div class="line clickable" data-entity="${esc(room.entity_id)}">${svgIcon(ICONS.room)}<span>${esc(room.state)}</span></div>`);
 
     if (statusClass(status?.state) === "active") {
       const pct = num(this._s(e.clean_percent));
@@ -1013,15 +1102,15 @@ class RoborockCard extends RoborockBase {
       const time = hours(this._s(e.cleaning_time));
       const bits = [pct ? `${this._t("progress")} ${Math.round(pct)} %` : null, area !== null ? `${fmtNum(area, 1, this._locale())} m²` : null, time !== null ? fmtHours(time) : null];
       if (bits.some(Boolean))
-        lines.push(`<div class="line clickable" data-entity="${e.clean_percent || e.cleaning_area || ""}">${svgIcon(ICONS.clock)}<span>${esc(bits.filter(Boolean).join(" · "))}</span></div>`);
+        lines.push(`<div class="line clickable" data-entity="${esc(e.clean_percent || e.cleaning_area || "")}">${svgIcon(ICONS.clock)}<span>${esc(bits.filter(Boolean).join(" · "))}</span></div>`);
     }
 
     const err = this._error(dev);
-    if (err) lines.push(`<div class="alert-line crit clickable" data-entity="${err.entity}">${svgIcon(ICONS.alert)}<span>${esc(err.text)}</span></div>`);
+    if (err) lines.push(`<div class="alert-line crit clickable" data-entity="${esc(err.entity)}">${svgIcon(ICONS.alert)}<span>${esc(err.text)}</span></div>`);
 
     if (this._config.show_modes !== false) {
       const tags = [];
-      const tag = (id, icon, text) => (text ? `<span class="tag clickable" data-entity="${id}">${svgIcon(icon)}${esc(text)}</span>` : "");
+      const tag = (id, icon, text) => (text ? `<span class="tag clickable" data-entity="${esc(id)}">${svgIcon(icon)}${esc(text)}</span>` : "");
       const mode = this._s(e.cleaning_mode);
       if (valid(mode)) tags.push(tag(mode.entity_id, ICONS.mode, this._fmt(mode)));
       const vac = this._s(dev.vacuum);
@@ -1035,11 +1124,11 @@ class RoborockCard extends RoborockBase {
     }
 
     return `<div class="hero">
-      ${pic ? `<div class="picture clickable" data-entity="${dev.vacuum || status?.entity || ""}"><img src="${esc(pic)}" alt=""></div>` : ""}
+      ${pic ? `<div class="picture clickable" data-entity="${esc(dev.vacuum || status?.entity || "")}"><img src="${esc(pic)}" alt=""></div>` : ""}
       <div class="info">
         ${
           batt
-            ? `<div class="batt clickable ${cls}" data-entity="${batt.entity_id}">
+            ? `<div class="batt clickable ${cls}" data-entity="${esc(batt.entity_id)}">
                  ${svgIcon(ICONS.battery)}<span class="pct">${v === null ? "—" : Math.round(v)}<small>%</small></span>
                  ${charging ? svgIcon(ICONS.bolt, "bolt") : ""}
                </div>
@@ -1067,7 +1156,7 @@ class RoborockCard extends RoborockBase {
         this._isCollapsed("routines")
           ? ""
           : `<div class="routines">${items
-              .map((r) => `<button class="btn" data-action="routine" data-entity="${r.id}" data-label="${esc(r.name)}">${svgIcon(ICONS.routine)}<span>${esc(r.name)}</span></button>`)
+              .map((r) => `<button class="btn" data-action="routine" data-entity="${esc(r.id)}" data-label="${esc(r.name)}">${svgIcon(ICONS.routine)}<span>${esc(r.name)}</span></button>`)
               .join("")}</div>`
       }
     </div>`;
@@ -1095,7 +1184,7 @@ class RoborockCard extends RoborockBase {
   }
 
   _tile(id, icon, label, value, cls = "") {
-    return `<div class="tile clickable ${cls}" data-entity="${id || ""}"><div class="k">${svgIcon(icon)}${esc(label)}</div><div class="v">${esc(value)}</div></div>`;
+    return `<div class="tile clickable ${cls}" data-entity="${esc(id || "")}"><div class="k">${svgIcon(icon)}${esc(label)}</div><div class="v">${esc(value)}</div></div>`;
   }
 
   _dock(dev) {
@@ -1152,7 +1241,7 @@ class RoborockCard extends RoborockBase {
         if (!s || s.state === "unavailable") return "";
         const on = this._isOn(s.entity_id);
         return `<button class="btn ${on ? "running" : ""}" title="${esc(this._t(on ? "stop_action" : "start_action", { name: this._t(label) }))}"
-          data-action="dock_toggle" data-entity="${s.entity_id}">${svgIcon(on ? ICONS.stop : icon)}<span>${esc(this._t(label))}</span></button>`;
+          data-action="dock_toggle" data-entity="${esc(s.entity_id)}">${svgIcon(on ? ICONS.stop : icon)}<span>${esc(this._t(label))}</span></button>`;
       })
       .filter(Boolean);
     return btns.length ? `<div class="dock-actions">${btns.join("")}</div>` : "";
@@ -1179,9 +1268,9 @@ class RoborockCard extends RoborockBase {
         cls = h === null ? "" : h <= 0 ? "crit" : (pct !== null ? pct < 10 : h < 10) ? "warn" : "ok";
       }
       rows.push(`
-        ${svgIcon(icon)}<span class="lbl clickable" data-entity="${s.entity_id}">${esc(this._t(label))}</span>
+        ${svgIcon(icon)}<span class="lbl clickable" data-entity="${esc(s.entity_id)}">${esc(this._t(label))}</span>
         ${pct !== null ? `<div class="bar ${cls}"><div style="width:${Math.max(0, Math.min(100, pct))}%"></div></div>` : `<div class="nobar"></div>`}
-        <span class="v clickable ${cls}" data-entity="${s.entity_id}">${esc(text)}</span>
+        <span class="v clickable ${cls}" data-entity="${esc(s.entity_id)}">${esc(text)}</span>
         ${resets ? this._resetButton(dev, resetKey, label) : ""}`);
     }
     if (!rows.length) return "";
@@ -1201,7 +1290,7 @@ class RoborockCard extends RoborockBase {
   _resetButton(dev, key, label) {
     const id = this._resetId(dev, key);
     if (!id) return `<span></span>`;
-    return `<button class="reset" title="${esc(this._t("reset"))}" data-action="reset" data-entity="${id}" data-label="${esc(this._t(label))}">${svgIcon(ICONS.reset)}</button>`;
+    return `<button class="reset" title="${esc(this._t("reset"))}" data-action="reset" data-entity="${esc(id)}" data-label="${esc(this._t(label))}">${svgIcon(ICONS.reset)}</button>`;
   }
 
   _stats(dev) {
@@ -1242,9 +1331,9 @@ class RoborockCard extends RoborockBase {
     const selected = this._s(dev.entities.selected_map)?.state;
     const map = (selected && maps.find((s) => (s.attributes.friendly_name || "").endsWith(selected))) || maps[0];
     const url = map.attributes.entity_picture;
-    const img = `<img src="${esc(url)}" alt="${esc(this._t("map"))}" data-map="${map.entity_id}"`;
+    const img = `<img src="${esc(url)}" alt="${esc(this._t("map"))}" data-map="${esc(map.entity_id)}"`;
     const crop = this._mapCrop(map.entity_id);
-    const attrs = `class="map clickable" data-action="zoom_map" data-entity="${map.entity_id}" title="${esc(this._t("map"))}"`;
+    const attrs = `class="map clickable" data-action="zoom_map" data-entity="${esc(map.entity_id)}" title="${esc(this._t("map"))}"`;
     if (!crop) return `<div ${attrs}>${img}></div>`;
     return `<div ${attrs}><div class="crop" style="aspect-ratio:${crop.ratio}">${img} style="${crop.img}"></div></div>`;
   }
@@ -1349,20 +1438,20 @@ class RoborockMiniCard extends RoborockBase {
     const { v, cls } = this._batteryLevel(batt);
     const lines = [];
     const err = this._error(dev);
-    if (err) lines.push(`<div class="alert-line crit clickable" data-entity="${err.entity}">${svgIcon(ICONS.alert)}<span>${esc(err.text)}</span></div>`);
+    if (err) lines.push(`<div class="alert-line crit clickable" data-entity="${esc(err.entity)}">${svgIcon(ICONS.alert)}<span>${esc(err.text)}</span></div>`);
     const room = this._s(e.current_room);
-    if (valid(room)) lines.push(`<div class="line clickable" data-entity="${room.entity_id}">${svgIcon(ICONS.room)}<span>${esc(room.state)}</span></div>`);
+    if (valid(room)) lines.push(`<div class="line clickable" data-entity="${esc(room.entity_id)}">${svgIcon(ICONS.room)}<span>${esc(room.state)}</span></div>`);
     const last = this._lastClean(dev);
     if (last) lines.push(`<div class="line">${svgIcon(ICONS.clock)}<span>${esc(last)}</span></div>`);
     return `<style>${BASE_STYLE}${MINI_STYLE}</style>
       <ha-card>
         ${this._header(dev, status, "")}
         <div class="content">
-          ${pic ? `<div class="picture clickable" data-entity="${dev.vacuum || status?.entity || ""}"><img src="${esc(pic)}" alt=""></div>` : ""}
+          ${pic ? `<div class="picture clickable" data-entity="${esc(dev.vacuum || status?.entity || "")}"><img src="${esc(pic)}" alt=""></div>` : ""}
           <div class="info">
             ${
               batt
-                ? `<div class="batt clickable ${cls}" data-entity="${batt.entity_id}">${svgIcon(ICONS.battery)}<div class="bar ${cls}"><div style="width:${
+                ? `<div class="batt clickable ${cls}" data-entity="${esc(batt.entity_id)}">${svgIcon(ICONS.battery)}<div class="bar ${cls}"><div style="width:${
                     v ?? 0
                   }%"></div></div><span class="v">${v === null ? "—" : `${Math.round(v)} %`}</span></div>`
                 : ""
@@ -1479,8 +1568,20 @@ class RoborockEditorBase extends HTMLElement {
     for (const [name, def] of toggles) if (data[name] === undefined) data[name] = def;
     if (!data.device) data.device = RoborockCard.getStubConfig(this._hass).device;
     this._form.hass = this._hass;
-    this._form.data = data;
-    this._form.schema = this._schema();
+    // A new data or schema object re-renders the whole form: only hand over new ones when the config,
+    // the language, the registries or the map size changed, not on every state change.
+    const h = this._hass;
+    const same = (a, b) => a && a.length === b.length && a.every((d, i) => d === b[i]);
+    const dataDeps = [this._config, h.entities, h.devices];
+    if (!same(this._dataDeps, dataDeps)) {
+      this._dataDeps = dataDeps;
+      this._form.data = data;
+    }
+    const schemaDeps = [lang(h, this._config), h.entities, h.devices, this._mapSize];
+    if (!same(this._schemaDeps, schemaDeps)) {
+      this._schemaDeps = schemaDeps;
+      this._form.schema = this._schema();
+    }
     this._loadMapSize(data.device);
   }
 
