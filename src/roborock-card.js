@@ -113,7 +113,7 @@ const STRINGS = {
     full: "Full",
     no_device: "No Roborock device found. Is the Roborock integration installed?",
     unknown_device: "Roborock device not found",
-    no_registry: "This card needs Home Assistant 2023.4 or later.",
+    no_registry: "This card needs Home Assistant 2024.8 or later.",
     // Editor
     device: "Roborock device",
     title: "Title (optional, defaults to the device name)",
@@ -257,7 +257,7 @@ const STRINGS = {
     full: "Plein",
     no_device: "Aucun appareil Roborock trouvé. L'intégration Roborock est-elle installée ?",
     unknown_device: "Appareil Roborock introuvable",
-    no_registry: "Cette carte nécessite Home Assistant 2023.4 ou plus récent.",
+    no_registry: "Cette carte nécessite Home Assistant 2024.8 ou plus récent.",
     device: "Appareil Roborock",
     title: "Titre (facultatif, nom de l'appareil par défaut)",
     image: "Image de l'appareil",
@@ -413,11 +413,14 @@ const fmtHours = (h) => {
 
 const fmtNum = (v, digits = 0, locale) => (v === null ? "—" : Number(v).toLocaleString(locale, { maximumFractionDigits: digits }));
 
+// One formatter per language, built on first use.
+const RTF = {};
 const ago = (hass, config, iso) => {
   const d = Date.parse(iso);
   if (!Number.isFinite(d)) return null;
   const diff = (d - Date.now()) / 1000;
-  const rtf = new Intl.RelativeTimeFormat(lang(hass, config), { numeric: "auto" });
+  const l = lang(hass, config);
+  const rtf = (RTF[l] ??= new Intl.RelativeTimeFormat(l, { numeric: "auto" }));
   const abs = Math.abs(diff);
   if (abs < 3600) return rtf.format(Math.round(diff / 60), "minute");
   if (abs < 86400) return rtf.format(Math.round(diff / 3600), "hour");
@@ -532,6 +535,11 @@ const BASE_STYLE = `
   .name { font-size: 16px; font-weight: 500; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub { font-size: 12px; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .warning { padding: 16px; color: var(--rr-warn); }
+  .picture { flex: none; display: flex; align-items: center; justify-content: center; }
+  .picture img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .line { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--secondary-text-color); min-width: 0; }
+  .line span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .alert-line { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--c, var(--rr-crit)); }
   .alert-line .icon { width: 16px; height: 16px; }
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: none; cursor: pointer; font: inherit; font-size: 13px;
@@ -571,19 +579,34 @@ const DIALOG_STYLE = `
 // Element names of Home Assistant dialogs (more-info opened from the card, among others).
 const DIALOG_TAGS = new Set(["HA-MORE-INFO-DIALOG", "HA-DIALOG", "DIALOG"]);
 
+// After the confirmation popup closes, clicks on the card are ignored for this long: the second click of a double
+// click on OK would otherwise land on what lies under the button (the battery, an action button).
+const CONFIRM_GUARD_MS = 400;
+
+// Inlined pictures (data: URIs of the logo and the robots, tens of KB) are written as <img data-img="id"> and get
+// their src once, then the same node is moved into every later render: the HTML stays small and the picture is not
+// decoded again on each update.
+const DATA_IMGS = [];
+const imgTag = (src, attrs) => {
+  if (!String(src).startsWith("data:")) return `<img src="${esc(src)}" ${attrs}>`;
+  let id = DATA_IMGS.indexOf(src);
+  if (id < 0) id = DATA_IMGS.push(src) - 1;
+  return `<img data-img="${id}" ${attrs}>`;
+};
+
 class RoborockBase extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
     this._html = "";
     this.shadowRoot.addEventListener("click", (ev) => this._onClick(ev));
-    this.shadowRoot.addEventListener("load", (ev) => this._onLoad(ev), true);
-    // Escape closes the confirmation popup (as Cancel).
-    this.shadowRoot.addEventListener("keydown", (ev) => {
+    // Escape closes the confirmation popup (as Cancel). Listened on the window while the popup is open: a re-render
+    // or a click on its text takes the focus out of the card.
+    this._onKey = (ev) => {
       if (ev.key !== "Escape" || !this._confirm) return;
       ev.stopPropagation();
       this._closeConfirm();
-    });
+    };
   }
 
   // Home Assistant pushes a new hass on every state change of the whole instance: the card is only
@@ -622,14 +645,23 @@ class RoborockBase extends HTMLElement {
       const path = ev.composedPath();
       if (path.includes(this) || path.some((n) => DIALOG_TAGS.has(n.tagName))) return;
       this._toggled = new Set();
-      this._confirm = null;
-      this._update();
+      if (this._confirm) this._closeConfirm();
+      else this._update();
     };
     document.addEventListener("click", this._onOutside, true);
   }
 
   disconnectedCallback() {
     document.removeEventListener("click", this._onOutside, true);
+    window.removeEventListener("keydown", this._onKey);
+    clearTimeout(this._pendingTimer);
+    this._closeZoom?.();
+  }
+
+  // Service call whose failure is already reported by Home Assistant (toast): the rejection is handled here so
+  // that it does not end up as "Uncaught (in promise)". `onError` undoes what the card showed meanwhile.
+  _call(domain, service, data, onError) {
+    return Promise.resolve(this._hass.callService(domain, service, data)).catch(() => onError?.());
   }
 
   setConfig(config) {
@@ -659,12 +691,37 @@ class RoborockBase extends HTMLElement {
       html = html.replace(/<ha-card>([\s\S]*)<\/ha-card>\s*$/, (_, inner) => `<ha-card class="dialog-open">${inner}${this._confirmHtml()}</ha-card>`);
     }
     if (html !== this._html) {
+      // The popup keeps its focus across the rewrite (OK, or Cancel when the user moved to it).
+      const focused = this._confirm && this.shadowRoot.activeElement?.dataset?.action;
       this._html = html;
       this.shadowRoot.innerHTML = html;
+      this._placeImages();
+      if (this._confirm) {
+        const sel = focused === "confirm_cancel" ? '[data-action="confirm_cancel"]' : ".modal .primary";
+        this.shadowRoot.querySelector(sel)?.focus();
+      }
       // Map size for the crop: read it from the image itself, already loaded (cache) or once loaded.
       for (const img of this.shadowRoot.querySelectorAll("img[data-map]")) {
         if (img.complete && img.naturalWidth) this._onLoad({ target: img });
         else img.addEventListener("load", (ev) => this._onLoad(ev), { once: true });
+      }
+    }
+  }
+
+  // Moves the inlined pictures kept from the previous render into the new one, or gives them their src once.
+  _placeImages() {
+    const kept = this._imgNodes || new Map();
+    this._imgNodes = new Map();
+    for (const img of this.shadowRoot.querySelectorAll("img[data-img]")) {
+      const key = `${img.dataset.img}|${img.className}`;
+      const old = kept.get(key);
+      if (old) {
+        kept.delete(key);
+        img.replaceWith(old);
+        this._imgNodes.set(key, old);
+      } else {
+        img.src = DATA_IMGS[img.dataset.img];
+        this._imgNodes.set(key, img);
       }
     }
   }
@@ -700,6 +757,11 @@ class RoborockBase extends HTMLElement {
   _onClick(ev) {
     const path = ev.composedPath();
     const el = path.find((n) => n.dataset && (n.dataset.entity || n.dataset.action));
+    // Just closed: the rest of a double click on OK does nothing.
+    if (!this._confirm && Date.now() - (this._confirmClosedAt ?? 0) < CONFIRM_GUARD_MS) {
+      ev.stopPropagation();
+      return;
+    }
     // Confirmation popup open: only its buttons and the backdrop itself (outside the dialog) act.
     if (this._confirm) {
       ev.stopPropagation();
@@ -707,7 +769,7 @@ class RoborockBase extends HTMLElement {
       if (action === "confirm_ok") {
         const { entity } = this._confirm;
         this._closeConfirm();
-        this._hass.callService("button", "press", { entity_id: entity });
+        this._call("button", "press", { entity_id: entity });
       } else if (action === "confirm_cancel" || (action === "confirm_backdrop" && path[0] === el)) {
         this._closeConfirm();
       }
@@ -728,14 +790,18 @@ class RoborockBase extends HTMLElement {
     if (action === "dock_toggle") {
       const on = this._isOn(entity);
       this._setPending(entity, on ? "off" : "on");
-      return this._hass.callService("switch", on ? "turn_off" : "turn_on", { entity_id: entity });
+      return this._call("switch", on ? "turn_off" : "turn_on", { entity_id: entity }, () => {
+        // The request failed: show the entity's real state again.
+        if (this._pending) delete this._pending[entity];
+        this._update();
+      });
     }
     if (action === "reset") {
       this._openConfirm({ entity, text: this._t("confirm_reset", { name: label }), ok: this._t("reset") });
     } else if (action === "routine") {
       this._openConfirm({ entity, text: this._t("run_routine", { name: label }), ok: this._t("start") });
     } else if (action) {
-      this._hass.callService("vacuum", action, { entity_id: entity });
+      this._call("vacuum", action, { entity_id: entity });
     } else if (entity) {
       this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: entity }, bubbles: true, composed: true }));
     }
@@ -744,12 +810,15 @@ class RoborockBase extends HTMLElement {
   // Confirmation before pressing a button entity (routine, consumable reset): Cancel does nothing.
   _openConfirm(confirm) {
     this._confirm = confirm;
+    window.addEventListener("keydown", this._onKey);
     this._update();
     this.shadowRoot.querySelector(".modal .primary")?.focus();
   }
 
   _closeConfirm() {
     this._confirm = null;
+    this._confirmClosedAt = Date.now();
+    window.removeEventListener("keydown", this._onKey);
     this._update();
   }
 
@@ -815,6 +884,30 @@ class RoborockBase extends HTMLElement {
     return null;
   }
 
+  // Current room (opens its entity), or "" when unknown.
+  _roomLine(dev) {
+    const room = this._s(dev.entities.current_room);
+    return valid(room)
+      ? `<div class="line clickable" data-entity="${esc(room.entity_id)}">${svgIcon(ICONS.room)}<span>${esc(room.state)}</span></div>`
+      : "";
+  }
+
+  // Robot or dock error (opens its entity), or "".
+  _errorLine(dev) {
+    const err = this._error(dev);
+    return err
+      ? `<div class="alert-line crit clickable" data-entity="${esc(err.entity)}">${svgIcon(ICONS.alert)}<span>${esc(err.text)}</span></div>`
+      : "";
+  }
+
+  // Picture of the robot (opens the vacuum), or "" when there is none.
+  _pictureBlock(dev, status) {
+    const pic = this._picture(dev);
+    return pic
+      ? `<div class="picture clickable" data-entity="${esc(dev.vacuum || status?.entity || "")}">${imgTag(pic, 'alt=""')}</div>`
+      : "";
+  }
+
   _picture(dev) {
     const img = this._config.image;
     if (img === "none") return null;
@@ -829,7 +922,7 @@ class RoborockBase extends HTMLElement {
       <div class="header">
         ${
           c.show_logo !== false
-            ? `<a class="logo-link" href="${ROBOROCK_SITE}" target="_blank" rel="noopener noreferrer" title="Roborock"><img class="logo" src="${IMG_LOGO}" alt="Roborock"></a>`
+            ? `<a class="logo-link" href="${ROBOROCK_SITE}" target="_blank" rel="noopener noreferrer" title="Roborock">${imgTag(IMG_LOGO, 'class="logo" alt="Roborock"')}</a>`
             : ""
         }
         <div class="titles">
@@ -909,7 +1002,7 @@ class RoborockBase extends HTMLElement {
         return true;
       case "clean_rooms":
         if (!r?.selected.length) return true;
-        this._hass.callService("vacuum", "send_command", {
+        this._call("vacuum", "send_command", {
           entity_id: entity,
           command: "app_segment_clean",
           params: [{ segments: r.selected.map(Number) }],
@@ -918,7 +1011,7 @@ class RoborockBase extends HTMLElement {
         this._update();
         return true;
       case "clean_all":
-        this._hass.callService("vacuum", "start", { entity_id: entity });
+        this._call("vacuum", "start", { entity_id: entity });
         this._rooms = null;
         this._update();
         return true;
@@ -988,17 +1081,14 @@ class RoborockBase extends HTMLElement {
 const FULL_STYLE = `
   .content { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 12px; }
   .hero { display: flex; gap: 12px; align-items: center; }
-  .picture { width: 96px; height: 104px; flex: none; display: flex; align-items: center; justify-content: center; }
-  .picture img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,.18)); }
-  .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .picture { width: 96px; height: 104px; }
+  .picture img { filter: drop-shadow(0 4px 8px rgba(0,0,0,.18)); }
   .batt { display: flex; align-items: center; gap: 8px; }
   .batt .pct { font-size: 24px; font-weight: 400; line-height: 1; }
   .batt .pct small { font-size: 14px; margin-left: 2px; color: var(--secondary-text-color); }
   .batt .icon { color: var(--c); }
   .batt .bolt { color: var(--rr-ok); width: 20px; height: 20px; }
-  .line { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--secondary-text-color); min-width: 0; }
   .line .icon { width: 16px; height: 16px; }
-  .line span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tags { display: flex; flex-wrap: wrap; gap: 4px; }
   .tag { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 6px; border-radius: 8px;
          background: var(--secondary-background-color, rgba(127,127,127,.12)); color: var(--primary-text-color); white-space: nowrap; }
@@ -1086,15 +1176,11 @@ class RoborockCard extends RoborockBase {
 
   _hero(dev) {
     const e = dev.entities;
-    const pic = this._picture(dev);
     const batt = this._battery(dev);
     const { v, cls } = this._batteryLevel(batt);
     const status = this._status(dev);
     const charging = /charg/.test(status?.state || "") && !/problem|complete/.test(status?.state || "");
-    const lines = [];
-
-    const room = this._s(e.current_room);
-    if (valid(room)) lines.push(`<div class="line clickable" data-entity="${esc(room.entity_id)}">${svgIcon(ICONS.room)}<span>${esc(room.state)}</span></div>`);
+    const lines = [this._roomLine(dev)];
 
     if (statusClass(status?.state) === "active") {
       const pct = num(this._s(e.clean_percent));
@@ -1105,8 +1191,7 @@ class RoborockCard extends RoborockBase {
         lines.push(`<div class="line clickable" data-entity="${esc(e.clean_percent || e.cleaning_area || "")}">${svgIcon(ICONS.clock)}<span>${esc(bits.filter(Boolean).join(" · "))}</span></div>`);
     }
 
-    const err = this._error(dev);
-    if (err) lines.push(`<div class="alert-line crit clickable" data-entity="${esc(err.entity)}">${svgIcon(ICONS.alert)}<span>${esc(err.text)}</span></div>`);
+    lines.push(this._errorLine(dev));
 
     if (this._config.show_modes !== false) {
       const tags = [];
@@ -1124,7 +1209,7 @@ class RoborockCard extends RoborockBase {
     }
 
     return `<div class="hero">
-      ${pic ? `<div class="picture clickable" data-entity="${esc(dev.vacuum || status?.entity || "")}"><img src="${esc(pic)}" alt=""></div>` : ""}
+      ${this._pictureBlock(dev, status)}
       <div class="info">
         ${
           batt
@@ -1237,7 +1322,7 @@ class RoborockCard extends RoborockBase {
       ["mop_drying", ICONS.fan, "dry_mop"],
     ]
       .map(([key, icon, label]) => {
-        const s = this._s(this._dev?.dock[key] || dev.dock[key]);
+        const s = this._s(dev.dock[key]);
         if (!s || s.state === "unavailable") return "";
         const on = this._isOn(s.entity_id);
         return `<button class="btn ${on ? "running" : ""}" title="${esc(this._t(on ? "stop_action" : "start_action", { name: this._t(label) }))}"
@@ -1376,10 +1461,13 @@ class RoborockCard extends RoborockBase {
     img.style.cssText = crop ? crop.img : "width:100%;height:100%;object-fit:contain;display:block";
     box.appendChild(img);
     overlay.appendChild(box);
+    this._closeZoom?.();
     const close = () => {
       overlay.remove();
       window.removeEventListener("keydown", onKey);
+      if (this._closeZoom === close) this._closeZoom = null;
     };
+    this._closeZoom = close;
     const onKey = (ev) => ev.key === "Escape" && close();
     overlay.addEventListener("click", close);
     window.addEventListener("keydown", onKey);
@@ -1396,16 +1484,13 @@ const MINI_STYLE = `
   .logo { height: 32px; }
   .name { font-size: 16px; }
   .content { padding: 4px 12px 12px; display: flex; align-items: center; gap: 12px; }
-  .picture { width: 64px; height: 72px; flex: none; display: flex; align-items: center; justify-content: center; }
-  .picture img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.18)); }
-  .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .picture { width: 64px; height: 72px; }
+  .picture img { filter: drop-shadow(0 2px 4px rgba(0,0,0,.18)); }
   .batt { display: flex; align-items: center; gap: 8px; font-size: 13px; }
   .batt .icon { color: var(--c); width: 16px; height: 16px; }
   .batt .bar { flex: 1; }
   .batt .v { font-weight: 500; min-width: 40px; text-align: right; }
-  .line { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--secondary-text-color); min-width: 0; }
   .line .icon { width: 14px; height: 14px; }
-  .line span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .controls { display: flex; gap: 6px; flex: none; }
   .rooms-wrap { padding: 0 12px 12px; }
 `;
@@ -1431,23 +1516,17 @@ class RoborockMiniCard extends RoborockBase {
     const { dev, error } = findDevice(this._hass, this._config);
     if (error) return this._errorCard(error);
     this._dev = dev;
-    const e = dev.entities;
     const status = this._status(dev);
-    const pic = this._picture(dev);
     const batt = this._battery(dev);
     const { v, cls } = this._batteryLevel(batt);
-    const lines = [];
-    const err = this._error(dev);
-    if (err) lines.push(`<div class="alert-line crit clickable" data-entity="${esc(err.entity)}">${svgIcon(ICONS.alert)}<span>${esc(err.text)}</span></div>`);
-    const room = this._s(e.current_room);
-    if (valid(room)) lines.push(`<div class="line clickable" data-entity="${esc(room.entity_id)}">${svgIcon(ICONS.room)}<span>${esc(room.state)}</span></div>`);
+    const lines = [this._errorLine(dev), this._roomLine(dev)];
     const last = this._lastClean(dev);
     if (last) lines.push(`<div class="line">${svgIcon(ICONS.clock)}<span>${esc(last)}</span></div>`);
     return `<style>${BASE_STYLE}${MINI_STYLE}</style>
       <ha-card>
         ${this._header(dev, status, "")}
         <div class="content">
-          ${pic ? `<div class="picture clickable" data-entity="${esc(dev.vacuum || status?.entity || "")}"><img src="${esc(pic)}" alt=""></div>` : ""}
+          ${this._pictureBlock(dev, status)}
           <div class="info">
             ${
               batt

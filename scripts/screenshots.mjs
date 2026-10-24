@@ -58,8 +58,10 @@ const shots = [
 const browser = await chromium.launch(
   process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}
 );
-const page = await browser.newPage({ deviceScaleFactor: 2, viewport: { width: 1000, height: 2000 } });
 for (const s of shots) {
+  // A new page per shot: the card's script declares top-level names, which cannot be evaluated twice in one page.
+  const page = await browser.newPage({ deviceScaleFactor: 2, viewport: { width: 1000, height: 2000 } });
+  page.on("pageerror", (err) => console.error(`pageerror (${s.file}): ${err.message}`));
   await page.setContent(page_html(s.theme, s.width));
   await page.addScriptTag({ content: HA_CARD });
   await page.addScriptTag({ content: cardJs });
@@ -88,5 +90,6 @@ for (const s of shots) {
     animations: "disabled",
   });
   console.log(`screenshots/${s.file}.png`);
+  await page.close();
 }
 await browser.close();

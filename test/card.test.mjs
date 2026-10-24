@@ -75,3 +75,99 @@ test("a click inside the more-info dialog keeps the sections unfolded", () => {
   card._onOutside({ composedPath: () => [{ tagName: "DIV" }] });
   assert.equal(card._toggled.size, 0);
 });
+
+test("a failed dock switch call drops the pending state and leaves no unhandled rejection", async () => {
+  const rejections = [];
+  const onRejection = (e) => rejections.push(e);
+  process.on("unhandledRejection", onRejection);
+  try {
+    const hass = { ...makeHass(), callService: () => Promise.reject(new Error("read-only")) };
+    const card = newCard(hass);
+    const id = "switch.station_vidage_de_la_poussiere";
+    click(card, { action: "dock_toggle", entity: id });
+    assert.ok(card._pending[id], "requested state shown meanwhile");
+    await new Promise((r) => setTimeout(r, 10));
+    assert.equal(card._pending[id], undefined);
+    assert.equal(card._isOn(id), false);
+    assert.equal(rejections.length, 0);
+    card.disconnectedCallback();
+  } finally {
+    process.off("unhandledRejection", onRejection);
+  }
+});
+
+test("detaching the card clears the pending timer and closes the zoomed map", () => {
+  const card = newCard(makeHass());
+  let closed = 0;
+  card._pendingTimer = setTimeout(() => assert.fail("timer still running"), 20);
+  card._closeZoom = () => closed++;
+  card.disconnectedCallback();
+  assert.equal(closed, 1);
+  return new Promise((r) => setTimeout(r, 40));
+});
+
+test("the relative time formatter is built once per language", () => {
+  const hass = makeHass();
+  const iso = new Date(Date.now() - 2 * 3600e3).toISOString();
+  rr.ago(hass, {}, iso);
+  const fmt = rr.RTF.en;
+  assert.ok(fmt);
+  rr.ago(hass, {}, iso);
+  assert.equal(rr.RTF.en, fmt);
+  rr.ago(hass, { language: "fr" }, iso);
+  assert.ok(rr.RTF.fr && rr.RTF.fr !== fmt);
+});
+
+test("the full and mini cards share the room, error and picture blocks", () => {
+  const err = "sensor.aspirateur_erreur";
+  const hass = makeHass({ ...states, [err]: { ...states[err], state: "main_brush_jammed" } });
+  const full = newCard(hass);
+  const mini = new rr.RoborockMiniCard();
+  mini.setConfig({ device: "saros" });
+  mini.hass = hass;
+  for (const html of [full.shadowRoot.innerHTML, mini.shadowRoot.innerHTML]) {
+    assert.match(html, /class="line clickable" data-entity="sensor\.aspirateur_piece_actuelle"/);
+    assert.match(html, /class="alert-line crit clickable" data-entity="sensor\.aspirateur_erreur"/);
+    assert.match(html, /class="picture clickable" data-entity="vacuum\.aspirateur"><img src="/);
+  }
+});
+
+test("Escape still closes the popup after a re-render took the focus away", () => {
+  const hass = makeHass();
+  const card = newCard(hass);
+  click(card, { action: "routine", entity: "button.routine", label: "Morning" });
+  // A device state changes while the popup is open: the card is rewritten and the focus falls back to <body>,
+  // so the keydown only reaches the window.
+  const batt = "sensor.aspirateur_batterie";
+  card.hass = { ...hass, states: { ...states, [batt]: { ...states[batt], state: "42" } } };
+  assert.match(card.shadowRoot.innerHTML, /dialog-open/);
+  rr.window.fire("keydown", { key: "Escape", stopPropagation() {} });
+  assert.doesNotMatch(card.shadowRoot.innerHTML, /dialog-open/);
+  assert.equal(hass.calls.length, 0);
+});
+
+test("the second click of a double click on OK does not reach the card under the popup", () => {
+  const hass = makeHass();
+  const card = newCard(hass);
+  click(card, { action: "routine", entity: "button.routine", label: "Morning" });
+  click(card, { action: "confirm_ok" });
+  // What lies under OK once the popup is gone: the battery (more-info) or an action button.
+  click(card, { entity: "sensor.aspirateur_batterie" });
+  click(card, { action: "stop", entity: "vacuum.aspirateur" });
+  assert.equal(hass.calls.length, 1);
+  assert.equal((card.events || []).length, 0);
+  card._confirmClosedAt -= 1000;
+  click(card, { entity: "sensor.aspirateur_batterie" });
+  assert.equal(card.events.length, 1, "clicks act again afterwards");
+});
+
+test("inlined pictures are not written into the HTML of every render", () => {
+  const card = new rr.RoborockCard();
+  card.setConfig({ device: "saros", show_map: "never", image: "data:image/png;base64,AAAA" });
+  card.hass = makeHass();
+  assert.doesNotMatch(card.shadowRoot.innerHTML, /data:image\/png/);
+  assert.match(card.shadowRoot.innerHTML, /class="picture clickable" data-entity="vacuum\.aspirateur"><img data-img="\d+" alt="">/);
+  card.setConfig({ device: "saros", show_map: "never", image: "/local/robot.png" });
+  card.hass = makeHass();
+  assert.match(card.shadowRoot.innerHTML, /<img src="\/local\/robot\.png" alt="">/);
+});
