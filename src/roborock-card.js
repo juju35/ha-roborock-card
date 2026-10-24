@@ -556,6 +556,21 @@ const BASE_STYLE = `
   .rooms-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 `;
 
+// In-card confirmation popup, as in ha-system-monitor-card and ha-iptv: a backdrop over the card with a
+// small dialog at the top of the card, so that it stays in view when the card is long.
+const DIALOG_STYLE = `
+  ha-card.dialog-open { position: relative; min-height: 160px; }
+  .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-start; justify-content: center;
+              padding-top: 12px; box-sizing: border-box; z-index: 9; border-radius: inherit; }
+  .modal { background: var(--card-background-color, #1c1c1c); color: var(--primary-text-color); width: min(92%, 340px); max-height: calc(100% - 24px);
+           box-sizing: border-box; border-radius: 14px; padding: 16px; box-shadow: 0 8px 30px rgba(0,0,0,.4); display: flex; flex-direction: column; gap: 12px; }
+  .modal .msg { font-size: 14px; line-height: 1.4; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+`;
+
+// Element names of Home Assistant dialogs (more-info opened from the card, among others).
+const DIALOG_TAGS = new Set(["HA-MORE-INFO-DIALOG", "HA-DIALOG", "DIALOG"]);
+
 class RoborockBase extends HTMLElement {
   constructor() {
     super();
@@ -563,6 +578,12 @@ class RoborockBase extends HTMLElement {
     this._html = "";
     this.shadowRoot.addEventListener("click", (ev) => this._onClick(ev));
     this.shadowRoot.addEventListener("load", (ev) => this._onLoad(ev), true);
+    // Escape closes the confirmation popup (as Cancel).
+    this.shadowRoot.addEventListener("keydown", (ev) => {
+      if (ev.key !== "Escape" || !this._confirm) return;
+      ev.stopPropagation();
+      this._closeConfirm();
+    });
   }
 
   // Home Assistant pushes a new hass on every state change of the whole instance: the card is only
@@ -595,9 +616,13 @@ class RoborockBase extends HTMLElement {
   // A click elsewhere on the page folds the sections back to their defaults (as in ha-carburants-france).
   // A click, not a pointerdown: folding on press would shift the layout under the pointer before the click.
   connectedCallback() {
+    // Clicks inside a dialog (the more-info opened from the card) leave the card as it is.
     this._onOutside ??= (ev) => {
-      if (!this._toggled?.size || ev.composedPath().includes(this)) return;
+      if (!this._toggled?.size && !this._confirm) return;
+      const path = ev.composedPath();
+      if (path.includes(this) || path.some((n) => DIALOG_TAGS.has(n.tagName))) return;
       this._toggled = new Set();
+      this._confirm = null;
       this._update();
     };
     document.addEventListener("click", this._onOutside, true);
@@ -629,7 +654,10 @@ class RoborockBase extends HTMLElement {
 
   _update() {
     if (!this._hass || !this._config) return;
-    const html = this._render();
+    let html = this._render();
+    if (this._confirm) {
+      html = html.replace(/<ha-card>([\s\S]*)<\/ha-card>\s*$/, (_, inner) => `<ha-card class="dialog-open">${inner}${this._confirmHtml()}</ha-card>`);
+    }
     if (html !== this._html) {
       this._html = html;
       this.shadowRoot.innerHTML = html;
@@ -670,7 +698,21 @@ class RoborockBase extends HTMLElement {
   }
 
   _onClick(ev) {
-    const el = ev.composedPath().find((n) => n.dataset && (n.dataset.entity || n.dataset.action));
+    const path = ev.composedPath();
+    const el = path.find((n) => n.dataset && (n.dataset.entity || n.dataset.action));
+    // Confirmation popup open: only its buttons and the backdrop itself (outside the dialog) act.
+    if (this._confirm) {
+      ev.stopPropagation();
+      const action = el?.dataset.action;
+      if (action === "confirm_ok") {
+        const { entity } = this._confirm;
+        this._closeConfirm();
+        this._hass.callService("button", "press", { entity_id: entity });
+      } else if (action === "confirm_cancel" || (action === "confirm_backdrop" && path[0] === el)) {
+        this._closeConfirm();
+      }
+      return;
+    }
     if (!el) return;
     ev.stopPropagation();
     const { action, entity, label } = el.dataset;
@@ -689,14 +731,39 @@ class RoborockBase extends HTMLElement {
       return this._hass.callService("switch", on ? "turn_off" : "turn_on", { entity_id: entity });
     }
     if (action === "reset") {
-      if (window.confirm(this._t("confirm_reset", { name: label }))) this._hass.callService("button", "press", { entity_id: entity });
+      this._openConfirm({ entity, text: this._t("confirm_reset", { name: label }), ok: this._t("reset") });
     } else if (action === "routine") {
-      if (window.confirm(this._t("run_routine", { name: label }))) this._hass.callService("button", "press", { entity_id: entity });
+      this._openConfirm({ entity, text: this._t("run_routine", { name: label }), ok: this._t("start") });
     } else if (action) {
       this._hass.callService("vacuum", action, { entity_id: entity });
     } else if (entity) {
       this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: entity }, bubbles: true, composed: true }));
     }
+  }
+
+  // Confirmation before pressing a button entity (routine, consumable reset): Cancel does nothing.
+  _openConfirm(confirm) {
+    this._confirm = confirm;
+    this._update();
+    this.shadowRoot.querySelector(".modal .primary")?.focus();
+  }
+
+  _closeConfirm() {
+    this._confirm = null;
+    this._update();
+  }
+
+  _confirmHtml() {
+    const c = this._confirm;
+    return `<style>${DIALOG_STYLE}</style><div class="backdrop" data-action="confirm_backdrop">
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="msg">${esc(c.text)}</div>
+        <div class="modal-actions">
+          <button class="btn" data-action="confirm_cancel"><span>${esc(this._t("cancel"))}</span></button>
+          <button class="btn primary" data-action="confirm_ok"><span>${esc(c.ok)}</span></button>
+        </div>
+      </div>
+    </div>`;
   }
 
   // Translated state: card strings first (they follow the language option), then Home Assistant's
