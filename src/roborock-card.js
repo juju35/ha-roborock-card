@@ -565,9 +565,27 @@ class RoborockBase extends HTMLElement {
     this.shadowRoot.addEventListener("load", (ev) => this._onLoad(ev), true);
   }
 
+  // Home Assistant pushes a new hass on every state change of the whole instance: the card is only
+  // rebuilt when something it shows changed (see _deps).
   set hass(hass) {
     this._hass = hass;
+    const deps = this._deps();
+    const prev = this._lastDeps;
+    if (deps && prev && deps.length === prev.length && deps.every((d, i) => d === prev[i])) return;
+    this._lastDeps = deps;
     this._update();
+  }
+
+  // What a render reads from hass: the registries, the language, the state objects of the device's
+  // entities (HA replaces a state object whenever its state or attributes change) and the relative
+  // "last clean" time, which moves on its own. null (no device found): always render.
+  _deps() {
+    const h = this._hass;
+    if (!h || !this._config) return null;
+    const { dev } = findDevice(h, this._config);
+    if (!dev) return null;
+    const ids = [dev.vacuum, ...Object.values(dev.entities), ...Object.values(dev.dock), ...Object.values(dev.extra).flat()];
+    return [h.entities, h.devices, h.language, h.locale, h.localize, h.formatEntityState, this._lastClean(dev), ...ids.map((id) => h.states[id])];
   }
 
   get hass() {
@@ -593,6 +611,7 @@ class RoborockBase extends HTMLElement {
     if (!config) throw new Error("Invalid configuration");
     this._config = { ...config };
     this._html = "";
+    this._lastDeps = null;
     this._update();
   }
 
@@ -752,7 +771,7 @@ class RoborockBase extends HTMLElement {
         </div>
         ${
           status
-            ? `<span class="chip clickable ${statusClass(status.state)}" data-entity="${status.entity}"><span class="dot"></span>${esc(status.text)}</span>`
+            ? `<span class="chip clickable ${statusClass(status.state)}" data-entity="${esc(status.entity)}"><span class="dot"></span>${esc(status.text)}</span>`
             : ""
         }
       </div>`;
@@ -780,7 +799,7 @@ class RoborockBase extends HTMLElement {
     if (!vac || this._config.show_controls === false) return "";
     const cleaning = vac.state === "cleaning";
     const btn = (action, icon, label, cls = "") =>
-      `<button class="btn ${round ? "round" : ""} ${cls}" title="${esc(label)}" data-action="${action}" data-entity="${vac.entity_id}">${svgIcon(icon)}${
+      `<button class="btn ${round ? "round" : ""} ${cls}" title="${esc(label)}" data-action="${action}" data-entity="${esc(vac.entity_id)}">${svgIcon(icon)}${
         round ? "" : `<span>${esc(label)}</span>`
       }</button>`;
     const list = [
@@ -873,11 +892,11 @@ class RoborockBase extends HTMLElement {
     else if (r.error) body = `<div class="rooms-msg">${esc(this._t("rooms_error"))}</div>`;
     else
       body = `<div class="room-list">
-        <button class="room all ${r.selected.length === r.list.length ? "on" : ""}" data-action="all_rooms" data-entity="${dev.vacuum}">${esc(this._t("select_all"))}</button>
+        <button class="room all ${r.selected.length === r.list.length ? "on" : ""}" data-action="all_rooms" data-entity="${esc(dev.vacuum)}">${esc(this._t("select_all"))}</button>
         ${r.list
           .map(
             (x) =>
-              `<button class="room ${r.selected.includes(x.id) ? "on" : ""}" data-action="toggle_room" data-entity="${dev.vacuum}" data-room="${esc(x.id)}">${esc(x.name)}</button>`
+              `<button class="room ${r.selected.includes(x.id) ? "on" : ""}" data-action="toggle_room" data-entity="${esc(dev.vacuum)}" data-room="${esc(x.id)}">${esc(x.name)}</button>`
           )
           .join("")}
       </div>`;
@@ -885,9 +904,9 @@ class RoborockBase extends HTMLElement {
       <div class="rooms-title">${svgIcon(ICONS.room)}${esc(this._t("choose_rooms"))}</div>
       ${body}
       <div class="rooms-actions">
-        <button class="btn" data-action="close_rooms" data-entity="${dev.vacuum}"><span>${esc(this._t("cancel"))}</span></button>
-        <button class="btn" data-action="clean_all" data-entity="${dev.vacuum}">${svgIcon(ICONS.home)}<span>${esc(this._t("whole_home"))}</span></button>
-        <button class="btn primary ${r.selected.length ? "" : "disabled"}" data-action="clean_rooms" data-entity="${dev.vacuum}" ${
+        <button class="btn" data-action="close_rooms" data-entity="${esc(dev.vacuum)}"><span>${esc(this._t("cancel"))}</span></button>
+        <button class="btn" data-action="clean_all" data-entity="${esc(dev.vacuum)}">${svgIcon(ICONS.home)}<span>${esc(this._t("whole_home"))}</span></button>
+        <button class="btn primary ${r.selected.length ? "" : "disabled"}" data-action="clean_rooms" data-entity="${esc(dev.vacuum)}" ${
           r.selected.length ? "" : "disabled"
         }>${svgIcon(ICONS.play)}<span>${esc(this._t("clean_rooms", { n: r.selected.length }))}</span></button>
       </div>
@@ -1008,7 +1027,7 @@ class RoborockCard extends RoborockBase {
     const lines = [];
 
     const room = this._s(e.current_room);
-    if (valid(room)) lines.push(`<div class="line clickable" data-entity="${room.entity_id}">${svgIcon(ICONS.room)}<span>${esc(room.state)}</span></div>`);
+    if (valid(room)) lines.push(`<div class="line clickable" data-entity="${esc(room.entity_id)}">${svgIcon(ICONS.room)}<span>${esc(room.state)}</span></div>`);
 
     if (statusClass(status?.state) === "active") {
       const pct = num(this._s(e.clean_percent));
@@ -1016,15 +1035,15 @@ class RoborockCard extends RoborockBase {
       const time = hours(this._s(e.cleaning_time));
       const bits = [pct ? `${this._t("progress")} ${Math.round(pct)} %` : null, area !== null ? `${fmtNum(area, 1, this._locale())} m²` : null, time !== null ? fmtHours(time) : null];
       if (bits.some(Boolean))
-        lines.push(`<div class="line clickable" data-entity="${e.clean_percent || e.cleaning_area || ""}">${svgIcon(ICONS.clock)}<span>${esc(bits.filter(Boolean).join(" · "))}</span></div>`);
+        lines.push(`<div class="line clickable" data-entity="${esc(e.clean_percent || e.cleaning_area || "")}">${svgIcon(ICONS.clock)}<span>${esc(bits.filter(Boolean).join(" · "))}</span></div>`);
     }
 
     const err = this._error(dev);
-    if (err) lines.push(`<div class="alert-line crit clickable" data-entity="${err.entity}">${svgIcon(ICONS.alert)}<span>${esc(err.text)}</span></div>`);
+    if (err) lines.push(`<div class="alert-line crit clickable" data-entity="${esc(err.entity)}">${svgIcon(ICONS.alert)}<span>${esc(err.text)}</span></div>`);
 
     if (this._config.show_modes !== false) {
       const tags = [];
-      const tag = (id, icon, text) => (text ? `<span class="tag clickable" data-entity="${id}">${svgIcon(icon)}${esc(text)}</span>` : "");
+      const tag = (id, icon, text) => (text ? `<span class="tag clickable" data-entity="${esc(id)}">${svgIcon(icon)}${esc(text)}</span>` : "");
       const mode = this._s(e.cleaning_mode);
       if (valid(mode)) tags.push(tag(mode.entity_id, ICONS.mode, this._fmt(mode)));
       const vac = this._s(dev.vacuum);
@@ -1038,11 +1057,11 @@ class RoborockCard extends RoborockBase {
     }
 
     return `<div class="hero">
-      ${pic ? `<div class="picture clickable" data-entity="${dev.vacuum || status?.entity || ""}"><img src="${esc(pic)}" alt=""></div>` : ""}
+      ${pic ? `<div class="picture clickable" data-entity="${esc(dev.vacuum || status?.entity || "")}"><img src="${esc(pic)}" alt=""></div>` : ""}
       <div class="info">
         ${
           batt
-            ? `<div class="batt clickable ${cls}" data-entity="${batt.entity_id}">
+            ? `<div class="batt clickable ${cls}" data-entity="${esc(batt.entity_id)}">
                  ${svgIcon(ICONS.battery)}<span class="pct">${v === null ? "—" : Math.round(v)}<small>%</small></span>
                  ${charging ? svgIcon(ICONS.bolt, "bolt") : ""}
                </div>
@@ -1070,7 +1089,7 @@ class RoborockCard extends RoborockBase {
         this._isCollapsed("routines")
           ? ""
           : `<div class="routines">${items
-              .map((r) => `<button class="btn" data-action="routine" data-entity="${r.id}" data-label="${esc(r.name)}">${svgIcon(ICONS.routine)}<span>${esc(r.name)}</span></button>`)
+              .map((r) => `<button class="btn" data-action="routine" data-entity="${esc(r.id)}" data-label="${esc(r.name)}">${svgIcon(ICONS.routine)}<span>${esc(r.name)}</span></button>`)
               .join("")}</div>`
       }
     </div>`;
@@ -1098,7 +1117,7 @@ class RoborockCard extends RoborockBase {
   }
 
   _tile(id, icon, label, value, cls = "") {
-    return `<div class="tile clickable ${cls}" data-entity="${id || ""}"><div class="k">${svgIcon(icon)}${esc(label)}</div><div class="v">${esc(value)}</div></div>`;
+    return `<div class="tile clickable ${cls}" data-entity="${esc(id || "")}"><div class="k">${svgIcon(icon)}${esc(label)}</div><div class="v">${esc(value)}</div></div>`;
   }
 
   _dock(dev) {
@@ -1155,7 +1174,7 @@ class RoborockCard extends RoborockBase {
         if (!s || s.state === "unavailable") return "";
         const on = this._isOn(s.entity_id);
         return `<button class="btn ${on ? "running" : ""}" title="${esc(this._t(on ? "stop_action" : "start_action", { name: this._t(label) }))}"
-          data-action="dock_toggle" data-entity="${s.entity_id}">${svgIcon(on ? ICONS.stop : icon)}<span>${esc(this._t(label))}</span></button>`;
+          data-action="dock_toggle" data-entity="${esc(s.entity_id)}">${svgIcon(on ? ICONS.stop : icon)}<span>${esc(this._t(label))}</span></button>`;
       })
       .filter(Boolean);
     return btns.length ? `<div class="dock-actions">${btns.join("")}</div>` : "";
@@ -1182,9 +1201,9 @@ class RoborockCard extends RoborockBase {
         cls = h === null ? "" : h <= 0 ? "crit" : (pct !== null ? pct < 10 : h < 10) ? "warn" : "ok";
       }
       rows.push(`
-        ${svgIcon(icon)}<span class="lbl clickable" data-entity="${s.entity_id}">${esc(this._t(label))}</span>
+        ${svgIcon(icon)}<span class="lbl clickable" data-entity="${esc(s.entity_id)}">${esc(this._t(label))}</span>
         ${pct !== null ? `<div class="bar ${cls}"><div style="width:${Math.max(0, Math.min(100, pct))}%"></div></div>` : `<div class="nobar"></div>`}
-        <span class="v clickable ${cls}" data-entity="${s.entity_id}">${esc(text)}</span>
+        <span class="v clickable ${cls}" data-entity="${esc(s.entity_id)}">${esc(text)}</span>
         ${resets ? this._resetButton(dev, resetKey, label) : ""}`);
     }
     if (!rows.length) return "";
@@ -1204,7 +1223,7 @@ class RoborockCard extends RoborockBase {
   _resetButton(dev, key, label) {
     const id = this._resetId(dev, key);
     if (!id) return `<span></span>`;
-    return `<button class="reset" title="${esc(this._t("reset"))}" data-action="reset" data-entity="${id}" data-label="${esc(this._t(label))}">${svgIcon(ICONS.reset)}</button>`;
+    return `<button class="reset" title="${esc(this._t("reset"))}" data-action="reset" data-entity="${esc(id)}" data-label="${esc(this._t(label))}">${svgIcon(ICONS.reset)}</button>`;
   }
 
   _stats(dev) {
@@ -1245,9 +1264,9 @@ class RoborockCard extends RoborockBase {
     const selected = this._s(dev.entities.selected_map)?.state;
     const map = (selected && maps.find((s) => (s.attributes.friendly_name || "").endsWith(selected))) || maps[0];
     const url = map.attributes.entity_picture;
-    const img = `<img src="${esc(url)}" alt="${esc(this._t("map"))}" data-map="${map.entity_id}"`;
+    const img = `<img src="${esc(url)}" alt="${esc(this._t("map"))}" data-map="${esc(map.entity_id)}"`;
     const crop = this._mapCrop(map.entity_id);
-    const attrs = `class="map clickable" data-action="zoom_map" data-entity="${map.entity_id}" title="${esc(this._t("map"))}"`;
+    const attrs = `class="map clickable" data-action="zoom_map" data-entity="${esc(map.entity_id)}" title="${esc(this._t("map"))}"`;
     if (!crop) return `<div ${attrs}>${img}></div>`;
     return `<div ${attrs}><div class="crop" style="aspect-ratio:${crop.ratio}">${img} style="${crop.img}"></div></div>`;
   }
@@ -1352,20 +1371,20 @@ class RoborockMiniCard extends RoborockBase {
     const { v, cls } = this._batteryLevel(batt);
     const lines = [];
     const err = this._error(dev);
-    if (err) lines.push(`<div class="alert-line crit clickable" data-entity="${err.entity}">${svgIcon(ICONS.alert)}<span>${esc(err.text)}</span></div>`);
+    if (err) lines.push(`<div class="alert-line crit clickable" data-entity="${esc(err.entity)}">${svgIcon(ICONS.alert)}<span>${esc(err.text)}</span></div>`);
     const room = this._s(e.current_room);
-    if (valid(room)) lines.push(`<div class="line clickable" data-entity="${room.entity_id}">${svgIcon(ICONS.room)}<span>${esc(room.state)}</span></div>`);
+    if (valid(room)) lines.push(`<div class="line clickable" data-entity="${esc(room.entity_id)}">${svgIcon(ICONS.room)}<span>${esc(room.state)}</span></div>`);
     const last = this._lastClean(dev);
     if (last) lines.push(`<div class="line">${svgIcon(ICONS.clock)}<span>${esc(last)}</span></div>`);
     return `<style>${BASE_STYLE}${MINI_STYLE}</style>
       <ha-card>
         ${this._header(dev, status, "")}
         <div class="content">
-          ${pic ? `<div class="picture clickable" data-entity="${dev.vacuum || status?.entity || ""}"><img src="${esc(pic)}" alt=""></div>` : ""}
+          ${pic ? `<div class="picture clickable" data-entity="${esc(dev.vacuum || status?.entity || "")}"><img src="${esc(pic)}" alt=""></div>` : ""}
           <div class="info">
             ${
               batt
-                ? `<div class="batt clickable ${cls}" data-entity="${batt.entity_id}">${svgIcon(ICONS.battery)}<div class="bar ${cls}"><div style="width:${
+                ? `<div class="batt clickable ${cls}" data-entity="${esc(batt.entity_id)}">${svgIcon(ICONS.battery)}<div class="bar ${cls}"><div style="width:${
                     v ?? 0
                   }%"></div></div><span class="v">${v === null ? "—" : `${Math.round(v)} %`}</span></div>`
                 : ""
@@ -1482,8 +1501,20 @@ class RoborockEditorBase extends HTMLElement {
     for (const [name, def] of toggles) if (data[name] === undefined) data[name] = def;
     if (!data.device) data.device = RoborockCard.getStubConfig(this._hass).device;
     this._form.hass = this._hass;
-    this._form.data = data;
-    this._form.schema = this._schema();
+    // A new data or schema object re-renders the whole form: only hand over new ones when the config,
+    // the language, the registries or the map size changed, not on every state change.
+    const h = this._hass;
+    const same = (a, b) => a && a.length === b.length && a.every((d, i) => d === b[i]);
+    const dataDeps = [this._config, h.entities, h.devices];
+    if (!same(this._dataDeps, dataDeps)) {
+      this._dataDeps = dataDeps;
+      this._form.data = data;
+    }
+    const schemaDeps = [lang(h, this._config), h.entities, h.devices, this._mapSize];
+    if (!same(this._schemaDeps, schemaDeps)) {
+      this._schemaDeps = schemaDeps;
+      this._form.schema = this._schema();
+    }
     this._loadMapSize(data.device);
   }
 
