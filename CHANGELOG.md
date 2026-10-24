@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.8.0
+
+### Changes
+- Running a routine or resetting a consumable now asks for confirmation in a small popup at the top of the card instead of the browser's confirm dialog; Cancel, Escape or a click outside does nothing, OK presses the button once.
+- The card is redrawn only when the vacuum, its dock or the "last clean" time change, not on every state change in Home Assistant: no more flicker, lost hover or focus.
+- The "needs Home Assistant" message says 2024.8, as HACS and the README do.
+
+### Fixes
+- Durations no longer read "1 h 60" or "60 min": they round to "2 h", "1 h", and so on.
+- The sections no longer fold when you click inside the more-info dialog.
+- When a dock switch call fails, the switch goes back to its real state right away instead of showing the requested state for 45 s; failed calls no longer leave an error in the browser console.
+- Removing the card from the page closes a zoomed map and clears its pending timer.
+- The visual editor no longer rebuilds its form on every update.
+
+### Maintenance
+- Shared code between the full and mini cards; no visible change.
+- CI: actions pinned by commit SHA, read-only token permissions, Dependabot for GitHub Actions, duplicate-code annotations, and a `node --test` suite run on every push.
+
 ## 1.7.2
 
 ### Maintenance
