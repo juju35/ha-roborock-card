@@ -113,7 +113,7 @@ const STRINGS = {
     full: "Full",
     no_device: "No Roborock device found. Is the Roborock integration installed?",
     unknown_device: "Roborock device not found",
-    no_registry: "This card needs Home Assistant 2023.4 or later.",
+    no_registry: "This card needs Home Assistant 2024.8 or later.",
     // Editor
     device: "Roborock device",
     title: "Title (optional, defaults to the device name)",
@@ -257,7 +257,7 @@ const STRINGS = {
     full: "Plein",
     no_device: "Aucun appareil Roborock trouvé. L'intégration Roborock est-elle installée ?",
     unknown_device: "Appareil Roborock introuvable",
-    no_registry: "Cette carte nécessite Home Assistant 2023.4 ou plus récent.",
+    no_registry: "Cette carte nécessite Home Assistant 2024.8 ou plus récent.",
     device: "Appareil Roborock",
     title: "Titre (facultatif, nom de l'appareil par défaut)",
     image: "Image de l'appareil",
@@ -413,11 +413,14 @@ const fmtHours = (h) => {
 
 const fmtNum = (v, digits = 0, locale) => (v === null ? "—" : Number(v).toLocaleString(locale, { maximumFractionDigits: digits }));
 
+// One formatter per language, built on first use.
+const RTF = {};
 const ago = (hass, config, iso) => {
   const d = Date.parse(iso);
   if (!Number.isFinite(d)) return null;
   const diff = (d - Date.now()) / 1000;
-  const rtf = new Intl.RelativeTimeFormat(lang(hass, config), { numeric: "auto" });
+  const l = lang(hass, config);
+  const rtf = (RTF[l] ??= new Intl.RelativeTimeFormat(l, { numeric: "auto" }));
   const abs = Math.abs(diff);
   if (abs < 3600) return rtf.format(Math.round(diff / 60), "minute");
   if (abs < 86400) return rtf.format(Math.round(diff / 3600), "hour");
@@ -582,7 +585,6 @@ class RoborockBase extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._html = "";
     this.shadowRoot.addEventListener("click", (ev) => this._onClick(ev));
-    this.shadowRoot.addEventListener("load", (ev) => this._onLoad(ev), true);
     // Escape closes the confirmation popup (as Cancel).
     this.shadowRoot.addEventListener("keydown", (ev) => {
       if (ev.key !== "Escape" || !this._confirm) return;
@@ -635,6 +637,14 @@ class RoborockBase extends HTMLElement {
 
   disconnectedCallback() {
     document.removeEventListener("click", this._onOutside, true);
+    clearTimeout(this._pendingTimer);
+    this._closeZoom?.();
+  }
+
+  // Service call whose failure is already reported by Home Assistant (toast): the rejection is handled here so
+  // that it does not end up as "Uncaught (in promise)". `onError` undoes what the card showed meanwhile.
+  _call(domain, service, data, onError) {
+    return Promise.resolve(this._hass.callService(domain, service, data)).catch(() => onError?.());
   }
 
   setConfig(config) {
@@ -712,7 +722,7 @@ class RoborockBase extends HTMLElement {
       if (action === "confirm_ok") {
         const { entity } = this._confirm;
         this._closeConfirm();
-        this._hass.callService("button", "press", { entity_id: entity });
+        this._call("button", "press", { entity_id: entity });
       } else if (action === "confirm_cancel" || (action === "confirm_backdrop" && path[0] === el)) {
         this._closeConfirm();
       }
@@ -733,14 +743,18 @@ class RoborockBase extends HTMLElement {
     if (action === "dock_toggle") {
       const on = this._isOn(entity);
       this._setPending(entity, on ? "off" : "on");
-      return this._hass.callService("switch", on ? "turn_off" : "turn_on", { entity_id: entity });
+      return this._call("switch", on ? "turn_off" : "turn_on", { entity_id: entity }, () => {
+        // The request failed: show the entity's real state again.
+        if (this._pending) delete this._pending[entity];
+        this._update();
+      });
     }
     if (action === "reset") {
       this._openConfirm({ entity, text: this._t("confirm_reset", { name: label }), ok: this._t("reset") });
     } else if (action === "routine") {
       this._openConfirm({ entity, text: this._t("run_routine", { name: label }), ok: this._t("start") });
     } else if (action) {
-      this._hass.callService("vacuum", action, { entity_id: entity });
+      this._call("vacuum", action, { entity_id: entity });
     } else if (entity) {
       this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: entity }, bubbles: true, composed: true }));
     }
@@ -938,7 +952,7 @@ class RoborockBase extends HTMLElement {
         return true;
       case "clean_rooms":
         if (!r?.selected.length) return true;
-        this._hass.callService("vacuum", "send_command", {
+        this._call("vacuum", "send_command", {
           entity_id: entity,
           command: "app_segment_clean",
           params: [{ segments: r.selected.map(Number) }],
@@ -947,7 +961,7 @@ class RoborockBase extends HTMLElement {
         this._update();
         return true;
       case "clean_all":
-        this._hass.callService("vacuum", "start", { entity_id: entity });
+        this._call("vacuum", "start", { entity_id: entity });
         this._rooms = null;
         this._update();
         return true;
@@ -1397,10 +1411,13 @@ class RoborockCard extends RoborockBase {
     img.style.cssText = crop ? crop.img : "width:100%;height:100%;object-fit:contain;display:block";
     box.appendChild(img);
     overlay.appendChild(box);
+    this._closeZoom?.();
     const close = () => {
       overlay.remove();
       window.removeEventListener("keydown", onKey);
+      if (this._closeZoom === close) this._closeZoom = null;
     };
+    this._closeZoom = close;
     const onKey = (ev) => ev.key === "Escape" && close();
     overlay.addEventListener("click", close);
     window.addEventListener("keydown", onKey);

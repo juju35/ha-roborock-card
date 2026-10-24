@@ -75,3 +75,59 @@ test("a click inside the more-info dialog keeps the sections unfolded", () => {
   card._onOutside({ composedPath: () => [{ tagName: "DIV" }] });
   assert.equal(card._toggled.size, 0);
 });
+
+test("a failed dock switch call drops the pending state and leaves no unhandled rejection", async () => {
+  const rejections = [];
+  const onRejection = (e) => rejections.push(e);
+  process.on("unhandledRejection", onRejection);
+  try {
+    const hass = { ...makeHass(), callService: () => Promise.reject(new Error("read-only")) };
+    const card = newCard(hass);
+    const id = "switch.station_vidage_de_la_poussiere";
+    click(card, { action: "dock_toggle", entity: id });
+    assert.ok(card._pending[id], "requested state shown meanwhile");
+    await new Promise((r) => setTimeout(r, 10));
+    assert.equal(card._pending[id], undefined);
+    assert.equal(card._isOn(id), false);
+    assert.equal(rejections.length, 0);
+    card.disconnectedCallback();
+  } finally {
+    process.off("unhandledRejection", onRejection);
+  }
+});
+
+test("detaching the card clears the pending timer and closes the zoomed map", () => {
+  const card = newCard(makeHass());
+  let closed = 0;
+  card._pendingTimer = setTimeout(() => assert.fail("timer still running"), 20);
+  card._closeZoom = () => closed++;
+  card.disconnectedCallback();
+  assert.equal(closed, 1);
+  return new Promise((r) => setTimeout(r, 40));
+});
+
+test("the relative time formatter is built once per language", () => {
+  const hass = makeHass();
+  const iso = new Date(Date.now() - 2 * 3600e3).toISOString();
+  rr.ago(hass, {}, iso);
+  const fmt = rr.RTF.en;
+  assert.ok(fmt);
+  rr.ago(hass, {}, iso);
+  assert.equal(rr.RTF.en, fmt);
+  rr.ago(hass, { language: "fr" }, iso);
+  assert.ok(rr.RTF.fr && rr.RTF.fr !== fmt);
+});
+
+test("the full and mini cards share the room, error and picture blocks", () => {
+  const err = "sensor.aspirateur_erreur";
+  const hass = makeHass({ ...states, [err]: { ...states[err], state: "main_brush_jammed" } });
+  const full = newCard(hass);
+  const mini = new rr.RoborockMiniCard();
+  mini.setConfig({ device: "saros" });
+  mini.hass = hass;
+  for (const html of [full.shadowRoot.innerHTML, mini.shadowRoot.innerHTML]) {
+    assert.match(html, /class="line clickable" data-entity="sensor\.aspirateur_piece_actuelle"/);
+    assert.match(html, /class="alert-line crit clickable" data-entity="sensor\.aspirateur_erreur"/);
+    assert.match(html, /class="picture clickable" data-entity="vacuum\.aspirateur"><img src="/);
+  }
+});
