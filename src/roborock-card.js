@@ -579,18 +579,34 @@ const DIALOG_STYLE = `
 // Element names of Home Assistant dialogs (more-info opened from the card, among others).
 const DIALOG_TAGS = new Set(["HA-MORE-INFO-DIALOG", "HA-DIALOG", "DIALOG"]);
 
+// After the confirmation popup closes, clicks on the card are ignored for this long: the second click of a double
+// click on OK would otherwise land on what lies under the button (the battery, an action button).
+const CONFIRM_GUARD_MS = 400;
+
+// Inlined pictures (data: URIs of the logo and the robots, tens of KB) are written as <img data-img="id"> and get
+// their src once, then the same node is moved into every later render: the HTML stays small and the picture is not
+// decoded again on each update.
+const DATA_IMGS = [];
+const imgTag = (src, attrs) => {
+  if (!String(src).startsWith("data:")) return `<img src="${esc(src)}" ${attrs}>`;
+  let id = DATA_IMGS.indexOf(src);
+  if (id < 0) id = DATA_IMGS.push(src) - 1;
+  return `<img data-img="${id}" ${attrs}>`;
+};
+
 class RoborockBase extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
     this._html = "";
     this.shadowRoot.addEventListener("click", (ev) => this._onClick(ev));
-    // Escape closes the confirmation popup (as Cancel).
-    this.shadowRoot.addEventListener("keydown", (ev) => {
+    // Escape closes the confirmation popup (as Cancel). Listened on the window while the popup is open: a re-render
+    // or a click on its text takes the focus out of the card.
+    this._onKey = (ev) => {
       if (ev.key !== "Escape" || !this._confirm) return;
       ev.stopPropagation();
       this._closeConfirm();
-    });
+    };
   }
 
   // Home Assistant pushes a new hass on every state change of the whole instance: the card is only
@@ -629,14 +645,15 @@ class RoborockBase extends HTMLElement {
       const path = ev.composedPath();
       if (path.includes(this) || path.some((n) => DIALOG_TAGS.has(n.tagName))) return;
       this._toggled = new Set();
-      this._confirm = null;
-      this._update();
+      if (this._confirm) this._closeConfirm();
+      else this._update();
     };
     document.addEventListener("click", this._onOutside, true);
   }
 
   disconnectedCallback() {
     document.removeEventListener("click", this._onOutside, true);
+    window.removeEventListener("keydown", this._onKey);
     clearTimeout(this._pendingTimer);
     this._closeZoom?.();
   }
@@ -674,12 +691,37 @@ class RoborockBase extends HTMLElement {
       html = html.replace(/<ha-card>([\s\S]*)<\/ha-card>\s*$/, (_, inner) => `<ha-card class="dialog-open">${inner}${this._confirmHtml()}</ha-card>`);
     }
     if (html !== this._html) {
+      // The popup keeps its focus across the rewrite (OK, or Cancel when the user moved to it).
+      const focused = this._confirm && this.shadowRoot.activeElement?.dataset?.action;
       this._html = html;
       this.shadowRoot.innerHTML = html;
+      this._placeImages();
+      if (this._confirm) {
+        const sel = focused === "confirm_cancel" ? '[data-action="confirm_cancel"]' : ".modal .primary";
+        this.shadowRoot.querySelector(sel)?.focus();
+      }
       // Map size for the crop: read it from the image itself, already loaded (cache) or once loaded.
       for (const img of this.shadowRoot.querySelectorAll("img[data-map]")) {
         if (img.complete && img.naturalWidth) this._onLoad({ target: img });
         else img.addEventListener("load", (ev) => this._onLoad(ev), { once: true });
+      }
+    }
+  }
+
+  // Moves the inlined pictures kept from the previous render into the new one, or gives them their src once.
+  _placeImages() {
+    const kept = this._imgNodes || new Map();
+    this._imgNodes = new Map();
+    for (const img of this.shadowRoot.querySelectorAll("img[data-img]")) {
+      const key = `${img.dataset.img}|${img.className}`;
+      const old = kept.get(key);
+      if (old) {
+        kept.delete(key);
+        img.replaceWith(old);
+        this._imgNodes.set(key, old);
+      } else {
+        img.src = DATA_IMGS[img.dataset.img];
+        this._imgNodes.set(key, img);
       }
     }
   }
@@ -715,6 +757,11 @@ class RoborockBase extends HTMLElement {
   _onClick(ev) {
     const path = ev.composedPath();
     const el = path.find((n) => n.dataset && (n.dataset.entity || n.dataset.action));
+    // Just closed: the rest of a double click on OK does nothing.
+    if (!this._confirm && Date.now() - (this._confirmClosedAt ?? 0) < CONFIRM_GUARD_MS) {
+      ev.stopPropagation();
+      return;
+    }
     // Confirmation popup open: only its buttons and the backdrop itself (outside the dialog) act.
     if (this._confirm) {
       ev.stopPropagation();
@@ -763,12 +810,15 @@ class RoborockBase extends HTMLElement {
   // Confirmation before pressing a button entity (routine, consumable reset): Cancel does nothing.
   _openConfirm(confirm) {
     this._confirm = confirm;
+    window.addEventListener("keydown", this._onKey);
     this._update();
     this.shadowRoot.querySelector(".modal .primary")?.focus();
   }
 
   _closeConfirm() {
     this._confirm = null;
+    this._confirmClosedAt = Date.now();
+    window.removeEventListener("keydown", this._onKey);
     this._update();
   }
 
@@ -854,7 +904,7 @@ class RoborockBase extends HTMLElement {
   _pictureBlock(dev, status) {
     const pic = this._picture(dev);
     return pic
-      ? `<div class="picture clickable" data-entity="${esc(dev.vacuum || status?.entity || "")}"><img src="${esc(pic)}" alt=""></div>`
+      ? `<div class="picture clickable" data-entity="${esc(dev.vacuum || status?.entity || "")}">${imgTag(pic, 'alt=""')}</div>`
       : "";
   }
 
@@ -872,7 +922,7 @@ class RoborockBase extends HTMLElement {
       <div class="header">
         ${
           c.show_logo !== false
-            ? `<a class="logo-link" href="${ROBOROCK_SITE}" target="_blank" rel="noopener noreferrer" title="Roborock"><img class="logo" src="${IMG_LOGO}" alt="Roborock"></a>`
+            ? `<a class="logo-link" href="${ROBOROCK_SITE}" target="_blank" rel="noopener noreferrer" title="Roborock">${imgTag(IMG_LOGO, 'class="logo" alt="Roborock"')}</a>`
             : ""
         }
         <div class="titles">
