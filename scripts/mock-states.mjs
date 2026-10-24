@@ -116,7 +116,7 @@ export const maps = {
       {
         flag: 0,
         name: "Appartement",
-        rooms: { 1: "Chambre Léa", 2: "Salon", 3: "Chambre Enfants", 4: "Couloir", 5: "Entrée", 6: "Chambre Parents", 7: "Salle de bains", 8: "Toilettes", 9: "Salle à manger", 11: "Cuisine" },
+        rooms: { 1: "Chambre Amis", 2: "Salon", 3: "Chambre Enfants", 4: "Couloir", 5: "Entrée", 6: "Chambre Parents", 7: "Salle de bains", 8: "Toilettes", 9: "Salle à manger", 11: "Cuisine" },
       },
     ],
   },
