@@ -397,13 +397,16 @@ const hours = (s) => {
   return u === "min" ? v / 60 : u === "s" ? v / 3600 : u === "d" ? v * 24 : v;
 };
 
+// Rounded to the minute first, so that 1.995 h reads "2 h" (not "1 h 60") and 0.999 h "1 h" (not "60 min").
 const fmtHours = (h) => {
   if (h === null || h === undefined) return "—";
   if (h <= 0) return "0 h";
-  if (h < 1) return `${Math.max(1, Math.round(h * 60))} min`;
-  if (h < 10) {
-    const m = Math.round((h % 1) * 60);
-    return m ? `${Math.floor(h)} h ${String(m).padStart(2, "0")}` : `${Math.floor(h)} h`;
+  const total = Math.round(h * 60);
+  if (total < 60) return `${Math.max(1, total)} min`;
+  if (total < 600) {
+    const m = total % 60;
+    const H = Math.floor(total / 60);
+    return m ? `${H} h ${String(m).padStart(2, "0")}` : `${H} h`;
   }
   return `${Math.round(h)} h`;
 };
