@@ -131,3 +131,43 @@ test("the full and mini cards share the room, error and picture blocks", () => {
     assert.match(html, /class="picture clickable" data-entity="vacuum\.aspirateur"><img src="/);
   }
 });
+
+test("Escape still closes the popup after a re-render took the focus away", () => {
+  const hass = makeHass();
+  const card = newCard(hass);
+  click(card, { action: "routine", entity: "button.routine", label: "Morning" });
+  // A device state changes while the popup is open: the card is rewritten and the focus falls back to <body>,
+  // so the keydown only reaches the window.
+  const batt = "sensor.aspirateur_batterie";
+  card.hass = { ...hass, states: { ...states, [batt]: { ...states[batt], state: "42" } } };
+  assert.match(card.shadowRoot.innerHTML, /dialog-open/);
+  rr.window.fire("keydown", { key: "Escape", stopPropagation() {} });
+  assert.doesNotMatch(card.shadowRoot.innerHTML, /dialog-open/);
+  assert.equal(hass.calls.length, 0);
+});
+
+test("the second click of a double click on OK does not reach the card under the popup", () => {
+  const hass = makeHass();
+  const card = newCard(hass);
+  click(card, { action: "routine", entity: "button.routine", label: "Morning" });
+  click(card, { action: "confirm_ok" });
+  // What lies under OK once the popup is gone: the battery (more-info) or an action button.
+  click(card, { entity: "sensor.aspirateur_batterie" });
+  click(card, { action: "stop", entity: "vacuum.aspirateur" });
+  assert.equal(hass.calls.length, 1);
+  assert.equal((card.events || []).length, 0);
+  card._confirmClosedAt -= 1000;
+  click(card, { entity: "sensor.aspirateur_batterie" });
+  assert.equal(card.events.length, 1, "clicks act again afterwards");
+});
+
+test("inlined pictures are not written into the HTML of every render", () => {
+  const card = new rr.RoborockCard();
+  card.setConfig({ device: "saros", show_map: "never", image: "data:image/png;base64,AAAA" });
+  card.hass = makeHass();
+  assert.doesNotMatch(card.shadowRoot.innerHTML, /data:image\/png/);
+  assert.match(card.shadowRoot.innerHTML, /class="picture clickable" data-entity="vacuum\.aspirateur"><img data-img="\d+" alt="">/);
+  card.setConfig({ device: "saros", show_map: "never", image: "/local/robot.png" });
+  card.hass = makeHass();
+  assert.match(card.shadowRoot.innerHTML, /<img src="\/local\/robot\.png" alt="">/);
+});

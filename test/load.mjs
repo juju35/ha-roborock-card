@@ -52,12 +52,19 @@ export const load = () => {
     setTimeout,
     clearTimeout,
   };
+  // window-level listeners, fired by hand with fire(type, ev).
+  const winListeners = {};
+  sandbox.addEventListener = (type, fn) => (winListeners[type] ||= new Set()).add(fn);
+  sandbox.removeEventListener = (type, fn) => winListeners[type]?.delete(fn);
+  sandbox.fire = (type, ev) => {
+    for (const fn of [...(winListeners[type] || [])]) fn(ev);
+  };
   sandbox.window = sandbox;
   vm.createContext(sandbox);
   return vm.runInContext(
     `${source}
     ({ fmtHours, hours, statusClass, esc, resolve, ago, RTF, RoborockCard: customElements.get("roborock-card"),
-       RoborockMiniCard: customElements.get("roborock-mini-card") })`,
+       RoborockMiniCard: customElements.get("roborock-mini-card"), window })`,
     sandbox,
   );
 };
