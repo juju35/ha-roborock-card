@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.8.1
+
+### Fixes
+- Escape closes the confirmation popup even when the card was redrawn while it was open (a battery change, for instance), and the keyboard focus goes back to the popup button that had it.
+- A double click on OK presses the button once and no longer opens what lies under the popup.
+- A click outside the card closes the popup the same way as Cancel.
+
+### Changes
+- Lighter redraws: the built-in logo and robot pictures are no longer rewritten into the page on every update (about 35 KB → 20 KB per redraw). Pictures set with `image:` are unchanged.
+
+### Maintenance
+- New tests for the popup and the redraws (17 in all); the screenshot script renders each capture in its own page, and the duplicate-code check ignores test folders.
+
 ## 1.8.0
 
 ### Changes
