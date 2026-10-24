@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2
+
+### Maintenance
+- Neutral room name in the screenshot mock data; screenshots regenerated.
+
 ## 1.7.1
 
 ### Maintenance
