@@ -649,6 +649,8 @@ class RoborockBase extends HTMLElement {
       else this._update();
     };
     document.addEventListener("click", this._onOutside, true);
+    // Reattached with the popup still open (view switch, editor): Escape keeps closing it.
+    if (this._confirm) window.addEventListener("keydown", this._onKey);
   }
 
   disconnectedCallback() {
@@ -698,7 +700,8 @@ class RoborockBase extends HTMLElement {
       this._placeImages();
       if (this._confirm) {
         const sel = focused === "confirm_cancel" ? '[data-action="confirm_cancel"]' : ".modal .primary";
-        this.shadowRoot.querySelector(sel)?.focus();
+        // preventScroll: an update while the popup is open must not bring a scrolled page back to the card.
+        this.shadowRoot.querySelector(sel)?.focus({ preventScroll: true });
       }
       // Map size for the crop: read it from the image itself, already loaded (cache) or once loaded.
       for (const img of this.shadowRoot.querySelectorAll("img[data-map]")) {
