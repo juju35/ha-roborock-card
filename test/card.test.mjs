@@ -196,3 +196,63 @@ test("Escape still closes the popup after the card is detached and attached agai
   assert.doesNotMatch(card.shadowRoot.innerHTML, /dialog-open/);
   assert.equal(hass.calls.length, 0);
 });
+
+const newMini = (hass, config = {}) => {
+  const mini = new rr.RoborockMiniCard();
+  mini.setConfig({ device: "saros", show_map: "never", ...config });
+  mini.hass = hass;
+  mini.connectedCallback();
+  return mini;
+};
+
+test("the mini card's detail button shows the full card, and back", () => {
+  const hass = makeHass();
+  const mini = newMini(hass);
+  const full = newCard(hass);
+  assert.match(mini.shadowRoot.innerHTML, /class="zoom" data-action="zoom" title="Show the full card"/);
+  assert.doesNotMatch(mini.shadowRoot.innerHTML, /class="section-title/);
+  let stopped = 0;
+  mini._onClick({ composedPath: () => [{ dataset: { action: "zoom" } }], stopPropagation: () => stopped++, detail: 1 });
+  assert.equal(stopped, 1, "the click does not reach the header");
+  assert.equal(hass.calls.length, 0);
+  const zoomed = mini.shadowRoot.innerHTML;
+  assert.match(zoomed, /title="Back to the compact view"/);
+  // Everything the full card shows, same markup, plus the button.
+  assert.equal(zoomed.replace(/<button class="zoom"[\s\S]*?<\/button>/, ""), full.shadowRoot.innerHTML);
+  assert.equal(mini.getCardSize(), full.getCardSize());
+  assert.deepEqual(mini.getGridOptions(), full.getGridOptions());
+  click(mini, { action: "zoom" });
+  assert.match(mini.shadowRoot.innerHTML, /title="Show the full card"/);
+  assert.doesNotMatch(mini.shadowRoot.innerHTML, /class="section-title/);
+  assert.equal(mini.getCardSize(), 3);
+});
+
+test("a click outside the mini card brings the compact view back, not one inside it or in a dialog", () => {
+  const mini = newMini(makeHass());
+  click(mini, { action: "zoom" });
+  mini._onUnzoom({ composedPath: () => [{ tagName: "BUTTON" }, mini] });
+  mini._onUnzoom({ composedPath: () => [{ tagName: "DIV" }, { tagName: "HA-MORE-INFO-DIALOG" }] });
+  mini._onUnzoom({ composedPath: () => [{ tagName: "DIV" }, { tagName: "HA-DIALOG" }] });
+  assert.equal(mini._zoomed, true);
+  assert.match(mini.shadowRoot.innerHTML, /class="section-title/);
+  mini._onUnzoom({ composedPath: () => [{ tagName: "DIV" }] });
+  assert.equal(mini._zoomed, false);
+  assert.doesNotMatch(mini.shadowRoot.innerHTML, /class="section-title/);
+});
+
+test("from the keyboard, the focus moves to the new detail button", () => {
+  const mini = newMini(makeHass());
+  const focused = [];
+  mini.shadowRoot.querySelector = (sel) => (sel === ".zoom" ? { focus: () => focused.push(sel) } : null);
+  mini._onClick({ composedPath: () => [{ dataset: { action: "zoom" } }], stopPropagation() {}, detail: 0 });
+  assert.equal(focused.length, 1);
+  mini._onClick({ composedPath: () => [{ dataset: { action: "zoom" } }], stopPropagation() {}, detail: 1 });
+  assert.equal(focused.length, 1, "a mouse click leaves the focus alone");
+});
+
+test("zoom: false removes the detail button", () => {
+  const mini = newMini(makeHass(), { zoom: false });
+  assert.doesNotMatch(mini.shadowRoot.innerHTML, /class="zoom"/);
+  const full = newCard(makeHass());
+  assert.doesNotMatch(full.shadowRoot.innerHTML, /class="zoom"/);
+});

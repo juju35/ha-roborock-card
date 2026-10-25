@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.9.0
+
+### Changes
+- Mini card: a small detail button at the top right of the header (after the status pill) switches it to the full card's content, with the same device and options, and back. A click anywhere outside the card brings the compact view back; clicks inside the card or in a dialog opened from it (more-info) do not. From the keyboard, the focus stays on the button.
+- New `zoom` option (default `true`, in the visual editor too): `zoom: false` removes the button.
+- Zoomed in, the mini card reports the full card's size to the dashboard.
+
+### Maintenance
+- The mini card now builds on the full card (no duplicated markup); tests for the zoom (23 in all) and two new screenshots of the zoomed-in mini card.
+
 ## 1.8.2
 
 ### Fixes

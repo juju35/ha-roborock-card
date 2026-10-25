@@ -52,6 +52,9 @@ const ICONS = {
   map: "M15,19L9,16.89V5L15,7.11M20.5,3C20.44,3 20.39,3 20.34,3L15,5.1L9,3L3.36,4.9C3.15,4.97 3,5.15 3,5.38V20.5A0.5,0.5 0 0,0 3.5,21C3.55,21 3.61,21 3.66,20.97L9,18.9L15,21L20.64,19.1C20.85,19 21,18.85 21,18.62V3.5A0.5,0.5 0 0,0 20.5,3Z",
   alert: "M13 14H11V9H13M13 18H11V16H13M1 21H23L12 2L1 21Z",
   chevron_down: "M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z",
+  // mdi:arrow-expand and mdi:arrow-collapse (mini card detail button)
+  expand: "M10,21V19H6.41L10.91,14.5L9.5,13.09L5,17.59V14H3V21H10M14.5,10.91L19,6.41V10H21V3H14V5H17.59L13.09,9.5L14.5,10.91Z",
+  collapse: "M19.5,3.09L15,7.59V4H13V11H20V9H16.41L20.91,4.5L19.5,3.09M4,13V15H7.59L3.09,19.5L4.5,20.91L9,16.41V20H11V13H4Z",
   reset: "M12,4C14.1,4 16.1,4.8 17.6,6.3C20.7,9.4 20.7,14.5 17.6,17.6C15.8,19.5 13.3,20.2 10.9,19.9L11.4,17.9C13.1,18.1 14.9,17.5 16.2,16.2C18.5,13.9 18.5,10.1 16.2,7.7C15.1,6.6 13.5,6 12,6V10.6L7,5.6L12,0.6V4M6.3,17.6C3.7,15 3.3,11 5.1,7.9L6.6,9.4C5.5,11.6 5.9,14.4 7.8,16.2C8.3,16.7 8.9,17.1 9.6,17.4L9,19.4C8,19 7.1,18.4 6.3,17.6Z",
 };
 
@@ -140,6 +143,10 @@ const STRINGS = {
     map_always: "Always",
     language: "Language",
     lang_auto: "Automatic",
+    zoom: "Detail button",
+    zoom_helper: "Button at the top right that switches the mini card to the full card and back",
+    zoom_in: "Show the full card",
+    zoom_out: "Back to the compact view",
     // States and values
     s_charging: "Charging",
     s_charging_complete: "Charged",
@@ -283,6 +290,10 @@ const STRINGS = {
     map_always: "Toujours",
     language: "Langue",
     lang_auto: "Automatique",
+    zoom: "Bouton de détail",
+    zoom_helper: "Bouton en haut à droite qui passe la mini-carte en carte complète et inversement",
+    zoom_in: "Afficher la carte complète",
+    zoom_out: "Revenir à la vue compacte",
     s_charging: "En charge",
     s_charging_complete: "Chargé",
     s_docked: "Sur la base",
@@ -562,6 +573,11 @@ const BASE_STYLE = `
   .room.all { color: var(--secondary-text-color); }
   .room.all.on { color: var(--rr-red); }
   .rooms-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+  .zoom { all: unset; flex: none; cursor: pointer; width: 24px; height: 24px; margin: -4px -4px -4px 0; border-radius: 50%;
+          display: grid; place-items: center; color: var(--secondary-text-color); }
+  .zoom .icon { width: 16px; height: 16px; }
+  .zoom:hover { background: color-mix(in srgb, var(--rr-idle) 16%, transparent); color: var(--primary-text-color); }
+  .zoom:focus-visible { outline: 2px solid var(--primary-color, var(--rr-red)); outline-offset: 1px; }
 `;
 
 // In-card confirmation popup, as in ha-system-monitor-card and ha-iptv: a backdrop over the card with a
@@ -578,6 +594,12 @@ const DIALOG_STYLE = `
 
 // Element names of Home Assistant dialogs (more-info opened from the card, among others).
 const DIALOG_TAGS = new Set(["HA-MORE-INFO-DIALOG", "HA-DIALOG", "DIALOG"]);
+
+// True for a click outside `card` that is not in a dialog opened from it (more-info, say).
+const isOutside = (card, ev) => {
+  const path = ev.composedPath();
+  return !path.includes(card) && !path.some((n) => DIALOG_TAGS.has(n.tagName));
+};
 
 // After the confirmation popup closes, clicks on the card are ignored for this long: the second click of a double
 // click on OK would otherwise land on what lies under the button (the battery, an action button).
@@ -641,9 +663,7 @@ class RoborockBase extends HTMLElement {
   connectedCallback() {
     // Clicks inside a dialog (the more-info opened from the card) leave the card as it is.
     this._onOutside ??= (ev) => {
-      if (!this._toggled?.size && !this._confirm) return;
-      const path = ev.composedPath();
-      if (path.includes(this) || path.some((n) => DIALOG_TAGS.has(n.tagName))) return;
+      if ((!this._toggled?.size && !this._confirm) || !isOutside(this, ev)) return;
       this._toggled = new Set();
       if (this._confirm) this._closeConfirm();
       else this._update();
@@ -783,6 +803,7 @@ class RoborockBase extends HTMLElement {
     const { action, entity, label } = el.dataset;
     if (this._roomAction(action, entity, el.dataset.room)) return;
     if (action === "zoom_map") return this._zoomMap(entity);
+    if (action === "zoom") return this._toggleZoom(ev);
     if (action === "toggle_section") {
       const key = el.dataset.section;
       this._toggled = new Set(this._toggled);
@@ -937,7 +958,13 @@ class RoborockBase extends HTMLElement {
             ? `<span class="chip clickable ${statusClass(status.state)}" data-entity="${esc(status.entity)}"><span class="dot"></span>${esc(status.text)}</span>`
             : ""
         }
+        ${this._zoomButton()}
       </div>`;
+  }
+
+  // Detail button at the far right of the header (mini card only).
+  _zoomButton() {
+    return "";
   }
 
   _errorCard(key) {
@@ -1498,24 +1525,60 @@ const MINI_STYLE = `
   .rooms-wrap { padding: 0 12px 12px; }
 `;
 
-class RoborockMiniCard extends RoborockBase {
+// The mini card is a full card drawn compact: its detail button (top right, `zoom: false` removes it) switches it
+// to the full card's content and back, and a click anywhere else on the page brings the compact view back.
+class RoborockMiniCard extends RoborockCard {
+  constructor() {
+    super();
+    // Clicks inside a dialog (the more-info opened from the card) leave it zoomed in.
+    this._onUnzoom = (ev) => {
+      if (this._zoomed && isOutside(this, ev)) this._setZoom(false);
+    };
+  }
+
   static getConfigElement() {
     return document.createElement("roborock-mini-card-editor");
   }
 
-  static getStubConfig(hass) {
-    return RoborockCard.getStubConfig(hass);
+  connectedCallback() {
+    super.connectedCallback();
+    document.addEventListener("click", this._onUnzoom, true);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    document.removeEventListener("click", this._onUnzoom, true);
   }
 
   getCardSize() {
-    return 3;
+    return this._zoomed ? super.getCardSize() : 3;
   }
 
   getGridOptions() {
-    return { columns: 6, min_columns: 6 };
+    return this._zoomed ? super.getGridOptions() : { columns: 6, min_columns: 6 };
+  }
+
+  _zoomButton() {
+    if (this._config.zoom === false) return "";
+    const z = this._zoomed;
+    const label = esc(this._t(z ? "zoom_out" : "zoom_in"));
+    return `<button class="zoom" data-action="zoom" title="${label}" aria-label="${label}">${svgIcon(z ? ICONS.collapse : ICONS.expand)}</button>`;
+  }
+
+  _setZoom(on) {
+    this._zoomed = on;
+    this._update();
+  }
+
+  // The click never reaches the header or an action (stopped in _onClick). From the keyboard (Enter / Space: no
+  // click count), the focus moves to the button that replaced this one.
+  _toggleZoom(ev) {
+    this._setZoom(!this._zoomed);
+    if (ev.detail === 0) this.shadowRoot.querySelector(".zoom")?.focus();
   }
 
   _render() {
+    if (this._zoomed) return super._render();
     const { dev, error } = findDevice(this._hass, this._config);
     if (error) return this._errorCard(error);
     this._dev = dev;
@@ -1623,8 +1686,10 @@ class RoborockEditorBase extends HTMLElement {
     if (!this._form) {
       this._form = document.createElement("ha-form");
       this._form.computeLabel = (s) => t(this._hass, this._config, s.name);
-      this._form.computeHelper = (s) =>
-        s.name === "crop" && this._mapSize ? t(this._hass, this._config, "map_size", { w: this._mapSize.w, h: this._mapSize.h }) : undefined;
+      this._form.computeHelper = (s) => {
+        if (s.name === "zoom") return t(this._hass, this._config, "zoom_helper");
+        return s.name === "crop" && this._mapSize ? t(this._hass, this._config, "map_size", { w: this._mapSize.w, h: this._mapSize.h }) : undefined;
+      };
       this._form.addEventListener("value-changed", (ev) => {
         ev.stopPropagation();
         const config = { ...ev.detail.value };
@@ -1742,6 +1807,7 @@ class RoborockMiniCardEditor extends RoborockEditorBase {
     return [
       ["show_controls", true],
       ["room_selection", true],
+      ["zoom", true],
     ];
   }
 }
