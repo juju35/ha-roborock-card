@@ -9,10 +9,87 @@
 
 const VERSION = "__VERSION__";
 const IMG_LOGO = "__IMG_LOGO__";
-const IMAGES = {
-  saros_20: "__IMG_SAROS_20__",
-  f25_ultra: "__IMG_F25_ULTRA__",
+// Roborock pictures: drawn illustrations, picked from the device name (robot with or without LiDAR turret,
+// with or without its dock, dark or white) or the wet-dry vacuum kind.
+const ROBOT_COLORS = {
+  dark: { top: "#3a3d42", side: "#1f2124", rim: "#55595f", lens: "#0e0f11" },
+  white: { top: "#f4f4f2", side: "#cfd0cd", rim: "#e2e2df", lens: "#2a2c30" },
 };
+// Robot seen from the front, slightly from above: disc of radius r centred on (cx, cy).
+const robotShape = (cx, cy, r, turret, col) => {
+  const ry = r * 0.3, h = r * 0.2;
+  let s = `<ellipse cx="${cx}" cy="${cy + h + ry * 0.35}" rx="${r * 0.98}" ry="${ry * 0.7}" opacity=".22"/>`;
+  s += `<path d="M${cx - r} ${cy} v${h} a${r} ${ry} 0 0 0 ${2 * r} 0 v${-h} z" fill="${col.side}"/>`;
+  s += `<ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${ry}" fill="${col.top}"/>`;
+  s += `<ellipse cx="${cx}" cy="${cy}" rx="${r * 0.97}" ry="${ry * 0.93}" fill="none" stroke="${col.rim}" stroke-width="${r * 0.02}"/>`;
+  s += `<rect x="${cx - r * 0.3}" y="${cy + h * 0.35}" width="${r * 0.6}" height="${h * 0.35}" rx="${h * 0.17}" fill="${col.lens}"/>`;
+  if (turret) {
+    const tr = r * 0.24, th = r * 0.17, ty = cy - ry * 0.25;
+    s += `<path d="M${cx - tr} ${ty} v${-th} a${tr} ${tr * 0.3} 0 0 1 ${2 * tr} 0 v${th} a${tr} ${tr * 0.3} 0 0 1 ${-2 * tr} 0 z" fill="${col.side}"/>`;
+    s += `<ellipse cx="${cx}" cy="${ty - th}" rx="${tr}" ry="${tr * 0.3}" fill="${col.top}"/>`;
+    s += `<rect x="${cx - tr * 0.55}" y="${ty - th * 0.75}" width="${tr * 1.1}" height="${th * 0.4}" rx="${th * 0.2}" fill="${col.lens}"/>`;
+  } else {
+    s += `<circle cx="${cx + r * 0.55}" cy="${cy - ry * 0.25}" r="${r * 0.04}" fill="#e3212d"/>`;
+  }
+  return s;
+};
+const svgDoc = (w, h, body, defs = "") =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">${defs ? `<defs>${defs}</defs>` : ""}${body}</svg>`;
+// Robot alone or in front of its dock.
+const robotSvg = ({ turret = true, white = false, dock = true } = {}) => {
+  const col = ROBOT_COLORS[white ? "white" : "dark"];
+  if (!dock) return svgDoc(160, 100, robotShape(80, 50, 72, turret, col));
+  const [dTop, dBot, panel, seam] = white
+    ? ["#fafaf8", "#d7d8d5", "#ecece9", "#c4c5c2"]
+    : ["#b9bcc0", "#62666c", "#2b2e33", "#4a4e54"];
+  const defs = `<linearGradient id="d" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${dTop}"/><stop offset="1" stop-color="${dBot}"/></linearGradient>`;
+  let s = `<ellipse cx="80" cy="152" rx="66" ry="6" opacity=".22"/>`;
+  s += `<path d="M18 140 L30 126 H130 L142 140 Q142 146 136 146 H24 Q18 146 18 140 Z" fill="${white ? "#e6e6e3" : "#2b2e33"}"/>`;
+  s += `<rect x="34" y="8" width="92" height="124" rx="10" fill="url(#d)"/>`;
+  s += `<rect x="40" y="16" width="80" height="54" rx="6" fill="${panel}"/>`;
+  s += `<line x1="80" y1="18" x2="80" y2="68" stroke="${seam}" stroke-width="1.5"/>`;
+  s += `<rect x="40" y="76" width="80" height="4" rx="2" fill="${seam}"/>`;
+  s += `<circle cx="112" cy="90" r="2" fill="#43c463"/>`;
+  s += robotShape(80, 122, 52, turret, col);
+  return svgDoc(160, 160, s, defs);
+};
+// Upright wet-dry vacuum: floor head, body with the two water tanks, handle.
+const wetdrySvg = ({ white = true } = {}) => {
+  const [body, edge, accent] = white ? ["#f2f2f0", "#c9cac7", "#3a3d42"] : ["#4a4e54", "#26282c", "#9aa0a6"];
+  let s = `<ellipse cx="50" cy="194" rx="40" ry="4" opacity=".22"/>`;
+  s += `<path d="M12 178 Q12 168 22 168 H78 Q88 168 88 178 V186 Q88 192 82 192 H18 Q12 192 12 186 Z" fill="${body}" stroke="${edge}" stroke-width="1.5"/>`;
+  s += `<rect x="16" y="182" width="68" height="6" rx="3" fill="#3f8fd4" opacity=".7"/>`;
+  s += `<rect x="30" y="70" width="40" height="104" rx="14" fill="${body}" stroke="${edge}" stroke-width="1.5"/>`;
+  s += `<rect x="35" y="80" width="30" height="34" rx="6" fill="#9fc6e6" opacity=".75"/>`;
+  s += `<rect x="35" y="120" width="30" height="40" rx="6" fill="#8a8f96" opacity=".55"/>`;
+  s += `<rect x="47" y="14" width="6" height="58" rx="3" fill="${accent}"/>`;
+  s += `<path d="M38 6 Q50 -2 62 6 L60 22 Q50 18 40 22 Z" fill="${accent}"/>`;
+  s += `<rect x="45" y="26" width="10" height="12" rx="2" fill="#2fa3ff" opacity=".85"/>`;
+  return svgDoc(100, 200, s);
+};
+// Presets offered in the editor (`image` option); the keys of the former photos still work.
+const IMAGES = {
+  saros_20: () => robotSvg({ turret: false }),
+  s8_maxv_ultra: () => robotSvg(),
+  qrevo: () => robotSvg({ white: true }),
+  q7: () => robotSvg({ white: true, dock: false }),
+  f25_ultra: () => wetdrySvg(),
+  dyad_pro: () => wetdrySvg({ white: false }),
+};
+const IMAGE_LABELS = { saros_20: "Saros 20", s8_maxv_ultra: "S8 MaxV Ultra", qrevo: "Qrevo", q7: "Q7", f25_ultra: "F25 Ultra", dyad_pro: "Dyad Pro" };
+// Automatic picture: Saros robots have no LiDAR turret, the Q series (Q7, Q8, Qrevo) is white, the dock is drawn
+// when the integration reports one (or the model name implies it); Dyad wet-dry vacuums are dark.
+const autoSvg = (dev) => {
+  const name = dev.rawName || dev.name || "";
+  if (dev.kind === "wetdry") return wetdrySvg({ white: !/dyad/i.test(name) });
+  if (dev.kind !== "robot") return null;
+  return robotSvg({
+    turret: !/saros/i.test(name),
+    white: /\bq\s?(revo|\d)/i.test(name),
+    dock: Object.keys(dev.dock || {}).length > 0 || /ultra|plus|saros|q\s?revo/i.test(name),
+  });
+};
+const svgUri = (svg) => svg && `data:image/svg+xml,${encodeURIComponent(svg)}`;
 const ROBOROCK_SITE = "https://www.roborock.com";
 const PENDING_MS = 45000;
 const DEFAULT_COLLAPSED = ["stats", "dock"];
@@ -935,9 +1012,9 @@ class RoborockBase extends HTMLElement {
   _picture(dev) {
     const img = this._config.image;
     if (img === "none") return null;
-    if (img && IMAGES[img]) return IMAGES[img];
+    if (img && IMAGES[img]) return svgUri(IMAGES[img]());
     if (img && img !== "auto") return img;
-    return dev.kind === "wetdry" ? IMAGES.f25_ultra : dev.kind === "robot" ? IMAGES.saros_20 : null;
+    return svgUri(autoSvg(dev));
   }
 
   _header(dev, status, sub) {
@@ -1511,7 +1588,6 @@ class RoborockCard extends RoborockBase {
 
 const MINI_STYLE = `
   .header { padding: 12px 12px 4px; }
-  .logo { height: 32px; }
   .name { font-size: 16px; }
   .content { padding: 4px 12px 12px; display: flex; align-items: center; gap: 12px; }
   .picture { width: 64px; height: 72px; }
@@ -1651,8 +1727,7 @@ class RoborockEditorBase extends HTMLElement {
             custom_value: true,
             options: [
               { value: "auto", label: tr("image_auto") },
-              { value: "saros_20", label: "Saros 20" },
-              { value: "f25_ultra", label: "F25 Ultra" },
+              ...Object.entries(IMAGE_LABELS).map(([value, label]) => ({ value, label })),
               { value: "none", label: tr("image_none") },
             ],
           },

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.10.0
+
+### Changes
+- Drawn device pictures that follow the model, instead of the two photos (Saros 20, F25 Ultra): robot with or without LiDAR turret (Saros), dark or white (Q series, Qrevo), with its dock when the integration reports one or the name implies it; upright wet-dry vacuum, dark for the Dyad series. The bundle is lighter.
+- New `image` presets in the visual editor: `s8_maxv_ultra`, `qrevo`, `q7`, `dyad_pro` (`saros_20` and `f25_ultra` still work).
+
+### Fixes
+- The Roborock logo of the mini card is the same size as on the full card (40 px instead of 32 px).
+
+### Maintenance
+- Test for the picture choice (24 in all); screenshots regenerated.
+
 ## 1.9.0
 
 ### Changes

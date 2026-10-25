@@ -51,3 +51,18 @@ test("resolve merges the dock into its robot", () => {
   assert.ok(Object.keys(saros.dock).length > 0);
   assert.ok(!model.devices.some((d) => d.id === "saros_dock"));
 });
+
+test("the device picture follows the model, the image option overrides it", () => {
+  const { autoSvg, IMAGES, robotSvg, wetdrySvg } = rr;
+  const robot = (name, dock = {}) => autoSvg({ kind: "robot", rawName: name, dock });
+  assert.equal(robot("Roborock Saros 20"), robotSvg({ turret: false }));
+  assert.equal(robot("Roborock S8 MaxV Ultra"), robotSvg());
+  assert.equal(robot("Roborock Qrevo Curv"), robotSvg({ white: true }));
+  assert.equal(robot("Roborock Q7 Max"), robotSvg({ white: true, dock: false }));
+  assert.equal(robot("Roborock S6", { dock_error: "sensor.x" }), robotSvg()); // dock reported by the integration
+  assert.equal(robot("Roborock S5 Max"), robotSvg({ dock: false }));
+  assert.equal(autoSvg({ kind: "wetdry", rawName: "Roborock F25 Ultra" }), wetdrySvg());
+  assert.equal(autoSvg({ kind: "wetdry", rawName: "Roborock Dyad Pro" }), wetdrySvg({ white: false }));
+  assert.equal(autoSvg({ kind: "other", rawName: "Roborock Saros 20 Dock" }), null);
+  assert.equal(IMAGES.f25_ultra(), wetdrySvg());
+});
