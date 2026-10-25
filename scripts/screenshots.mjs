@@ -53,6 +53,8 @@ const shots = [
   { file: "mini-card", type: "roborock-mini-card", theme: "light", width: 380, config: {} },
   { file: "mini-card-dark", type: "roborock-mini-card", theme: "dark", width: 380, config: { language: "fr" }, overrides: cleaning },
   { file: "mini-card-f25", type: "roborock-mini-card", theme: "light", width: 380, config: { device: "Roborock F25 Ultra" } },
+  { file: "mini-card-zoom", type: "roborock-mini-card", theme: "light", width: 380, config: {}, clicks: [".zoom"] },
+  { file: "mini-card-zoom-dark", type: "roborock-mini-card", theme: "dark", width: 380, config: { language: "fr" }, overrides: cleaning, clicks: [".zoom"] },
 ];
 
 const browser = await chromium.launch(
@@ -79,7 +81,15 @@ for (const s of shots) {
     { type: s.type, config: s.config, states, entities, devices, overrides: s.overrides, maps }
   );
   for (const sel of s.clicks || []) {
-    await page.evaluate((sel) => document.querySelector("#root").firstElementChild.shadowRoot.querySelector(sel).click(), sel);
+    // A mouse click (detail 1), not .click(): a keyboard-like click would move the focus and show its ring.
+    await page.evaluate(
+      (sel) =>
+        document
+          .querySelector("#root")
+          .firstElementChild.shadowRoot.querySelector(sel)
+          .dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true, detail: 1 })),
+      sel
+    );
     await page.waitForTimeout(100);
   }
   await page.waitForTimeout(800);

@@ -32,6 +32,7 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 - Maintenance: main brush, side brush, filter, sensors, dock strainer… with remaining time and a reset button (with confirmation) when the integration provides one
 - Statistics: last clean, number of cleanings, total area and time
 - Collapsible sections (statistics and dock folded by default)
+- Detail button on the mini card (top right): it switches the mini card to the full card's content and back; a click anywhere outside the card brings the compact view back
 - Map of the current floor while the robot is cleaning (or always, or never), with optional cropping, enlarged full screen on click
 - Click any value to open its Home Assistant history (more-info dialog)
 - Click the Roborock logo to open [roborock.com](https://www.roborock.com)
@@ -120,6 +121,7 @@ image: auto
 show_logo: true
 show_controls: true
 room_selection: true
+zoom: true
 language: fr
 ```
 
@@ -133,6 +135,7 @@ language: fr
 | `show_logo` | both | `true` | Show the Roborock logo (opens [roborock.com](https://www.roborock.com) in a new tab) |
 | `show_controls` | both | `true` | Start / pause, stop, dock and locate buttons (robot vacuums), dock actions (empty bin, wash and dry mop) and maintenance reset buttons |
 | `room_selection` | both | `true` | The Start button opens the room selector; `false` starts a full cleaning right away |
+| `zoom` | mini | `true` | Detail button at the top right of the mini card: it shows the full card's content (with the same options, so `show_dock`, `show_map`, `collapsed`… can be set on the mini card too) and switches back to the compact view; a click outside the card also brings the compact view back. `false` removes the button |
 | `show_modes` | full | `true` | Cleaning mode, suction power, mop intensity and route |
 | `show_routines` | full | `true` | Routines buttons |
 | `show_dock` | full | `true` | Dock status |
@@ -166,6 +169,12 @@ Click the map to open it full screen; click anywhere or press Escape to close it
 |---|---|
 | ![card](screenshots/card.png) | ![card dark](screenshots/card-dark.png) |
 | ![mini card](screenshots/mini-card.png) | ![mini card dark](screenshots/mini-card-dark.png) |
+
+Mini card zoomed in with its detail button (top right, click it again or anywhere outside the card to go back):
+
+| Light | Dark (French, cleaning) |
+|---|---|
+| ![mini card zoomed in](screenshots/mini-card-zoom.png) | ![mini card zoomed in dark](screenshots/mini-card-zoom-dark.png) |
 
 Room selector (opened by the Start button):
 
