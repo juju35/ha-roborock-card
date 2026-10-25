@@ -21,7 +21,7 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 ## Features
 
 - Two cards: a full **Roborock Card** and a compact **Roborock Mini Card**
-- Robot vacuums and wet-dry vacuums, with a device picture chosen per model (Saros 20, F25 Ultra) or your own
+- Robot vacuums and wet-dry vacuums, with a drawn device picture that follows the model (robot with or without LiDAR turret and dock, wet-dry vacuum) or your own
 - Automatic discovery of the Roborock devices (several devices supported, dock merged with its robot)
 - Battery, status, current room, cleaning progress and errors
 - Cleaning settings: mode, suction power, mop intensity and route
@@ -131,7 +131,7 @@ language: fr
 |---|---|---|---|
 | `device` | both | First robot vacuum | Roborock device to display: its name (as shown in Home Assistant) or its device id (set by the visual editor) |
 | `title` | both | Device name | Card title |
-| `image` | both | `auto` | Device picture: `auto` (per model), `saros_20`, `f25_ultra`, `none`, or the URL of your own picture (e.g. `/local/my-robot.png`) |
+| `image` | both | `auto` | Device picture: `auto` (per model), `saros_20`, `s8_maxv_ultra`, `qrevo`, `q7`, `f25_ultra`, `dyad_pro`, `none`, or the URL of your own picture (e.g. `/local/my-robot.png`) |
 | `show_logo` | both | `true` | Show the Roborock logo (opens [roborock.com](https://www.roborock.com) in a new tab) |
 | `show_controls` | both | `true` | Start / pause, stop, dock and locate buttons (robot vacuums), dock actions (empty bin, wash and dry mop) and maintenance reset buttons |
 | `room_selection` | both | `true` | The Start button opens the room selector; `false` starts a full cleaning right away |
@@ -192,7 +192,9 @@ The cards read the Home Assistant entity and device registries instead of entity
 
 States and errors are shown with the card's own translations when available, otherwise with Home Assistant's translation of the integration.
 
-The device picture is chosen from the model: robot vacuums show the Saros 20, wet-dry vacuums (`roborock.wdv.*`) show the F25 Ultra. Use the `image` option to pick another one or your own.
+<p align="center"><img src="images/models.svg" alt="Device pictures" width="640"></p>
+
+The device picture is drawn from the model name: Saros robots have no LiDAR turret, the Q series (Q7, Q8, Qrevo) is white, the other robots (S series…) are dark; the dock is drawn when the integration reports one or the name implies it (Ultra, Plus, Qrevo, Saros). Wet-dry vacuums (`roborock.wdv.*`) show an upright vacuum, dark for the Dyad series. The picture is animated by the current activity, from the status, the cleaning mode and the dock drying: vacuuming (side brushes and dust), mopping (wet trail and drops), both, returning to the dock, washing the mops (bubbles) and drying them (heat waves); it stays still otherwise and with the reduced-motion setting. Use the `image` option to pick another one or your own.
 
 The room selector reads the rooms of the current map (the one chosen in the integration's **Selected map** select) with the `roborock.get_maps` service, then cleans the selected rooms with the same `app_segment_clean` command the integration uses. When the robot is paused, the Start button resumes the cleaning instead.
 
@@ -206,7 +208,7 @@ Maintenance thresholds: the remaining time turns orange under 10 % of the part l
 
 ```bash
 npm install
-npm run build        # bundles src/roborock-card.js + images/ into dist/roborock-card.js
+npm run build        # bundles src/roborock-card.js + images/logo.svg into dist/roborock-card.js
 npm run check        # builds and checks the card (run in CI)
 npm run screenshots  # renders the cards with mock data (scripts/mock-states.mjs) into screenshots/
 ```

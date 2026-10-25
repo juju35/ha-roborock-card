@@ -128,7 +128,7 @@ test("the full and mini cards share the room, error and picture blocks", () => {
   for (const html of [full.shadowRoot.innerHTML, mini.shadowRoot.innerHTML]) {
     assert.match(html, /class="line clickable" data-entity="sensor\.aspirateur_piece_actuelle"/);
     assert.match(html, /class="alert-line crit clickable" data-entity="sensor\.aspirateur_erreur"/);
-    assert.match(html, /class="picture clickable" data-entity="vacuum\.aspirateur"><img src="/);
+    assert.match(html, /class="picture clickable" data-entity="vacuum\.aspirateur"><img data-img="/);
   }
 });
 
