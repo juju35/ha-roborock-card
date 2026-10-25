@@ -10,11 +10,35 @@
 const VERSION = "__VERSION__";
 const IMG_LOGO = "__IMG_LOGO__";
 // Roborock pictures: drawn illustrations, picked from the device name (robot with or without LiDAR turret,
-// with or without its dock, dark or white) or the wet-dry vacuum kind.
+// with or without its dock, dark or white) or the wet-dry vacuum kind, and animated by what the device is doing
+// (`activity`): vacuum, mop, vacmop (vacuum and mop), returning, washing (the mops), drying (the mops).
 const ROBOT_COLORS = {
   dark: { top: "#3a3d42", side: "#1f2124", rim: "#55595f", lens: "#0e0f11" },
   white: { top: "#f4f4f2", side: "#cfd0cd", rim: "#e2e2df", lens: "#2a2c30" },
 };
+// Animations, shared by every picture. Pictures are <img>, so CSS animations run but no script does.
+const ANIM_CSS = `
+  .spin { transform-box: fill-box; transform-origin: center; animation: spin .5s linear infinite; }
+  .sway { animation: sway 2.4s ease-in-out infinite alternate; }
+  .home { animation: home 2.6s cubic-bezier(.3,.7,.4,1) infinite; }
+  .tilt { transform-box: fill-box; transform-origin: 50% 100%; animation: tilt 1.6s ease-in-out infinite alternate; }
+  .dust { animation: dust 1.2s ease-in infinite; } .drop { animation: drop 1.1s ease-in infinite; }
+  .wet { animation: wet 1.6s ease-in-out infinite alternate; }
+  .bub { transform-box: fill-box; transform-origin: center; animation: bub 1.8s ease-out infinite; }
+  .heat { animation: heat 2.2s ease-out infinite; }
+  .roll { animation: roll .4s linear infinite; }
+  .d1 { animation-delay: -.3s; } .d2 { animation-delay: -.6s; } .d3 { animation-delay: -.9s; } .d4 { animation-delay: -1.2s; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes sway { from { transform: translateX(-6px); } to { transform: translateX(6px); } }
+  @keyframes home { 0% { transform: translateX(-70px); opacity: 0; } 15% { opacity: 1; } 60%, 100% { transform: none; opacity: 1; } }
+  @keyframes tilt { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+  @keyframes dust { from { transform: translateY(14px); opacity: 0; } 30% { opacity: .9; } to { transform: translateY(-4px); opacity: 0; } }
+  @keyframes drop { from { transform: translateY(-6px); opacity: 0; } 30% { opacity: 1; } to { transform: translateY(10px); opacity: 0; } }
+  @keyframes wet { from { opacity: .25; } to { opacity: .6; } }
+  @keyframes bub { from { transform: translateY(0) scale(.4); opacity: 0; } 25% { opacity: .9; } to { transform: translateY(-34px) scale(1.1); opacity: 0; } }
+  @keyframes heat { from { transform: translateY(6px); opacity: 0; } 35% { opacity: .9; } to { transform: translateY(-30px); opacity: 0; } }
+  @keyframes roll { to { stroke-dashoffset: -12; } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }`;
 // Robot seen from the front, slightly from above: disc of radius r centred on (cx, cy).
 const robotShape = (cx, cy, r, turret, col) => {
   const ry = r * 0.3, h = r * 0.2;
@@ -33,12 +57,45 @@ const robotShape = (cx, cy, r, turret, col) => {
   }
   return s;
 };
-const svgDoc = (w, h, body, defs = "") =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">${defs ? `<defs>${defs}</defs>` : ""}${body}</svg>`;
-// Robot alone or in front of its dock.
-const robotSvg = ({ turret = true, white = false, dock = true } = {}) => {
+const svgDoc = (w, h, body, defs = "", anim = false) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">${anim ? `<style>${ANIM_CSS}</style>` : ""}${defs ? `<defs>${defs}</defs>` : ""}${body}</svg>`;
+// Side brush: three spokes turning, at (x, y).
+const brush = (x, y, r) =>
+  `<g class="spin"><circle cx="${x}" cy="${y}" r="${r}" fill="none"/>${[0, 120, 240]
+    .map((a) => {
+      const rad = (a * Math.PI) / 180;
+      return `<line x1="${x}" y1="${y}" x2="${(x + r * Math.cos(rad)).toFixed(1)}" y2="${(y + r * 0.45 * Math.sin(rad)).toFixed(1)}" stroke="#8a8f96" stroke-width="1.6" stroke-linecap="round"/>`;
+    })
+    .join("")}</g>`;
+// Rising bubbles (washing) or heat waves (drying) around (cx, y), spread over w.
+const bubbles = (cx, y, w) =>
+  [-0.4, -0.15, 0.1, 0.35, 0.45]
+    .map((f, i) => `<circle class="bub d${i % 5}" cx="${cx + f * w}" cy="${y - (i % 2) * 6}" r="${3.5 + (i % 3) * 1.5}" fill="#9fd3ff" stroke="#3f8fd4" stroke-width=".8"/>`)
+    .join("");
+const heat = (cx, y, w) =>
+  [-0.3, 0, 0.3]
+    .map(
+      (f, i) =>
+        `<path class="heat d${i + 1}" d="M${cx + f * w} ${y} q-4 -6 0 -12 q4 -6 0 -12" fill="none" stroke="#ff9f43" stroke-width="2.2" stroke-linecap="round"/>`
+    )
+    .join("");
+// Robot alone or in front of its dock, animated by `activity`.
+const robotSvg = ({ turret = true, white = false, dock = true, activity = null } = {}) => {
   const col = ROBOT_COLORS[white ? "white" : "dark"];
-  if (!dock) return svgDoc(160, 100, robotShape(80, 50, 72, turret, col));
+  const cleaning = ["vacuum", "mop", "vacmop"].includes(activity);
+  // Cleaning: the robot is out on the floor, drawn alone whatever its dock.
+  if (!dock || cleaning) {
+    const vac = activity === "vacuum" || activity === "vacmop";
+    const mop = activity === "mop" || activity === "vacmop";
+    let s = "";
+    if (mop) s += `<ellipse class="wet" cx="80" cy="84" rx="78" ry="13" fill="#3f8fd4"/>`;
+    let robot = robotShape(80, 50, 72, turret, col);
+    if (vac) robot += brush(26, 75, 10) + brush(134, 75, 10);
+    s += `<g class="${cleaning ? "sway" : ""}">${robot}</g>`;
+    if (vac) s += [56, 72, 88, 104].map((x, i) => `<circle class="dust d${i + 1}" cx="${x}" cy="94" r="2.6" fill="#c9ccd0"/>`).join("");
+    if (mop) s += [40, 66, 94, 120].map((x, i) => `<path class="drop d${i + 1}" d="M${x} 88 q-3 4 0 6 q3 -2 0 -6z" fill="#3f8fd4"/>`).join("");
+    return svgDoc(160, 104, s, "", cleaning);
+  }
   const [dTop, dBot, panel, seam] = white
     ? ["#fafaf8", "#d7d8d5", "#ecece9", "#c4c5c2"]
     : ["#b9bcc0", "#62666c", "#2b2e33", "#4a4e54"];
@@ -49,45 +106,68 @@ const robotSvg = ({ turret = true, white = false, dock = true } = {}) => {
   s += `<rect x="40" y="16" width="80" height="54" rx="6" fill="${panel}"/>`;
   s += `<line x1="80" y1="18" x2="80" y2="68" stroke="${seam}" stroke-width="1.5"/>`;
   s += `<rect x="40" y="76" width="80" height="4" rx="2" fill="${seam}"/>`;
-  s += `<circle cx="112" cy="90" r="2" fill="#43c463"/>`;
-  s += robotShape(80, 122, 52, turret, col);
-  return svgDoc(160, 160, s, defs);
+  s += `<circle cx="112" cy="90" r="2" fill="${activity === "washing" ? "#2fa3ff" : activity === "drying" ? "#ff9f43" : "#43c463"}"/>`;
+  s += `<g class="${activity === "returning" ? "home" : ""}">${robotShape(80, 122, 52, turret, col)}</g>`;
+  if (activity === "washing") s += bubbles(80, 112, 100);
+  if (activity === "drying") s += heat(80, 108, 100);
+  return svgDoc(160, 160, s, defs, !!activity);
 };
-// Upright wet-dry vacuum: floor head, body with the two water tanks, handle.
-const wetdrySvg = ({ white = true } = {}) => {
+// Upright wet-dry vacuum: floor head, body with the two water tanks, handle. Cleaning: it rocks back and forth
+// and its roller turns; washing / drying (self-cleaning on its base): bubbles / heat waves at the floor head.
+const wetdrySvg = ({ white = true, activity = null } = {}) => {
   const [body, edge, accent] = white ? ["#f2f2f0", "#c9cac7", "#3a3d42"] : ["#4a4e54", "#26282c", "#9aa0a6"];
+  const cleaning = ["vacuum", "mop", "vacmop"].includes(activity);
   let s = `<ellipse cx="50" cy="194" rx="40" ry="4" opacity=".22"/>`;
-  s += `<path d="M12 178 Q12 168 22 168 H78 Q88 168 88 178 V186 Q88 192 82 192 H18 Q12 192 12 186 Z" fill="${body}" stroke="${edge}" stroke-width="1.5"/>`;
-  s += `<rect x="16" y="182" width="68" height="6" rx="3" fill="#3f8fd4" opacity=".7"/>`;
-  s += `<rect x="30" y="70" width="40" height="104" rx="14" fill="${body}" stroke="${edge}" stroke-width="1.5"/>`;
-  s += `<rect x="35" y="80" width="30" height="34" rx="6" fill="#9fc6e6" opacity=".75"/>`;
-  s += `<rect x="35" y="120" width="30" height="40" rx="6" fill="#8a8f96" opacity=".55"/>`;
-  s += `<rect x="47" y="14" width="6" height="58" rx="3" fill="${accent}"/>`;
-  s += `<path d="M38 6 Q50 -2 62 6 L60 22 Q50 18 40 22 Z" fill="${accent}"/>`;
-  s += `<rect x="45" y="26" width="10" height="12" rx="2" fill="#2fa3ff" opacity=".85"/>`;
-  return svgDoc(100, 200, s);
+  let v = `<path d="M12 178 Q12 168 22 168 H78 Q88 168 88 178 V186 Q88 192 82 192 H18 Q12 192 12 186 Z" fill="${body}" stroke="${edge}" stroke-width="1.5"/>`;
+  v += `<rect x="16" y="182" width="68" height="6" rx="3" fill="#3f8fd4" opacity=".7"/>`;
+  if (cleaning) v += `<line class="roll" x1="18" y1="185" x2="82" y2="185" stroke="#d6ecff" stroke-width="2" stroke-dasharray="4 8"/>`;
+  v += `<rect x="30" y="70" width="40" height="104" rx="14" fill="${body}" stroke="${edge}" stroke-width="1.5"/>`;
+  v += `<rect x="35" y="80" width="30" height="34" rx="6" fill="#9fc6e6" opacity=".75"/>`;
+  v += `<rect x="35" y="120" width="30" height="40" rx="6" fill="#8a8f96" opacity=".55"/>`;
+  v += `<rect x="47" y="14" width="6" height="58" rx="3" fill="${accent}"/>`;
+  v += `<path d="M38 6 Q50 -2 62 6 L60 22 Q50 18 40 22 Z" fill="${accent}"/>`;
+  v += `<rect x="45" y="26" width="10" height="12" rx="2" fill="#2fa3ff" opacity=".85"/>`;
+  s += cleaning ? `<g class="tilt">${v}</g>` : v;
+  if (activity === "washing") s += bubbles(50, 176, 70);
+  if (activity === "drying") s += heat(50, 168, 60);
+  return svgDoc(100, 200, s, "", !!activity);
 };
 // Presets offered in the editor (`image` option); the keys of the former photos still work.
 const IMAGES = {
-  saros_20: () => robotSvg({ turret: false }),
-  s8_maxv_ultra: () => robotSvg(),
-  qrevo: () => robotSvg({ white: true }),
-  q7: () => robotSvg({ white: true, dock: false }),
-  f25_ultra: () => wetdrySvg(),
-  dyad_pro: () => wetdrySvg({ white: false }),
+  saros_20: (activity) => robotSvg({ turret: false, activity }),
+  s8_maxv_ultra: (activity) => robotSvg({ activity }),
+  qrevo: (activity) => robotSvg({ white: true, activity }),
+  q7: (activity) => robotSvg({ white: true, dock: false, activity }),
+  f25_ultra: (activity) => wetdrySvg({ activity }),
+  dyad_pro: (activity) => wetdrySvg({ white: false, activity }),
 };
 const IMAGE_LABELS = { saros_20: "Saros 20", s8_maxv_ultra: "S8 MaxV Ultra", qrevo: "Qrevo", q7: "Q7", f25_ultra: "F25 Ultra", dyad_pro: "Dyad Pro" };
 // Automatic picture: Saros robots have no LiDAR turret, the Q series (Q7, Q8, Qrevo) is white, the dock is drawn
 // when the integration reports one (or the model name implies it); Dyad wet-dry vacuums are dark.
-const autoSvg = (dev) => {
+const autoSvg = (dev, activity = null) => {
   const name = dev.rawName || dev.name || "";
-  if (dev.kind === "wetdry") return wetdrySvg({ white: !/dyad/i.test(name) });
+  if (dev.kind === "wetdry") return wetdrySvg({ white: !/dyad/i.test(name), activity });
   if (dev.kind !== "robot") return null;
   return robotSvg({
     turret: !/saros/i.test(name),
     white: /\bq\s?(revo|\d)/i.test(name),
     dock: Object.keys(dev.dock || {}).length > 0 || /ultra|plus|saros|q\s?revo/i.test(name),
+    activity,
   });
+};
+// What the device is doing, for the picture animation, from its status, cleaning mode and the dock drying
+// flag (null: at rest).
+const activityOf = (status, mode, drying) => {
+  const s = String(status || "").toLowerCase();
+  if (/dry/.test(s)) return "drying";
+  if (/going_to_wash|return|docking/.test(s)) return "returning";
+  if (/wash|self_clean/.test(s)) return "washing";
+  if (/mopping/.test(s)) return "mop";
+  // The dock drying flag only counts while the robot is not out cleaning.
+  if (!/clean|sweep|dusting|mapping|target|working/.test(s)) return drying ? "drying" : null;
+  const m = String(mode || "").toLowerCase();
+  if (/vac|sweep/.test(m) && /mop/.test(m)) return "vacmop";
+  return /mop/.test(m) ? "mop" : "vacuum";
 };
 const svgUri = (svg) => svg && `data:image/svg+xml,${encodeURIComponent(svg)}`;
 const ROBOROCK_SITE = "https://www.roborock.com";
@@ -1003,18 +1083,21 @@ class RoborockBase extends HTMLElement {
 
   // Picture of the robot (opens the vacuum), or "" when there is none.
   _pictureBlock(dev, status) {
-    const pic = this._picture(dev);
+    const pic = this._picture(dev, status);
     return pic
       ? `<div class="picture clickable" data-entity="${esc(dev.vacuum || status?.entity || "")}">${imgTag(pic, 'alt=""')}</div>`
       : "";
   }
 
-  _picture(dev) {
+  _picture(dev, status) {
     const img = this._config.image;
     if (img === "none") return null;
-    if (img && IMAGES[img]) return svgUri(IMAGES[img]());
-    if (img && img !== "auto") return img;
-    return svgUri(autoSvg(dev));
+    if (img && !IMAGES[img] && img !== "auto") return img;
+    // Mops drying: the drying status of the dock, or its remaining time while the robot is not out cleaning.
+    const d = dev.dock;
+    const drying = [d.mop_drying_status].some((id) => this._isOn(id)) || hours(this._s(d.mop_drying_remaining_time)) > 0;
+    const activity = activityOf(status?.state, this._s(dev.entities.cleaning_mode)?.state, drying);
+    return svgUri(IMAGES[img] ? IMAGES[img](activity) : autoSvg(dev, activity));
   }
 
   _header(dev, status, sub) {

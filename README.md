@@ -194,7 +194,7 @@ States and errors are shown with the card's own translations when available, oth
 
 <p align="center"><img src="images/models.svg" alt="Device pictures" width="640"></p>
 
-The device picture is drawn from the model name: Saros robots have no LiDAR turret, the Q series (Q7, Q8, Qrevo) is white, the other robots (S series…) are dark; the dock is drawn when the integration reports one or the name implies it (Ultra, Plus, Qrevo, Saros). Wet-dry vacuums (`roborock.wdv.*`) show an upright vacuum, dark for the Dyad series. Use the `image` option to pick another one or your own.
+The device picture is drawn from the model name: Saros robots have no LiDAR turret, the Q series (Q7, Q8, Qrevo) is white, the other robots (S series…) are dark; the dock is drawn when the integration reports one or the name implies it (Ultra, Plus, Qrevo, Saros). Wet-dry vacuums (`roborock.wdv.*`) show an upright vacuum, dark for the Dyad series. The picture is animated by the current activity, from the status, the cleaning mode and the dock drying: vacuuming (side brushes and dust), mopping (wet trail and drops), both, returning to the dock, washing the mops (bubbles) and drying them (heat waves); it stays still otherwise and with the reduced-motion setting. Use the `image` option to pick another one or your own.
 
 The room selector reads the rooms of the current map (the one chosen in the integration's **Selected map** select) with the `roborock.get_maps` service, then cleans the selected rooms with the same `app_segment_clean` command the integration uses. When the robot is paused, the Start button resumes the cleaning instead.
 

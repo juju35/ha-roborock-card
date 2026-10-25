@@ -4,13 +4,14 @@
 
 ### Changes
 - Drawn device pictures that follow the model, instead of the two photos (Saros 20, F25 Ultra): robot with or without LiDAR turret (Saros), dark or white (Q series, Qrevo), with its dock when the integration reports one or the name implies it; upright wet-dry vacuum, dark for the Dyad series. The bundle is lighter.
+- The picture is animated by what the device is doing: side brushes turning and dust sucked in while vacuuming, wet trail and drops while mopping (both in vacuum-and-mop mode), the robot rolling back into its dock when returning, bubbles while the mops are washed, heat waves while they dry. Upright wet-dry vacuums rock with their roller turning while cleaning, and show bubbles / heat waves while self-cleaning / drying. Motion is off with the system's reduced-motion setting.
 - New `image` presets in the visual editor: `s8_maxv_ultra`, `qrevo`, `q7`, `dyad_pro` (`saros_20` and `f25_ultra` still work).
 
 ### Fixes
 - The Roborock logo of the mini card is the same size as on the full card (40 px instead of 32 px).
 
 ### Maintenance
-- Test for the picture choice (24 in all); screenshots regenerated.
+- Tests for the picture choice and its animation (25 in all); screenshots regenerated.
 
 ## 1.9.0
 

@@ -66,3 +66,25 @@ test("the device picture follows the model, the image option overrides it", () =
   assert.equal(autoSvg({ kind: "other", rawName: "Roborock Saros 20 Dock" }), null);
   assert.equal(IMAGES.f25_ultra(), wetdrySvg());
 });
+
+test("the picture animation follows the status, the cleaning mode and the dock drying", () => {
+  const { activityOf, robotSvg } = rr;
+  assert.equal(activityOf("segment_cleaning", "vacuum"), "vacuum");
+  assert.equal(activityOf("cleaning", "vac_and_mop"), "vacmop");
+  assert.equal(activityOf("zoned_cleaning", "mop"), "mop");
+  assert.equal(activityOf("mopping", "vac_and_mop"), "mop");
+  assert.equal(activityOf("cleaning", undefined), "vacuum");
+  assert.equal(activityOf("returning_home"), "returning");
+  assert.equal(activityOf("going_to_wash_the_mop"), "returning");
+  assert.equal(activityOf("washing_the_mop"), "washing");
+  assert.equal(activityOf("drying"), "drying");
+  assert.equal(activityOf("charging", "vacuum", true), "drying");
+  assert.equal(activityOf("cleaning", "vacuum", true), "vacuum"); // out cleaning: the dock flag does not count
+  assert.equal(activityOf("charging", "vacuum"), null);
+  assert.doesNotMatch(robotSvg(), /<style>/); // at rest: no animation
+  assert.match(robotSvg({ activity: "vacuum" }), /class="spin"/);
+  assert.match(robotSvg({ activity: "mop" }), /class="drop/);
+  assert.match(robotSvg({ activity: "returning" }), /class="home"/);
+  assert.match(robotSvg({ activity: "washing" }), /class="bub/);
+  assert.match(robotSvg({ activity: "drying" }), /class="heat/);
+});
