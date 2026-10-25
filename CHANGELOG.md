@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.8.2
+
+### Fixes
+- While the confirmation popup is open, an update of the vacuum no longer scrolls the page back to the card.
+- Escape still closes the popup after the card was hidden and shown again (view switch, card editor).
+
+### Maintenance
+- Tests for both cases (19 in all); duplication checks run on Node 22.
+
 ## 1.8.1
 
 ### Fixes

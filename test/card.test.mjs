@@ -171,3 +171,28 @@ test("inlined pictures are not written into the HTML of every render", () => {
   card.hass = makeHass();
   assert.match(card.shadowRoot.innerHTML, /<img src="\/local\/robot\.png" alt="">/);
 });
+
+test("a re-render keeps the popup focus without scrolling the page to the card", () => {
+  const hass = makeHass();
+  const card = newCard(hass);
+  click(card, { action: "routine", entity: "button.routine", label: "Morning" });
+  const focusCalls = [];
+  card.shadowRoot.querySelector = (sel) => (sel === ".modal .primary" ? { focus: (opts) => focusCalls.push(opts) } : null);
+  const batt = "sensor.aspirateur_batterie";
+  card.hass = { ...hass, states: { ...states, [batt]: { ...states[batt], state: "41" } } };
+  assert.equal(focusCalls.length, 1);
+  assert.equal(focusCalls[0]?.preventScroll, true);
+});
+
+test("Escape still closes the popup after the card is detached and attached again", () => {
+  const hass = makeHass();
+  const card = newCard(hass);
+  card.connectedCallback();
+  click(card, { action: "routine", entity: "button.routine", label: "Morning" });
+  card.disconnectedCallback();
+  card.connectedCallback();
+  assert.match(card.shadowRoot.innerHTML, /dialog-open/);
+  rr.window.fire("keydown", { key: "Escape", stopPropagation() {} });
+  assert.doesNotMatch(card.shadowRoot.innerHTML, /dialog-open/);
+  assert.equal(hass.calls.length, 0);
+});
