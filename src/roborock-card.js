@@ -697,7 +697,7 @@ const BASE_STYLE = `
   .bar { height: 4px; border-radius: 3px; background: var(--divider-color, rgba(127,127,127,.25)); overflow: hidden; }
   .bar > div { height: 100%; border-radius: 3px; background: var(--c, var(--rr-ok)); transition: width .6s ease; }
   .header { display: flex; align-items: center; gap: 10px; padding: 12px 12px 4px; }
-  .logo { height: 40px; width: auto; flex: none; }
+  .logo { width: 40px; height: 40px; object-fit: contain; flex: none; }
   a.logo-link { display: flex; flex: none; }
   .titles { flex: 1; min-width: 0; }
   .name { font-size: 16px; font-weight: 500; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

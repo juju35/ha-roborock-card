@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Changes
+- The Roborock logo is fitted in a 40 × 40 px box (`object-fit: contain`), like the brand logos of the other ha-* cards; it looks the same.
+
+### Maintenance
+- Screenshots: English everywhere (no more French dark shots, English room and routine names), zoomed-in mini card at 460 px, on the shared 16 px frame and theme tokens.
+
 ## 1.10.0
 
 ### Changes
