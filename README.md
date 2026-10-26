@@ -165,6 +165,28 @@ Click the map to open it full screen; click anywhere or press Escape to close it
 
 ## Screenshots
 
+The picture animates to match what the device is doing and settles back to a still card once it is idle. Each state plays its own animation, and every one of them honours `prefers-reduced-motion`.
+
+While the robot is out vacuuming and mopping, it sways across the floor, its side brushes spin, and dust and water trail behind it:
+
+![cleaning animation](screenshots/cleaning.gif)
+
+Heading back, it slides in from the side and settles in front of its dock:
+
+![returning animation](screenshots/returning.gif)
+
+Docked and washing its mop, blue bubbles rise at the dock:
+
+![mop washing animation](screenshots/mop-washing.gif)
+
+Docked and drying its mop, orange heat waves rise instead:
+
+![mop drying animation](screenshots/mop-drying.gif)
+
+A wet-dry vacuum (F25 Ultra) rocks on its handle and its floor roller turns while it cleans:
+
+![F25 cleaning animation](screenshots/f25-cleaning.gif)
+
 | Light | Dark (cleaning: the map is shown) |
 |---|---|
 | ![card](screenshots/card.png) | ![card dark](screenshots/card-dark.png) |
@@ -210,7 +232,7 @@ Maintenance thresholds: the remaining time turns orange under 10 % of the part l
 npm install
 npm run build        # bundles src/roborock-card.js + images/logo.svg into dist/roborock-card.js
 npm run check        # builds and checks the card (run in CI)
-npm run screenshots  # renders the cards with mock data (scripts/mock-states.mjs) into screenshots/
+npm run screenshots  # renders the cards (and one GIF per animated state, needs ffmpeg) with mock data into screenshots/
 ```
 
 `dist/` is not committed: `npm run build` creates it locally, CI builds it on every push, and the release workflow attaches the built file to the release, which is where HACS downloads it from.

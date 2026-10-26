@@ -1,9 +1,12 @@
 // Renders the cards with mock Roborock data and saves the README screenshots.
 // Usage: npm run build && npm run screenshots
-import { chromium } from "playwright";
-import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { states, entities, devices, cleaning, maps } from "./mock-states.mjs";
+import { chromium } from "playwright";
+import { states, entities, devices, cleaning, returning, washing, drying, f25Cleaning, maps } from "./mock-states.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const cardJs = readFileSync(`${root}dist/roborock-card.js`, "utf8");
@@ -44,6 +47,30 @@ const page_html = (theme, width) => `<!doctype html><html><head><meta charset="u
          font-family: Roboto, "Segoe UI", Helvetica, Arial, sans-serif; width: ${width}px; }
 </style></head><body><div id="root"></div></body></html>`;
 
+// Opens a card on a fresh page (its script declares top-level names, which cannot be evaluated twice in one page)
+// and mounts it with the mock hass; `overrides` patch the mock states for this shot only.
+async function openCard(browser, { file, type, config, theme, width, overrides }) {
+  const page = await browser.newPage({ deviceScaleFactor: 2, viewport: { width: 1000, height: 2000 } });
+  page.on("pageerror", (err) => console.error(`pageerror (${file}): ${err.message}`));
+  await page.setContent(page_html(theme, width));
+  await page.addScriptTag({ content: HA_CARD });
+  await page.addScriptTag({ content: cardJs });
+  await page.evaluate(
+    ({ type, config, states, entities, devices, overrides, maps }) => {
+      for (const [id, o] of Object.entries(overrides || {})) states[id] = { ...states[id], ...o };
+      const el = document.createElement(type);
+      el.setConfig({ type: `custom:${type}`, ...config });
+      el.hass = {
+        states, entities, devices, language: "en", locale: { language: "en" }, callService: () => {},
+        callWS: async () => ({ response: maps }),
+      };
+      document.getElementById("root").appendChild(el);
+    },
+    { type, config, states, entities, devices, overrides, maps }
+  );
+  return page;
+}
+
 const shots = [
   { file: "card", type: "roborock-card", theme: "light", width: 460, config: {} },
   { file: "card-dark", type: "roborock-card", theme: "dark", width: 460, config: { crop: { top: 10, bottom: 10, left: 10, right: 10 } }, overrides: cleaning },
@@ -61,25 +88,7 @@ const browser = await chromium.launch(
   process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}
 );
 for (const s of shots) {
-  // A new page per shot: the card's script declares top-level names, which cannot be evaluated twice in one page.
-  const page = await browser.newPage({ deviceScaleFactor: 2, viewport: { width: 1000, height: 2000 } });
-  page.on("pageerror", (err) => console.error(`pageerror (${s.file}): ${err.message}`));
-  await page.setContent(page_html(s.theme, s.width));
-  await page.addScriptTag({ content: HA_CARD });
-  await page.addScriptTag({ content: cardJs });
-  await page.evaluate(
-    ({ type, config, states, entities, devices, overrides, maps }) => {
-      for (const [id, o] of Object.entries(overrides || {})) states[id] = { ...states[id], ...o };
-      const el = document.createElement(type);
-      el.setConfig({ type: `custom:${type}`, ...config });
-      el.hass = {
-        states, entities, devices, language: "en", locale: { language: "en" }, callService: () => {},
-        callWS: async () => ({ response: maps }),
-      };
-      document.getElementById("root").appendChild(el);
-    },
-    { type: s.type, config: s.config, states, entities, devices, overrides: s.overrides, maps }
-  );
+  const page = await openCard(browser, s);
   for (const sel of s.clicks || []) {
     // A mouse click (detail 1), not .click(): a keyboard-like click would move the focus and show its ring.
     await page.evaluate(
@@ -102,4 +111,49 @@ for (const s of shots) {
   console.log(`screenshots/${s.file}.png`);
   await page.close();
 }
+
+// Records one animated state as a looping GIF (screenshots/<gif.file>.gif) — needs ffmpeg on PATH.
+// Every animation is paused and stepped frame by frame, so the GIF is identical whatever the machine's speed.
+async function makeGif(browser, gif, { fps = 20, seconds = 3 } = {}) {
+  const page = await openCard(browser, gif);
+  await page.waitForTimeout(300);
+  const box = await page.locator("#root").boundingBox();
+  const clip = { x: 0, y: 0, width: gif.width + 32, height: Math.ceil(box.height) + 32 };
+  const dir = mkdtempSync(join(tmpdir(), "rr-frames-"));
+  const frames = Math.round(fps * seconds);
+  for (let i = 0; i < frames; i++) {
+    await page.evaluate((t) => {
+      for (const a of document.getAnimations()) {
+        a.pause();
+        a.currentTime = t;
+      }
+    }, (i * 1000) / fps);
+    await page.screenshot({ path: join(dir, `f${String(i).padStart(3, "0")}.png`), clip });
+  }
+  await page.close();
+  const out = `${root}screenshots/${gif.file}.gif`;
+  // Halve the retina capture and build a per-clip palette: the colours stay clean and the file stays small.
+  execFileSync("ffmpeg", [
+    "-y", "-loglevel", "error", "-framerate", String(fps), "-i", join(dir, "f%03d.png"),
+    "-vf", `scale=${clip.width}:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer:bayer_scale=4`,
+    "-loop", "0", out,
+  ]);
+  rmSync(dir, { recursive: true });
+  console.log(`screenshots/${gif.file}.gif`);
+}
+
+// One looping GIF per distinct animated state the card shows (each plays different keyframes):
+//   cleaning     — robot out vacuuming and mopping (sway, spin, dust, wet, drop)
+//   returning    — robot heading back to the dock (home)
+//   mop-washing  — robot docked, washing its mop (bub)
+//   mop-drying   — robot docked, drying its mop (heat)
+//   f25-cleaning — F25 Ultra wet-dry vacuum mid-clean (tilt, roll)
+const gifs = [
+  { file: "cleaning", type: "roborock-card", theme: "light", width: 460, config: {}, overrides: cleaning },
+  { file: "returning", type: "roborock-card", theme: "light", width: 460, config: {}, overrides: returning },
+  { file: "mop-washing", type: "roborock-card", theme: "light", width: 460, config: {}, overrides: washing },
+  { file: "mop-drying", type: "roborock-card", theme: "light", width: 460, config: {}, overrides: drying },
+  { file: "f25-cleaning", type: "roborock-card", theme: "light", width: 460, config: { device: "Roborock F25 Ultra" }, overrides: f25Cleaning },
+];
+for (const g of gifs) await makeGif(browser, g);
 await browser.close();
