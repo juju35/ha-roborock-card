@@ -1,7 +1,6 @@
 # Changelog
 
-## Unreleased
-
+## 1.11.0
 ### Changes
 - The Roborock logo is fitted in a 40 × 40 px box (`object-fit: contain`), like the brand logos of the other ha-* cards; it looks the same.
 - Mini card: the Roborock logo is back to 32 × 32 px, like the header icon of every ha-* mini card (the zoomed-in view keeps the full card's 40 px).
