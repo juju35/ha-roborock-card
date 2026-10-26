@@ -94,7 +94,8 @@ entity("sensor.balai_filtre", "f25", "filter_time_left", "95.95", { unit_of_meas
 entity("sensor.balai_rouleau", "f25", "brush_remaining", "95.95", { unit_of_measurement: "h", device_class: "duration" });
 entity("sensor.balai_duree_totale", "f25", "total_cleaning_time", "0.0", { unit_of_measurement: "h", device_class: "duration" });
 
-// Same robot while it is cleaning, with the mop drying in the dock and the dirty water tank full.
+// Same robot while it is cleaning (vacuum + mop), with the mop drying in the dock and the dirty water tank
+// full. Picture activity: "vacmop" — the robot sways, its side brushes spin and dust and water trail behind.
 export const cleaning = {
   "vacuum.aspirateur": { state: "cleaning" },
   "sensor.aspirateur_etat": { state: "segment_cleaning" },
@@ -107,6 +108,40 @@ export const cleaning = {
   "switch.station_sechage_de_la_serpilliere": { state: "on" },
   "sensor.station_sechage": { state: "4800" },
   "sensor.station_erreur": { state: "waste_water_tank_full" },
+};
+
+// The robot on its way back to the dock, the dock idle. Picture activity: "returning" — the robot slides in
+// from the left and settles in front of the dock.
+export const returning = {
+  "vacuum.aspirateur": { state: "returning" },
+  "sensor.aspirateur_etat": { state: "returning_home" },
+  "sensor.aspirateur_batterie": { state: "34" },
+  "sensor.aspirateur_piece_actuelle": { state: "Hallway" },
+  "sensor.aspirateur_progression": { state: "100" },
+};
+
+// The robot docked, self-cleaning (washing) its mop. Picture activity: "washing" — blue bubbles rise at the dock.
+export const washing = {
+  "vacuum.aspirateur": { state: "docked" },
+  "sensor.aspirateur_etat": { state: "washing_the_mop" },
+  "sensor.aspirateur_batterie": { state: "78" },
+  "switch.station_lavage_de_la_serpilliere": { state: "on" },
+};
+
+// The robot docked with its mop drying. Picture activity: "drying" — orange heat waves rise at the dock.
+export const drying = {
+  "vacuum.aspirateur": { state: "docked" },
+  "sensor.aspirateur_etat": { state: "drying" },
+  "sensor.aspirateur_batterie": { state: "92" },
+  "switch.station_sechage_de_la_serpilliere": { state: "on" },
+  "sensor.station_sechage": { state: "3600" },
+};
+
+// The F25 Ultra wet-dry vacuum mid-clean. Picture activity: "vacuum" — the body rocks (tilt) and the floor
+// roller turns (roll); those two keyframes only ever play for a wet-dry vacuum.
+export const f25Cleaning = {
+  "sensor.balai_etat": { state: "cleaning" },
+  "sensor.balai_batterie": { state: "54" },
 };
 
 // Response of the roborock.get_maps service, used by the room selector.
