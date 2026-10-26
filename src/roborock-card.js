@@ -1671,6 +1671,7 @@ class RoborockCard extends RoborockBase {
 
 const MINI_STYLE = `
   .header { padding: 12px 12px 4px; }
+  .logo { width: 32px; height: 32px; }
   .name { font-size: 16px; }
   .content { padding: 4px 12px 12px; display: flex; align-items: center; gap: 12px; }
   .picture { width: 64px; height: 72px; }
