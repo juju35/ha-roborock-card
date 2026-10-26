@@ -165,6 +165,10 @@ Click the map to open it full screen; click anywhere or press Escape to close it
 
 ## Screenshots
 
+While the robot is cleaning, the card animates: the status icon spins, the robot sweeps across the map, dust and water trail behind it, and the dock shows the mop drying and the dirty-water warning. It settles back to a still card once cleaning stops (and honours `prefers-reduced-motion`).
+
+![cleaning animation](screenshots/cleaning.gif)
+
 | Light | Dark (cleaning: the map is shown) |
 |---|---|
 | ![card](screenshots/card.png) | ![card dark](screenshots/card-dark.png) |
@@ -210,7 +214,7 @@ Maintenance thresholds: the remaining time turns orange under 10 % of the part l
 npm install
 npm run build        # bundles src/roborock-card.js + images/logo.svg into dist/roborock-card.js
 npm run check        # builds and checks the card (run in CI)
-npm run screenshots  # renders the cards with mock data (scripts/mock-states.mjs) into screenshots/
+npm run screenshots  # renders the cards (and the cleaning.gif, needs ffmpeg) with mock data into screenshots/
 ```
 
 `dist/` is not committed: `npm run build` creates it locally, CI builds it on every push, and the release workflow attaches the built file to the release, which is where HACS downloads it from.
