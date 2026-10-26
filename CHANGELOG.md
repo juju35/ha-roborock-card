@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.0 - 2026-10-26
+### Fixes
+- Harden the `image` option against inherited property names: `_picture()` now uses `Object.hasOwn(IMAGES, img)` so that only real presets are recognised. A value matching an inherited prototype property (`__proto__`, `constructor`, `hasOwnProperty`…) no longer returns a truthy non-callable value that crashed the render with a `TypeError`. Legitimate values (`auto`, presets, custom URL, `none`) are unchanged.
+
 ## 1.11.0
 ### Changes
 - The Roborock logo is fitted in a 40 × 40 px box (`object-fit: contain`), like the brand logos of the other ha-* cards; it looks the same.

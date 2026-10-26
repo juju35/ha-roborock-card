@@ -1094,12 +1094,15 @@ class RoborockBase extends HTMLElement {
   _picture(dev, status) {
     const img = this._config.image;
     if (img === "none") return null;
-    if (img && !IMAGES[img] && img !== "auto") return img;
+    // Object.hasOwn, not IMAGES[img]: an inherited property name ("__proto__", "constructor"…) as the image
+    // option would otherwise be a truthy non-function and crash the render.
+    const preset = img && Object.hasOwn(IMAGES, img);
+    if (img && !preset && img !== "auto") return img;
     // Mops drying: the drying status of the dock, or its remaining time while the robot is not out cleaning.
     const d = dev.dock;
     const drying = [d.mop_drying_status].some((id) => this._isOn(id)) || hours(this._s(d.mop_drying_remaining_time)) > 0;
     const activity = activityOf(status?.state, this._s(dev.entities.cleaning_mode)?.state, drying);
-    return svgUri(IMAGES[img] ? IMAGES[img](activity) : autoSvg(dev, activity));
+    return svgUri(preset ? IMAGES[img](activity) : autoSvg(dev, activity));
   }
 
   _header(dev, status, sub) {
