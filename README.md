@@ -165,14 +165,14 @@ Click the map to open it full screen; click anywhere or press Escape to close it
 
 ## Screenshots
 
-| Light | Dark (French, cleaning: the map is shown) |
+| Light | Dark (cleaning: the map is shown) |
 |---|---|
 | ![card](screenshots/card.png) | ![card dark](screenshots/card-dark.png) |
 | ![mini card](screenshots/mini-card.png) | ![mini card dark](screenshots/mini-card-dark.png) |
 
 Mini card zoomed in with its detail button (top right, click it again or anywhere outside the card to go back):
 
-| Light | Dark (French, cleaning) |
+| Light | Dark (cleaning) |
 |---|---|
 | ![mini card zoomed in](screenshots/mini-card-zoom.png) | ![mini card zoomed in dark](screenshots/mini-card-zoom-dark.png) |
 

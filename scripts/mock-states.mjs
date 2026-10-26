@@ -1,6 +1,6 @@
 // Mock Home Assistant registries and states shaped like the Roborock integration (a Saros 20 with
-// its dock and an F25 Ultra), used to render screenshots. Entity ids are in French on purpose:
-// the cards never rely on them.
+// its dock and an F25 Ultra), used to render screenshots. Entity ids are in French on purpose
+// (the cards never rely on them); the names shown are in English.
 export const states = {};
 export const entities = {};
 export const devices = {};
@@ -39,7 +39,7 @@ entity("vacuum.aspirateur", "saros", "roborock", "docked", {
 });
 entity("sensor.aspirateur_etat", "saros", "status", "charging");
 entity("sensor.aspirateur_batterie", "saros", null, "100", { device_class: "battery", unit_of_measurement: "%" });
-entity("sensor.aspirateur_piece_actuelle", "saros", "current_room", "Salon");
+entity("sensor.aspirateur_piece_actuelle", "saros", "current_room", "Living room");
 entity("sensor.aspirateur_erreur", "saros", "vacuum_error", "none");
 entity("sensor.aspirateur_progression", "saros", "clean_percent", "0", { unit_of_measurement: "%" });
 entity("sensor.aspirateur_surface", "saros", "cleaning_area", "42.5", { unit_of_measurement: "m²" });
@@ -61,16 +61,16 @@ entity("binary_sensor.aspirateur_nettoyage", "saros", "in_cleaning", "off");
 entity("select.aspirateur_mode", "saros", "cleaning_mode", "vac_and_mop", { options: ["vacuum", "vac_and_mop", "mop"] });
 entity("select.aspirateur_intensite", "saros", "mop_intensity", "moderate");
 entity("select.aspirateur_parcours", "saros", "cleaning_route", "deep_plus");
-entity("select.aspirateur_carte", "saros", "selected_map", "Appartement");
+entity("select.aspirateur_carte", "saros", "selected_map", "Apartment");
 entity("image.aspirateur_appartement", "saros", null, hoursAgo(1), {
-  friendly_name: "Roborock Saros 20 Appartement",
+  friendly_name: "Roborock Saros 20 Apartment",
   entity_picture: `data:image/svg+xml;base64,${Buffer.from(MAP).toString("base64")}`,
 });
 for (const [slug, name] of [
-  ["salon", "Salon"],
-  ["cuisine", "Cuisine"],
-  ["chambres", "Chambres"],
-  ["tout", "Toute la maison"],
+  ["salon", "Living room"],
+  ["cuisine", "Kitchen"],
+  ["chambres", "Bedrooms"],
+  ["tout", "Whole home"],
 ])
   entity(`button.aspirateur_${slug}`, "saros", null, "unknown", { friendly_name: `Roborock Saros 20 ${name}` });
 
@@ -99,7 +99,7 @@ export const cleaning = {
   "vacuum.aspirateur": { state: "cleaning" },
   "sensor.aspirateur_etat": { state: "segment_cleaning" },
   "sensor.aspirateur_batterie": { state: "64" },
-  "sensor.aspirateur_piece_actuelle": { state: "Cuisine" },
+  "sensor.aspirateur_piece_actuelle": { state: "Kitchen" },
   "sensor.aspirateur_progression": { state: "45" },
   "sensor.aspirateur_surface": { state: "18.2" },
   "sensor.aspirateur_duree": { state: "16" },
@@ -115,8 +115,8 @@ export const maps = {
     maps: [
       {
         flag: 0,
-        name: "Appartement",
-        rooms: { 1: "Chambre Amis", 2: "Salon", 3: "Chambre Enfants", 4: "Couloir", 5: "Entrée", 6: "Chambre Parents", 7: "Salle de bains", 8: "Toilettes", 9: "Salle à manger", 11: "Cuisine" },
+        name: "Apartment",
+        rooms: { 1: "Guest room", 2: "Living room", 3: "Kids' room", 4: "Hallway", 5: "Entrance", 6: "Main bedroom", 7: "Bathroom", 8: "Toilet", 9: "Dining room", 11: "Kitchen" },
       },
     ],
   },
