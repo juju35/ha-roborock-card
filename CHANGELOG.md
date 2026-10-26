@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Changes
+- The Roborock logo is fitted in a 40 × 40 px box (`object-fit: contain`), like the brand logos of the other ha-* cards; it looks the same.
+- Mini card: the Roborock logo is back to 32 × 32 px, like the header icon of every ha-* mini card (the zoomed-in view keeps the full card's 40 px).
+- Start / Pause, the mini card's round play / pause button, the room selector's Clean button and the popup's confirm button are tinted with the Roborock red instead of filled; the room chips are neutral (selected: tinted) instead of outlined, like the other ha-* cards.
+- The battery level next to the picture is 30 px (was 24 px), like the other cards' main value.
+- The content starts 8 px under the header (was 4 px), like the other cards.
+
+### Maintenance
+- Screenshots: English everywhere (no more French dark shots, English room and routine names), zoomed-in mini card at 460 px, on the shared 16 px frame and theme tokens.
+
 ## 1.10.0
 
 ### Changes

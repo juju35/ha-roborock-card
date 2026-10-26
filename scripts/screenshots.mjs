@@ -46,15 +46,15 @@ const page_html = (theme, width) => `<!doctype html><html><head><meta charset="u
 
 const shots = [
   { file: "card", type: "roborock-card", theme: "light", width: 460, config: {} },
-  { file: "card-dark", type: "roborock-card", theme: "dark", width: 460, config: { language: "fr", crop: { top: 10, bottom: 10, left: 10, right: 10 } }, overrides: cleaning },
-  { file: "card-rooms", type: "roborock-card", theme: "light", width: 460, config: { language: "fr", show_routines: false, show_dock: false, show_consumables: false, show_stats: false },
+  { file: "card-dark", type: "roborock-card", theme: "dark", width: 460, config: { crop: { top: 10, bottom: 10, left: 10, right: 10 } }, overrides: cleaning },
+  { file: "card-rooms", type: "roborock-card", theme: "light", width: 460, config: { show_routines: false, show_dock: false, show_consumables: false, show_stats: false },
     clicks: ['[data-action="open_rooms"]', '[data-room="2"]', '[data-room="11"]', '[data-room="9"]'] },
   { file: "card-f25", type: "roborock-card", theme: "light", width: 460, config: { device: "Roborock F25 Ultra" } },
   { file: "mini-card", type: "roborock-mini-card", theme: "light", width: 380, config: {} },
-  { file: "mini-card-dark", type: "roborock-mini-card", theme: "dark", width: 380, config: { language: "fr" }, overrides: cleaning },
+  { file: "mini-card-dark", type: "roborock-mini-card", theme: "dark", width: 380, config: {}, overrides: cleaning },
   { file: "mini-card-f25", type: "roborock-mini-card", theme: "light", width: 380, config: { device: "Roborock F25 Ultra" } },
-  { file: "mini-card-zoom", type: "roborock-mini-card", theme: "light", width: 380, config: {}, clicks: [".zoom"] },
-  { file: "mini-card-zoom-dark", type: "roborock-mini-card", theme: "dark", width: 380, config: { language: "fr" }, overrides: cleaning, clicks: [".zoom"] },
+  { file: "mini-card-zoom", type: "roborock-mini-card", theme: "light", width: 460, config: {}, clicks: [".zoom"] },
+  { file: "mini-card-zoom-dark", type: "roborock-mini-card", theme: "dark", width: 460, config: {}, overrides: cleaning, clicks: [".zoom"] },
 ];
 
 const browser = await chromium.launch(

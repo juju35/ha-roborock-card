@@ -696,8 +696,8 @@ const BASE_STYLE = `
           background: color-mix(in srgb, var(--c, var(--rr-ok)) 15%, transparent); color: var(--c, var(--rr-ok)); flex: none; }
   .bar { height: 4px; border-radius: 3px; background: var(--divider-color, rgba(127,127,127,.25)); overflow: hidden; }
   .bar > div { height: 100%; border-radius: 3px; background: var(--c, var(--rr-ok)); transition: width .6s ease; }
-  .header { display: flex; align-items: center; gap: 10px; padding: 12px 12px 4px; }
-  .logo { height: 40px; width: auto; flex: none; }
+  .header { display: flex; align-items: center; gap: 10px; padding: 12px 12px 0; }
+  .logo { width: 40px; height: 40px; object-fit: contain; flex: none; }
   a.logo-link { display: flex; flex: none; }
   .titles { flex: 1; min-width: 0; }
   .name { font-size: 16px; font-weight: 500; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -714,7 +714,8 @@ const BASE_STYLE = `
          font-weight: 500; padding: 6px 12px; border-radius: 18px; background: var(--secondary-background-color, rgba(127,127,127,.12));
          color: var(--primary-text-color); min-width: 0; }
   .btn:hover { background: color-mix(in srgb, var(--rr-red) 12%, var(--secondary-background-color, rgba(127,127,127,.12))); }
-  .btn.primary { background: var(--rr-red); color: #fff; }
+  .btn.primary { background: color-mix(in srgb, var(--rr-red) 16%, transparent); color: var(--rr-red); }
+  .btn.primary:hover { background: color-mix(in srgb, var(--rr-red) 24%, transparent); }
   .btn .icon { width: 18px; height: 18px; }
   .btn.round { width: 36px; height: 36px; padding: 0; border-radius: 50%; }
   .btn.disabled { opacity: .45; cursor: default; }
@@ -725,8 +726,9 @@ const BASE_STYLE = `
   .rooms-msg { font-size: 13px; color: var(--secondary-text-color); }
   .room-list { display: flex; flex-wrap: wrap; gap: 6px; }
   .room { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 16px; cursor: pointer; color: var(--primary-text-color);
-          background: transparent; border: 1px solid var(--divider-color, rgba(127,127,127,.35)); }
-  .room.on { background: color-mix(in srgb, var(--rr-red) 14%, transparent); border-color: var(--rr-red); color: var(--rr-red); font-weight: 500; }
+          background: var(--secondary-background-color, rgba(127,127,127,.12)); border: 1px solid transparent; }
+  .room.on { background: color-mix(in srgb, var(--rr-red) 16%, transparent); color: var(--rr-red); font-weight: 500; }
+  .room.on:hover { background: color-mix(in srgb, var(--rr-red) 24%, transparent); }
   .room.all { color: var(--secondary-text-color); }
   .room.all.on { color: var(--rr-red); }
   .rooms-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
@@ -1269,12 +1271,12 @@ class RoborockBase extends HTMLElement {
 // ---------------------------------------------------------------------------
 
 const FULL_STYLE = `
-  .content { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 12px; }
+  .content { padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 12px; }
   .hero { display: flex; gap: 12px; align-items: center; }
   .picture { width: 96px; height: 104px; }
   .picture img { filter: drop-shadow(0 4px 8px rgba(0,0,0,.18)); }
   .batt { display: flex; align-items: center; gap: 8px; }
-  .batt .pct { font-size: 24px; font-weight: 400; line-height: 1; }
+  .batt .pct { font-size: 30px; font-weight: 400; line-height: 1; }
   .batt .pct small { font-size: 14px; margin-left: 2px; color: var(--secondary-text-color); }
   .batt .icon { color: var(--c); }
   .batt .bolt { color: var(--rr-ok); width: 20px; height: 20px; }
@@ -1670,9 +1672,10 @@ class RoborockCard extends RoborockBase {
 // ---------------------------------------------------------------------------
 
 const MINI_STYLE = `
-  .header { padding: 12px 12px 4px; }
+  .header { padding: 12px 12px 0; }
+  .logo { width: 32px; height: 32px; }
   .name { font-size: 16px; }
-  .content { padding: 4px 12px 12px; display: flex; align-items: center; gap: 12px; }
+  .content { padding: 8px 12px 12px; display: flex; align-items: center; gap: 12px; }
   .picture { width: 64px; height: 72px; }
   .picture img { filter: drop-shadow(0 2px 4px rgba(0,0,0,.18)); }
   .batt { display: flex; align-items: center; gap: 8px; font-size: 13px; }
