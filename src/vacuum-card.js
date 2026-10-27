@@ -1,5 +1,5 @@
 /*
- * Roborock Card for Home Assistant
+ * Vacuum Card for Home Assistant
  * https://github.com/juju35/ha-roborock-card
  *
  * Lovelace cards for the Roborock integration (https://www.home-assistant.io/integrations/roborock/), also
@@ -984,7 +984,7 @@ const imgTag = (src, attrs) => {
   return `<img data-img="${id}" ${attrs}>`;
 };
 
-class RoborockBase extends HTMLElement {
+class VacuumBase extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
@@ -1549,9 +1549,9 @@ const FULL_STYLE = `
   .map .crop img { max-width: none; border-radius: 0; background: none; }
 `;
 
-class RoborockCard extends RoborockBase {
+class VacuumCard extends VacuumBase {
   static getConfigElement() {
-    return document.createElement("roborock-card-editor");
+    return document.createElement("vacuum-card-editor");
   }
 
   static getStubConfig(hass) {
@@ -1845,7 +1845,7 @@ class RoborockCard extends RoborockBase {
     const size = this._mapSizes?.[id];
     if (!size || !(t || b || l || r)) return null;
     if (size.w - l - r <= 0 || size.h - t - b <= 0) {
-      if (!this._cropWarned) console.warn(`roborock-card: crop is larger than the map image (${size.w} × ${size.h} px)`);
+      if (!this._cropWarned) console.warn(`vacuum-card: crop is larger than the map image (${size.w} × ${size.h} px)`);
       this._cropWarned = true;
       return null;
     }
@@ -1911,7 +1911,7 @@ const MINI_STYLE = `
 
 // The mini card is a full card drawn compact: its detail button (top right, `zoom: false` removes it) switches it
 // to the full card's content and back, and a click anywhere else on the page brings the compact view back.
-class RoborockMiniCard extends RoborockCard {
+class VacuumMiniCard extends VacuumCard {
   constructor() {
     super();
     // Clicks inside a dialog (the more-info opened from the card) leave it zoomed in.
@@ -1921,7 +1921,7 @@ class RoborockMiniCard extends RoborockCard {
   }
 
   static getConfigElement() {
-    return document.createElement("roborock-mini-card-editor");
+    return document.createElement("vacuum-mini-card-editor");
   }
 
   connectedCallback() {
@@ -1998,7 +1998,7 @@ class RoborockMiniCard extends RoborockCard {
 // Visual editors (ha-form)
 // ---------------------------------------------------------------------------
 
-class RoborockEditorBase extends HTMLElement {
+class VacuumEditorBase extends HTMLElement {
   // [name, default]
   static get toggles() {
     return [];
@@ -2102,7 +2102,7 @@ class RoborockEditorBase extends HTMLElement {
     // The nested form of an expandable section needs an object, even when the option is not set.
     for (const f of this.constructor.extraFields(() => "")) if (f.type === "expandable") data[f.name] = { ...data[f.name] };
     for (const [name, def] of toggles) if (data[name] === undefined) data[name] = def;
-    if (!data.device) data.device = RoborockCard.getStubConfig(this._hass).device;
+    if (!data.device) data.device = VacuumCard.getStubConfig(this._hass).device;
     this._form.hass = this._hass;
     // A new data or schema object re-renders the whole form: only hand over new ones when the config,
     // the language, the registries or the map size changed, not on every state change.
@@ -2137,7 +2137,7 @@ class RoborockEditorBase extends HTMLElement {
   }
 }
 
-class RoborockCardEditor extends RoborockEditorBase {
+class VacuumCardEditor extends VacuumEditorBase {
   static get toggles() {
     return [
       ["show_controls", true],
@@ -2192,7 +2192,7 @@ class RoborockCardEditor extends RoborockEditorBase {
   }
 }
 
-class RoborockMiniCardEditor extends RoborockEditorBase {
+class VacuumMiniCardEditor extends VacuumEditorBase {
   static get toggles() {
     return [
       ["show_controls", true],
@@ -2209,27 +2209,32 @@ class RoborockMiniCardEditor extends RoborockEditorBase {
 const define = (name, cls) => {
   if (!customElements.get(name)) customElements.define(name, cls);
 };
-define("roborock-card", RoborockCard);
-define("roborock-mini-card", RoborockMiniCard);
-// Brand-neutral aliases (Xiaomi, Dreame…): same cards under another type. Not "vacuum-card", which belongs to
-// another popular card (denysdovhan/vacuum-card). A custom element class can only be defined once, hence the subclasses.
-define("robot-vacuum-card", class extends RoborockCard {});
-define("robot-vacuum-mini-card", class extends RoborockMiniCard {});
-define("roborock-card-editor", RoborockCardEditor);
-define("roborock-mini-card-editor", RoborockMiniCardEditor);
+define("vacuum-card", VacuumCard);
+define("vacuum-mini-card", VacuumMiniCard);
+// Former types, kept so that existing dashboards keep working: same cards under another name. A custom element class
+// can only be defined once, hence the subclasses. If another card already registered "vacuum-card" (such as
+// denysdovhan/vacuum-card, loaded first), these types are the way to use this one.
+for (const [name, base] of [
+  ["roborock-card", VacuumCard],
+  ["robot-vacuum-card", VacuumCard],
+  ["roborock-mini-card", VacuumMiniCard],
+  ["robot-vacuum-mini-card", VacuumMiniCard],
+])
+  define(name, class extends base {});
+define("vacuum-card-editor", VacuumCardEditor);
+define("vacuum-mini-card-editor", VacuumMiniCardEditor);
 
 window.customCards = window.customCards || [];
 for (const card of [
   {
-    type: "roborock-card",
-    name: "Roborock Card",
-    description:
-      "Monitor and control a Roborock, Xiaomi or Dreame robot vacuum or wet-dry vacuum: status, battery, routines, dock, maintenance and statistics. Also available as custom:robot-vacuum-card.",
+    type: "vacuum-card",
+    name: "Vacuum Card",
+    description: "Monitor and control a Roborock, Xiaomi or Dreame robot vacuum or wet-dry vacuum: status, battery, routines, dock, maintenance and statistics.",
   },
   {
-    type: "roborock-mini-card",
-    name: "Roborock Mini Card",
-    description: "Compact Roborock, Xiaomi or Dreame overview: status, battery, current room and quick controls. Also available as custom:robot-vacuum-mini-card.",
+    type: "vacuum-mini-card",
+    name: "Vacuum Mini Card",
+    description: "Compact Roborock, Xiaomi or Dreame robot vacuum overview: status, battery, current room and quick controls.",
   },
 ]) {
   if (!window.customCards.some((c) => c.type === card.type))
@@ -2237,7 +2242,7 @@ for (const card of [
 }
 
 console.info(
-  `%c ROBOROCK-CARD %c v${VERSION} `,
+  `%c VACUUM-CARD %c v${VERSION} `,
   "color: white; background: #ea0029; font-weight: 700;",
   "color: #ea0029; background: white; font-weight: 700;"
 );

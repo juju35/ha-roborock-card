@@ -9,7 +9,7 @@ import { chromium } from "playwright";
 import { states, entities, devices, cleaning, returning, washing, drying, f25Cleaning, maps } from "./mock-states.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const cardJs = readFileSync(`${root}dist/roborock-card.js`, "utf8");
+const cardJs = readFileSync(`${root}dist/vacuum-card.js`, "utf8");
 
 const THEMES = {
   light: {
@@ -72,22 +72,22 @@ async function openCard(browser, { file, type, config, theme, width, overrides }
 }
 
 const shots = [
-  { file: "card", type: "roborock-card", theme: "light", width: 460, config: {} },
-  { file: "card-dark", type: "roborock-card", theme: "dark", width: 460, config: { crop: { top: 10, bottom: 10, left: 10, right: 10 } }, overrides: cleaning },
-  { file: "card-rooms", type: "roborock-card", theme: "light", width: 460, config: { show_routines: false, show_dock: false, show_consumables: false, show_stats: false },
+  { file: "card", type: "vacuum-card", theme: "light", width: 460, config: {} },
+  { file: "card-dark", type: "vacuum-card", theme: "dark", width: 460, config: { crop: { top: 10, bottom: 10, left: 10, right: 10 } }, overrides: cleaning },
+  { file: "card-rooms", type: "vacuum-card", theme: "light", width: 460, config: { show_routines: false, show_dock: false, show_consumables: false, show_stats: false },
     clicks: ['[data-action="open_rooms"]', '[data-room="2"]', '[data-room="11"]', '[data-room="9"]'] },
-  { file: "card-f25", type: "roborock-card", theme: "light", width: 460, config: { device: "Roborock F25 Ultra" } },
-  { file: "card-xiaomi", type: "roborock-card", theme: "light", width: 460, config: { device: "Robot vacuum", show_map: "always", map_entity: "camera.dustbusters_map" } },
-  { file: "mini-card", type: "roborock-mini-card", theme: "light", width: 380, config: {} },
-  { file: "mini-card-dark", type: "roborock-mini-card", theme: "dark", width: 380, config: {}, overrides: cleaning },
-  { file: "mini-card-f25", type: "roborock-mini-card", theme: "light", width: 380, config: { device: "Roborock F25 Ultra" } },
-  { file: "mini-card-xiaomi", type: "roborock-mini-card", theme: "light", width: 380, config: { device: "Robot vacuum" } },
-  { file: "card-dreame", type: "robot-vacuum-card", theme: "dark", width: 460, config: { device: "Upstairs robot", show_map: "always", collapsed: ["stats"] } },
-  { file: "mini-card-dreame", type: "robot-vacuum-mini-card", theme: "dark", width: 380, config: { device: "Upstairs robot" } },
-  { file: "mini-card-dreame-light", type: "robot-vacuum-mini-card", theme: "light", width: 380, config: { device: "Upstairs robot" } },
-  { file: "mini-card-xiaomi-dark", type: "roborock-mini-card", theme: "dark", width: 380, config: { device: "Robot vacuum" } },
-  { file: "mini-card-zoom", type: "roborock-mini-card", theme: "light", width: 460, config: {}, clicks: [".zoom"] },
-  { file: "mini-card-zoom-dark", type: "roborock-mini-card", theme: "dark", width: 460, config: {}, overrides: cleaning, clicks: [".zoom"] },
+  { file: "card-f25", type: "vacuum-card", theme: "light", width: 460, config: { device: "Roborock F25 Ultra" } },
+  { file: "card-xiaomi", type: "vacuum-card", theme: "light", width: 460, config: { device: "Robot vacuum", show_map: "always", map_entity: "camera.dustbusters_map" } },
+  { file: "mini-card", type: "vacuum-mini-card", theme: "light", width: 380, config: {} },
+  { file: "mini-card-dark", type: "vacuum-mini-card", theme: "dark", width: 380, config: {}, overrides: cleaning },
+  { file: "mini-card-f25", type: "vacuum-mini-card", theme: "light", width: 380, config: { device: "Roborock F25 Ultra" } },
+  { file: "mini-card-xiaomi", type: "vacuum-mini-card", theme: "light", width: 380, config: { device: "Robot vacuum" } },
+  { file: "card-dreame", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Upstairs robot", show_map: "always", collapsed: ["stats"] } },
+  { file: "mini-card-dreame", type: "vacuum-mini-card", theme: "dark", width: 380, config: { device: "Upstairs robot" } },
+  { file: "mini-card-dreame-light", type: "vacuum-mini-card", theme: "light", width: 380, config: { device: "Upstairs robot" } },
+  { file: "mini-card-xiaomi-dark", type: "vacuum-mini-card", theme: "dark", width: 380, config: { device: "Robot vacuum" } },
+  { file: "mini-card-zoom", type: "vacuum-mini-card", theme: "light", width: 460, config: {}, clicks: [".zoom"] },
+  { file: "mini-card-zoom-dark", type: "vacuum-mini-card", theme: "dark", width: 460, config: {}, overrides: cleaning, clicks: [".zoom"] },
 ];
 
 const browser = await chromium.launch(
@@ -155,11 +155,11 @@ async function makeGif(browser, gif, { fps = 20, seconds = 3 } = {}) {
 //   mop-drying   — robot docked, drying its mop (heat)
 //   f25-cleaning — F25 Ultra wet-dry vacuum mid-clean (tilt, roll)
 const gifs = [
-  { file: "cleaning", type: "roborock-card", theme: "light", width: 460, config: {}, overrides: cleaning },
-  { file: "returning", type: "roborock-card", theme: "light", width: 460, config: {}, overrides: returning },
-  { file: "mop-washing", type: "roborock-card", theme: "light", width: 460, config: {}, overrides: washing },
-  { file: "mop-drying", type: "roborock-card", theme: "light", width: 460, config: {}, overrides: drying },
-  { file: "f25-cleaning", type: "roborock-card", theme: "light", width: 460, config: { device: "Roborock F25 Ultra" }, overrides: f25Cleaning },
+  { file: "cleaning", type: "vacuum-card", theme: "light", width: 460, config: {}, overrides: cleaning },
+  { file: "returning", type: "vacuum-card", theme: "light", width: 460, config: {}, overrides: returning },
+  { file: "mop-washing", type: "vacuum-card", theme: "light", width: 460, config: {}, overrides: washing },
+  { file: "mop-drying", type: "vacuum-card", theme: "light", width: 460, config: {}, overrides: drying },
+  { file: "f25-cleaning", type: "vacuum-card", theme: "light", width: 460, config: { device: "Roborock F25 Ultra" }, overrides: f25Cleaning },
 ];
 for (const g of gifs) await makeGif(browser, g);
 await browser.close();

@@ -1,7 +1,7 @@
 {
-  "name": "Roborock Card",
+  "name": "Vacuum Card",
   "render_readme": true,
   "content_in_root": false,
-  "filename": "roborock-card.js",
+  "filename": "vacuum-card.js",
   "homeassistant": "2024.8.0"
 }

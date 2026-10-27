@@ -1,4 +1,4 @@
-# Robot Vacuum Card
+# Vacuum Card
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![HACS Validation](https://github.com/juju35/ha-roborock-card/actions/workflows/hacs.yml/badge.svg)](https://github.com/juju35/ha-roborock-card/actions/workflows/hacs.yml)
@@ -37,7 +37,7 @@ Only the vacuums of these integrations are listed: their other devices (purifier
 
 ## Features
 
-- Two cards: a full **Robot Vacuum Card** and a compact **Robot Vacuum Mini Card**
+- Two cards: a full **Vacuum Card** (`custom:vacuum-card`) and a compact **Vacuum Mini Card** (`custom:vacuum-mini-card`)
 - Robot vacuums and wet-dry vacuums, several devices supported, Roborock dock merged with its robot
 - Drawn device picture that follows the model (about 100 Roborock, Xiaomi / Mijia and Dreame models recognized from their model id, even when the device was renamed), animated by what the robot is doing, white or dark (`color`), or your own picture
 - Brand logo (Roborock, Xiaomi, Mi Home or Dreame) opening the brand's site, and buttons in the brand's color, readable in the light and dark themes
@@ -73,49 +73,54 @@ Or manually:
 
 1. Open HACS → **⋮** (top right) → **Custom repositories**
 2. Add `https://github.com/juju35/ha-roborock-card` — Type: **Dashboard**
-3. Search for **Roborock Card** and click **Download**
+3. Search for **Vacuum Card** and click **Download**
 4. Clear your browser cache and refresh
 
 ### Manual
 
-1. Download `roborock-card.js` from the [latest release](https://github.com/juju35/ha-roborock-card/releases/latest)
-2. Copy it to `/config/www/roborock-card.js`
+1. Download `vacuum-card.js` from the [latest release](https://github.com/juju35/ha-roborock-card/releases/latest)
+2. Copy it to `/config/www/vacuum-card.js`
 3. Go to **Settings → Dashboards → ⋮ → Resources** → Add resource:
-   - URL: `/local/roborock-card.js`
+   - URL: `/local/vacuum-card.js`
    - Type: **JavaScript Module**
 4. Clear your browser cache and refresh
 
-The repository and the file keep their historical name (`ha-roborock-card`, `roborock-card.js`) so that existing installations keep updating.
+### Upgrading from `roborock-card.js` (1.x)
+
+The file is now `vacuum-card.js`. With HACS, check after the update that **Settings → Dashboards → ⋮ → Resources** points to `/hacsfiles/ha-roborock-card/vacuum-card.js` (and not to the former `roborock-card.js`, which you can remove). For a manual install, replace the file and the resource URL as above; the releases still carry a `roborock-card.js` copy for the transition. Dashboards using `custom:roborock-card` keep working: the former types stay registered (see [Card types](#card-types)).
 
 ## Configuration
 
 ### Card types
 
-| Card | Type | Same card, historical type |
+| Card | Type | Former types (same card) |
 |---|---|---|
-| Robot Vacuum Card | `custom:robot-vacuum-card` | `custom:roborock-card` |
-| Robot Vacuum Mini Card | `custom:robot-vacuum-mini-card` | `custom:roborock-mini-card` |
+| Vacuum Card | `custom:vacuum-card` | `custom:roborock-card`, `custom:robot-vacuum-card` |
+| Vacuum Mini Card | `custom:vacuum-mini-card` | `custom:roborock-mini-card`, `custom:robot-vacuum-mini-card` |
 
-Both types of a card are identical (same options, same editor), whatever the brand of the robot: existing dashboards using `roborock-card` keep working. `custom:vacuum-card` is not used: it belongs to the popular [vacuum-card](https://github.com/denysdovhan/vacuum-card), with which these cards can be installed side by side.
+The former types are identical (same options, same editor), whatever the brand of the robot: existing dashboards keep working.
+
+> [!NOTE]
+> `custom:vacuum-card` is also the type of [denysdovhan/vacuum-card](https://github.com/denysdovhan/vacuum-card). When both are installed, the one loaded first gets `vacuum-card`; use `custom:robot-vacuum-card` / `custom:robot-vacuum-mini-card` for this one, they are always available.
 
 ### Visual editor
 
-Edit a dashboard, click **Add card** and search for **Roborock Card** or **Roborock Mini Card**. The first robot vacuum is preselected; pick another device in the list if you have several, set an optional title, choose the picture and its color, the sections to display and the language. The preview updates live, and options left at their default are kept out of the generated YAML.
+Edit a dashboard, click **Add card** and search for **Vacuum Card** or **Vacuum Mini Card**. The first robot vacuum is preselected; pick another device in the list if you have several, set an optional title, choose the picture and its color, the sections to display and the language. The preview updates live, and options left at their default are kept out of the generated YAML.
 
 ### Minimal
 
 ```yaml
-type: custom:robot-vacuum-card
+type: custom:vacuum-card
 ```
 
 ```yaml
-type: custom:robot-vacuum-mini-card
+type: custom:vacuum-mini-card
 ```
 
 ### Full options
 
 ```yaml
-type: custom:robot-vacuum-card
+type: custom:vacuum-card
 device: Roborock Saros 20
 title: Saros
 image: auto
@@ -142,7 +147,7 @@ language: fr
 ```
 
 ```yaml
-type: custom:robot-vacuum-mini-card
+type: custom:vacuum-mini-card
 device: Roborock F25 Ultra
 title: F25
 image: auto
@@ -182,7 +187,7 @@ language: fr
 Map images often have wide empty borders. Remove them with `crop`, in pixels of the original image (all four values are optional):
 
 ```yaml
-type: custom:robot-vacuum-card
+type: custom:vacuum-card
 crop:
   top: 170
   bottom: 190
@@ -316,7 +321,7 @@ Each maintenance line has a reset button when the integration exposes the matchi
 
 ```bash
 npm install
-npm run build        # bundles src/roborock-card.js + the logos of images/ into dist/roborock-card.js
+npm run build        # bundles src/vacuum-card.js + the logos of images/ into dist/vacuum-card.js (and a dist/roborock-card.js copy)
 npm run check        # builds and checks the card (run in CI)
 node scripts/models.mjs  # renders the drawn model galleries of the README into images/models-*.svg
 npm run screenshots  # renders the cards (and one GIF per animated state, needs ffmpeg) with mock data into screenshots/
@@ -328,7 +333,7 @@ npm run screenshots  # renders the cards (and one GIF per animated state, needs 
 
 1. Bump `version` in `package.json`
 2. Add a `## <version>` section at the top of [CHANGELOG.md](CHANGELOG.md)
-3. Push to `main`: the **Release** workflow builds the card, creates the tag and the GitHub release with the changelog section as notes, and attaches `roborock-card.js`
+3. Push to `main`: the **Release** workflow builds the card, creates the tag and the GitHub release with the changelog section as notes, and attaches `vacuum-card.js` (and the `roborock-card.js` copy)
 
 ## Translations
 
