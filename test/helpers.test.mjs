@@ -76,6 +76,12 @@ test("the device picture follows the model, the image option overrides it", () =
   assert.equal(byModel("xiaomi.vacuum.b108gl"), robotSvg({ white: true, dock: false })); // Xiaomi brand
   assert.equal(byModel("roborock.wetdryvac.a56", "wetdry"), wetdrySvg({ white: false })); // Dyad Pro
   assert.equal(byModel("roborock.vacuum.zz99"), robotSvg({ dock: false })); // unknown model
+  // color option: forces white (true) or dark (false) on the automatic picture and the presets.
+  assert.equal(autoSvg({ kind: "wetdry", rawName: "Roborock F25 Ultra" }, null, false), wetdrySvg({ white: false }));
+  assert.equal(autoSvg({ kind: "robot", rawName: "Roborock Qrevo Curv" }, null, false), robotSvg());
+  assert.equal(autoSvg({ kind: "robot", rawName: "Roborock S8 MaxV Ultra" }, null, true), robotSvg({ white: true }));
+  assert.equal(IMAGES.f25_ultra(null, false), wetdrySvg({ white: false }));
+  assert.equal(IMAGES.saros_20(null, undefined), robotSvg({ turret: false }));
 });
 
 test("the picture animation follows the status, the cleaning mode and the dock drying", () => {

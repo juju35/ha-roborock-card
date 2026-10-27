@@ -95,6 +95,7 @@ type: custom:roborock-card
 device: Roborock Saros 20
 title: Saros
 image: auto
+color: auto
 show_logo: true
 show_controls: true
 room_selection: true
@@ -121,6 +122,7 @@ type: custom:roborock-mini-card
 device: Roborock F25 Ultra
 title: F25
 image: auto
+color: dark
 show_logo: true
 show_controls: true
 room_selection: true
@@ -135,6 +137,7 @@ language: fr
 | `device` | both | First robot vacuum | Roborock device to display: its name (as shown in Home Assistant) or its device id (set by the visual editor) |
 | `title` | both | Device name | Card title |
 | `image` | both | `auto` | Device picture: `auto` (per model), `saros_20`, `s8_maxv_ultra`, `qrevo`, `q7`, `f25_ultra`, `dyad_pro`, `none`, or the URL of your own picture (e.g. `/local/my-robot.png`) |
+| `color` | both | `auto` | Color of the drawn picture: `auto` (per model), `white` or `dark` — for models sold in both colors (F25 Ultra, S7, Q5…) |
 | `show_logo` | both | `true` | Show the brand logo: Roborock or Xiaomi from the model, else the integration's (Roborock, Mi Home for Xiaomi Miio, Xiaomi for Xiaomi Home); it opens the brand's site in a new tab |
 | `show_controls` | both | `true` | Start / pause, stop, dock and locate buttons (robot vacuums), dock actions (empty bin, wash and dry mop) and maintenance reset buttons |
 | `room_selection` | both | `true` | The Start button opens the room selector; `false` starts a full cleaning right away |
@@ -226,7 +229,7 @@ States and errors are shown with the card's own translations when available, oth
 
 <p align="center"><img src="images/models.svg" alt="Device pictures" width="640"></p>
 
-The device picture is drawn from the device name and the commercial name of its model id (`roborock.vacuum.a72` → Q5 Pro…, about 45 common Roborock and Xiaomi models from E2 / S4 to Saros 20, Qrevo, Dyad and F25), so a renamed device keeps the right picture: Saros robots and the E / C1 series have no LiDAR turret, the Q series (Q5…Q10, Qrevo) and the Mi / Xiaomi robots are white, the other robots (S series…) are dark; the dock is drawn when the integration reports one or the name implies it (Ultra, Plus, Qrevo, Saros, G10). Wet-dry vacuums (`roborock.wdv.*`) show an upright vacuum, dark for the Dyad series. The picture is animated by the current activity, from the status, the cleaning mode and the dock drying: vacuuming (side brushes and dust), mopping (wet trail and drops), both, returning to the dock, washing the mops (bubbles) and drying them (heat waves); it stays still otherwise and with the reduced-motion setting. Use the `image` option to pick another one or your own.
+The device picture is drawn from the device name and the commercial name of its model id (`roborock.vacuum.a72` → Q5 Pro…, about 45 common Roborock and Xiaomi models from E2 / S4 to Saros 20, Qrevo, Dyad and F25), so a renamed device keeps the right picture: Saros robots and the E / C1 series have no LiDAR turret, the Q series (Q5…Q10, Qrevo) and the Mi / Xiaomi robots are white, the other robots (S series…) are dark; the dock is drawn when the integration reports one or the name implies it (Ultra, Plus, Qrevo, Saros, G10). Wet-dry vacuums (`roborock.wdv.*`, `roborock.wetdryvac.*`) show an upright vacuum, dark for the Dyad series. The picture is animated by the current activity, from the status, the cleaning mode and the dock drying: vacuuming (side brushes and dust), mopping (wet trail and drops), both, returning to the dock, washing the mops (bubbles) and drying them (heat waves); it stays still otherwise and with the reduced-motion setting. Use the `image` option to pick another one or your own, and `color` (`white` / `dark`) when your model exists in both colors.
 
 The room selector reads the rooms of the current map (the one chosen in the integration's **Selected map** select) with the `roborock.get_maps` service, then cleans the selected rooms with the same `app_segment_clean` command the integration uses. When the robot is paused, the Start button resumes the cleaning instead.
 

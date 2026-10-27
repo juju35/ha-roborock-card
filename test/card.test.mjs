@@ -312,3 +312,11 @@ test("the logo follows the brand of the model, else the integration", () => {
   assert.equal(logoOf("xiaomi_home", "dreame.vacuum.p2009"), "Xiaomi");
   assert.equal(logoOf("roborock", "roborock.vacuum.zz99"), "Roborock");
 });
+
+test("the color option paints the F25 Ultra black", () => {
+  const card = new rr.RoborockCard();
+  card.setConfig({ device: "Roborock F25 Ultra", color: "dark" });
+  card.hass = makeHass();
+  const dev = rr.resolve(card._hass).devices.find((d) => d.id === "f25");
+  assert.equal(card._picture(dev, card._status(dev)), `data:image/svg+xml,${encodeURIComponent(rr.wetdrySvg({ white: false }))}`);
+});

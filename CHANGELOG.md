@@ -5,6 +5,7 @@
 - About 45 common Roborock and Xiaomi models are recognized from their model id (`roborock.vacuum.a72` → Q5 Pro, `roborock.vacuum.m1s` → Mi Robot Vacuum 1S, `roborock.wetdryvac.a56` → Dyad Pro…): the device picture and its animations follow the model even when the device was renamed. New rules: E / C1 series without LiDAR turret, Mi / Xiaomi robots white, G10 series with its dock.
 - The logo follows the brand of the model: Roborock for Roborock models (also on Xiaomi Miio / Xiaomi Home), Xiaomi for the Mi / Xiaomi robots (`rockrobo.vacuum.v1`, `roborock.vacuum.m1s`, `xiaomi.*`, `mijia.*`, `ijai.*`); other models keep the integration's logo (Mi Home on Xiaomi Miio).
 - Wet-dry vacuums reported as `roborock.wetdryvac.*` are recognized (was `roborock.wdv.*` only).
+- New `color` option (both cards, visual editor): `auto` (per model), `white` or `dark` drawn picture, also applied to the `image` presets — for models sold in both colors (F25 Ultra, S7, Q5…).
 
 ## 1.13.0
 ### Changes

@@ -137,14 +137,17 @@ const wetdrySvg = ({ white = true, activity = null } = {}) => {
   return svgDoc(100, 200, s, "", !!activity);
 };
 // Presets offered in the editor (`image` option); the keys of the former photos still work.
+// `white`: color forced by the `color` option (true / false), undefined to keep the model's.
 const IMAGES = {
-  saros_20: (activity) => robotSvg({ turret: false, activity }),
-  s8_maxv_ultra: (activity) => robotSvg({ activity }),
-  qrevo: (activity) => robotSvg({ white: true, activity }),
-  q7: (activity) => robotSvg({ white: true, dock: false, activity }),
-  f25_ultra: (activity) => wetdrySvg({ activity }),
-  dyad_pro: (activity) => wetdrySvg({ white: false, activity }),
+  saros_20: (activity, white = false) => robotSvg({ turret: false, white, activity }),
+  s8_maxv_ultra: (activity, white = false) => robotSvg({ white, activity }),
+  qrevo: (activity, white = true) => robotSvg({ white, activity }),
+  q7: (activity, white = true) => robotSvg({ white, dock: false, activity }),
+  f25_ultra: (activity, white = true) => wetdrySvg({ white, activity }),
+  dyad_pro: (activity, white = false) => wetdrySvg({ white, activity }),
 };
+// `color` option → forced color of the picture: true (white), false (dark), undefined (per model).
+const colorOf = (color) => (color === "white" ? true : color === "dark" ? false : undefined);
 const IMAGE_LABELS = { saros_20: "Saros 20", s8_maxv_ultra: "S8 MaxV Ultra", qrevo: "Qrevo", q7: "Q7", f25_ultra: "F25 Ultra", dyad_pro: "Dyad Pro" };
 // Commercial names of the common Roborock models, by the model id the integrations report (Roborock, Xiaomi Miio
 // and Xiaomi Home alike): the picture and the logo then follow the model even when the device was renamed
@@ -211,13 +214,13 @@ const modelName = (dev) => [dev.rawName || dev.name, MODEL_NAMES[String(dev.mode
 // Automatic picture: Saros robots and the E / C1 series have no LiDAR turret, the Q series (Q5…Q10, Qrevo) and the
 // Mi / Xiaomi robots are white, the dock is drawn when the integration reports one (or the model name implies it:
 // Ultra, Plus, Saros, Qrevo, G10); Dyad wet-dry vacuums are dark.
-const autoSvg = (dev, activity = null) => {
+const autoSvg = (dev, activity = null, white = undefined) => {
   const name = modelName(dev);
-  if (dev.kind === "wetdry") return wetdrySvg({ white: !/dyad/i.test(name), activity });
+  if (dev.kind === "wetdry") return wetdrySvg({ white: white ?? !/dyad/i.test(name), activity });
   if (dev.kind !== "robot") return null;
   return robotSvg({
     turret: !/saros|\b(e\d|c1)\b/i.test(name),
-    white: /\bq\s?(revo|\d)|\bmi robot/i.test(name) || brandOf(dev.model) === "xiaomi",
+    white: white ?? (/\bq\s?(revo|\d)|\bmi robot/i.test(name) || brandOf(dev.model) === "xiaomi"),
     dock: Object.keys(dev.dock || {}).length > 0 || /ultra|plus|saros|q\s?revo|\bg\d/i.test(name),
     activity,
   });
@@ -370,6 +373,10 @@ const STRINGS = {
     image: "Device picture",
     image_auto: "Automatic (per model)",
     image_none: "None",
+    color: "Device color",
+    color_auto: "Automatic (per model)",
+    color_white: "White",
+    color_dark: "Black",
     show_logo: "Show the brand logo",
     show_controls: "Show control buttons",
     show_modes: "Show cleaning settings",
@@ -518,6 +525,10 @@ const STRINGS = {
     image: "Image de l'appareil",
     image_auto: "Automatique (selon le modèle)",
     image_none: "Aucune",
+    color: "Couleur de l'appareil",
+    color_auto: "Automatique (selon le modèle)",
+    color_white: "Blanc",
+    color_dark: "Noir",
     show_logo: "Afficher le logo de la marque",
     show_controls: "Afficher les boutons de commande",
     show_modes: "Afficher les réglages de nettoyage",
@@ -1215,7 +1226,8 @@ class RoborockBase extends HTMLElement {
     const d = dev.dock;
     const drying = [d.mop_drying_status].some((id) => this._isOn(id)) || hours(this._s(d.mop_drying_remaining_time)) > 0;
     const activity = activityOf(status?.state, this._s(dev.entities.cleaning_mode)?.state, drying);
-    return svgUri(preset ? IMAGES[img](activity) : autoSvg(dev, activity));
+    const white = colorOf(this._config.color);
+    return svgUri(preset ? IMAGES[img](activity, white) : autoSvg(dev, activity, white));
   }
 
   // Logo of the brand of the model (Roborock or Xiaomi), else of the integration the device comes from
@@ -1941,6 +1953,12 @@ class RoborockEditorBase extends HTMLElement {
           },
         },
       },
+      {
+        name: "color",
+        selector: {
+          select: { mode: "dropdown", options: ["auto", "white", "dark"].map((v) => ({ value: v, label: tr(`color_${v}`) })) },
+        },
+      },
       ...this.constructor.extraFields(tr),
       {
         type: "grid",
@@ -1976,7 +1994,7 @@ class RoborockEditorBase extends HTMLElement {
       this._form.addEventListener("value-changed", (ev) => {
         ev.stopPropagation();
         const config = { ...ev.detail.value };
-        const defaults = { ...Object.fromEntries(toggles), image: "auto", ...this.constructor.selects };
+        const defaults = { ...Object.fromEntries(toggles), image: "auto", color: "auto", ...this.constructor.selects };
         for (let [k, v] of Object.entries(config)) {
           // Keep the YAML minimal: drop empty values and options left at their default.
           if (v && typeof v === "object" && !Array.isArray(v)) {
@@ -1990,7 +2008,7 @@ class RoborockEditorBase extends HTMLElement {
       });
       this.appendChild(this._form);
     }
-    const data = { image: "auto", ...this.constructor.selects, ...this._config };
+    const data = { image: "auto", color: "auto", ...this.constructor.selects, ...this._config };
     if (data.show_map === true) data.show_map = "always";
     if (data.show_map === false) data.show_map = "never";
     // The nested form of an expandable section needs an object, even when the option is not set.
