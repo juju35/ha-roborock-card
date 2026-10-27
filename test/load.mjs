@@ -1,9 +1,9 @@
-// Evaluates src/roborock-card.js (a classic script, bundled as is by scripts/build.mjs) in a sandbox with
+// Evaluates src/vacuum-card.js (a classic script, bundled as is by scripts/build.mjs) in a sandbox with
 // minimal DOM stand-ins and returns the names the tests need. No dependency, no browser.
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
-const source = readFileSync(new URL("../src/roborock-card.js", import.meta.url), "utf8");
+const source = readFileSync(new URL("../src/vacuum-card.js", import.meta.url), "utf8");
 
 // Shadow root stand-in: keeps the HTML it is given and the listeners it gets.
 const fakeRoot = () => ({
@@ -63,8 +63,8 @@ export const load = () => {
   vm.createContext(sandbox);
   return vm.runInContext(
     `${source}
-    ({ fmtHours, hours, statusClass, esc, resolve, ago, RTF, autoSvg, robotSvg, wetdrySvg, IMAGES, activityOf, brandOf, MODEL_NAMES, MODEL_PRESETS, RoborockCard: customElements.get("roborock-card"),
-       RoborockMiniCard: customElements.get("roborock-mini-card"), window })`,
+    ({ fmtHours, hours, statusClass, esc, resolve, ago, RTF, autoSvg, robotSvg, wetdrySvg, IMAGES, activityOf, brandOf, MODEL_NAMES, MODEL_PRESETS, VacuumCard: customElements.get("vacuum-card"),
+       VacuumMiniCard: customElements.get("vacuum-mini-card"), window })`,
     sandbox,
   );
 };

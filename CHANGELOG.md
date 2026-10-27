@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.0.0
+### Changes
+- The cards are renamed **Vacuum Card** / **Vacuum Mini Card**, types `custom:vacuum-card` / `custom:vacuum-mini-card` (card picker and HACS name too). The former types `roborock-card`, `roborock-mini-card`, `robot-vacuum-card` and `robot-vacuum-mini-card` stay registered: existing dashboards keep working.
+- The file is now `vacuum-card.js` (`hacs.json`, build, release). Releases still attach a `roborock-card.js` copy for manual installs. **After updating, check that the dashboard resource points to `vacuum-card.js`.**
+- If another card already registered `vacuum-card` (denysdovhan/vacuum-card), use `custom:robot-vacuum-card`.
+- The repository is renamed `ha-vacuum-card` (formerly `ha-roborock-card`, GitHub redirects the former address); links updated.
+- README rewritten brand-neutral (supported integrations, card types, brands, pictures, integrations).
+
+### Maintenance
+- Source `src/vacuum-card.js`, classes `VacuumCard` / `VacuumMiniCard`, editors `vacuum-card-editor` / `vacuum-mini-card-editor`; CI release attaches both files; screenshots workflow also runs when `images/` changes.
+
 ## 1.16.0
 ### Changes
 - The Dreame logo has rounded corners, like the Xiaomi and Mi Home ones (card header and README).
