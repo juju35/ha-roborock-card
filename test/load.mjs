@@ -63,7 +63,7 @@ export const load = () => {
   vm.createContext(sandbox);
   return vm.runInContext(
     `${source}
-    ({ fmtHours, hours, statusClass, esc, resolve, ago, RTF, autoSvg, robotSvg, wetdrySvg, IMAGES, activityOf, brandOf, MODEL_NAMES, RoborockCard: customElements.get("roborock-card"),
+    ({ fmtHours, hours, statusClass, esc, resolve, ago, RTF, autoSvg, robotSvg, wetdrySvg, IMAGES, activityOf, brandOf, MODEL_NAMES, MODEL_PRESETS, RoborockCard: customElements.get("roborock-card"),
        RoborockMiniCard: customElements.get("roborock-mini-card"), window })`,
     sandbox,
   );

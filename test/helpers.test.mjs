@@ -82,6 +82,16 @@ test("the device picture follows the model, the image option overrides it", () =
   assert.equal(autoSvg({ kind: "robot", rawName: "Roborock S8 MaxV Ultra" }, null, true), robotSvg({ white: true }));
   assert.equal(IMAGES.f25_ultra(null, false), wetdrySvg({ white: false }));
   assert.equal(IMAGES.saros_20(null, undefined), robotSvg({ turret: false }));
+  // Xiaomi models
+  assert.equal(byModel("dreame.vacuum.mc1808"), robotSvg({ turret: false, white: true, dock: false })); // Mi 1C
+  assert.equal(byModel("mijia.vacuum.v2"), robotSvg({ turret: false, white: true, dock: false })); // Essential G1
+  assert.equal(byModel("dreame.vacuum.p2041o"), robotSvg({ white: true })); // Mop 2 Pro+, with its dock
+  assert.equal(rr.brandOf("viomi.vacuum.v8"), "xiaomi");
+  assert.equal(rr.brandOf("dreame.vacuum.p2009"), null);
+  // One editor preset per commercial name, labelled with the brand.
+  const labels = rr.MODEL_PRESETS.map((p) => p.label);
+  assert.equal(new Set(labels).size, labels.length);
+  assert.ok(labels.includes("Roborock Q5 Pro") && labels.includes("Xiaomi Mi Robot Vacuum 1S") && labels.includes("Roborock F25 Ultra"));
 });
 
 test("the picture animation follows the status, the cleaning mode and the dock drying", () => {

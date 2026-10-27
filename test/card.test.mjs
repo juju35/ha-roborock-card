@@ -320,3 +320,11 @@ test("the color option paints the F25 Ultra black", () => {
   const dev = rr.resolve(card._hass).devices.find((d) => d.id === "f25");
   assert.equal(card._picture(dev, card._status(dev)), `data:image/svg+xml,${encodeURIComponent(rr.wetdrySvg({ white: false }))}`);
 });
+
+test("a model id as image option draws that model, with the color option", () => {
+  const card = new rr.RoborockCard();
+  card.setConfig({ device: "saros", image: "roborock.wetdryvac.a56", color: "white" });
+  card.hass = makeHass();
+  const dev = rr.resolve(card._hass).devices.find((d) => d.id === "saros");
+  assert.equal(card._picture(dev, null), `data:image/svg+xml,${encodeURIComponent(rr.wetdrySvg({ white: true }))}`);
+});
