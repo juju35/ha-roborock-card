@@ -1,6 +1,6 @@
 /*
  * Vacuum Card for Home Assistant
- * https://github.com/juju35/ha-roborock-card
+ * https://github.com/juju35/ha-vacuum-card
  *
  * Lovelace cards for the Roborock integration (https://www.home-assistant.io/integrations/roborock/), also
  * for robot vacuums set up with Xiaomi Miio (https://www.home-assistant.io/integrations/xiaomi_miio/),
@@ -2238,7 +2238,7 @@ for (const card of [
   },
 ]) {
   if (!window.customCards.some((c) => c.type === card.type))
-    window.customCards.push({ ...card, preview: true, documentationURL: "https://github.com/juju35/ha-roborock-card" });
+    window.customCards.push({ ...card, preview: true, documentationURL: "https://github.com/juju35/ha-vacuum-card" });
 }
 
 console.info(

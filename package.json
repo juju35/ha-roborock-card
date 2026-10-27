@@ -1,5 +1,5 @@
 {
-  "name": "ha-roborock-card",
+  "name": "ha-vacuum-card",
   "version": "2.0.0",
   "description": "Lovelace cards for Home Assistant to monitor and control Roborock, Xiaomi and Dreame robot vacuums and wet-dry vacuums.",
   "private": true,

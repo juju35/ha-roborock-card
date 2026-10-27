@@ -1,9 +1,9 @@
 # Vacuum Card
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
-[![HACS Validation](https://github.com/juju35/ha-roborock-card/actions/workflows/hacs.yml/badge.svg)](https://github.com/juju35/ha-roborock-card/actions/workflows/hacs.yml)
-[![Validate](https://github.com/juju35/ha-roborock-card/actions/workflows/validate.yml/badge.svg)](https://github.com/juju35/ha-roborock-card/actions/workflows/validate.yml)
-[![Release](https://img.shields.io/github/v/release/juju35/ha-roborock-card)](https://github.com/juju35/ha-roborock-card/releases/latest)
+[![HACS Validation](https://github.com/juju35/ha-vacuum-card/actions/workflows/hacs.yml/badge.svg)](https://github.com/juju35/ha-vacuum-card/actions/workflows/hacs.yml)
+[![Validate](https://github.com/juju35/ha-vacuum-card/actions/workflows/validate.yml/badge.svg)](https://github.com/juju35/ha-vacuum-card/actions/workflows/validate.yml)
+[![Release](https://img.shields.io/github/v/release/juju35/ha-vacuum-card)](https://github.com/juju35/ha-vacuum-card/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 <p align="center">
@@ -17,12 +17,12 @@ Lovelace cards for Home Assistant to monitor and control robot vacuums and wet-d
 
 The cards work on top of the integrations you already use — [Roborock](https://www.home-assistant.io/integrations/roborock/), [Xiaomi Miio](https://www.home-assistant.io/integrations/xiaomi_miio/), [Xiaomi Home](https://github.com/XiaoMi/ha_xiaomi_home) and [Dreame Vacuum](https://github.com/Tasshack/dreame-vacuum). Entities are **discovered automatically** from the Home Assistant registries: you don't pick them one by one, and it works whatever your Home Assistant language or entity ids. The logo, the button color and the drawn picture follow the brand and the model of each robot.
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=juju35&repository=ha-roborock-card&category=plugin)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=juju35&repository=ha-vacuum-card&category=plugin)
 
 | <img src="images/logo.svg" alt="" width="20"> Roborock | <img src="images/xiaomi.png" alt="" width="20"> Xiaomi | <img src="images/dreame.png" alt="" width="20"> Dreame |
 |---|---|---|
-| ![roborock card](https://raw.githubusercontent.com/juju35/ha-roborock-card/main/screenshots/card.png) | ![xiaomi card](https://raw.githubusercontent.com/juju35/ha-roborock-card/main/screenshots/card-xiaomi.png) | ![dreame card](https://raw.githubusercontent.com/juju35/ha-roborock-card/main/screenshots/card-dreame.png) |
-| ![roborock mini card](https://raw.githubusercontent.com/juju35/ha-roborock-card/main/screenshots/mini-card.png) | ![xiaomi mini card](https://raw.githubusercontent.com/juju35/ha-roborock-card/main/screenshots/mini-card-xiaomi.png) | ![dreame mini card](https://raw.githubusercontent.com/juju35/ha-roborock-card/main/screenshots/mini-card-dreame.png) |
+| ![roborock card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/card.png) | ![xiaomi card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/card-xiaomi.png) | ![dreame card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/card-dreame.png) |
+| ![roborock mini card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/mini-card.png) | ![xiaomi mini card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/mini-card-xiaomi.png) | ![dreame mini card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/mini-card-dreame.png) |
 
 ## Supported integrations
 
@@ -65,29 +65,29 @@ Home Assistant 2024.8 or later, with at least one of the [supported integrations
 
 Click the button below to add the repository directly:
 
-[![Add to HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=juju35&repository=ha-roborock-card&category=plugin)
+[![Add to HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=juju35&repository=ha-vacuum-card&category=plugin)
 
 Then click **Download**, and reload your browser when HACS asks you to.
 
 Or manually:
 
 1. Open HACS → **⋮** (top right) → **Custom repositories**
-2. Add `https://github.com/juju35/ha-roborock-card` — Type: **Dashboard**
+2. Add `https://github.com/juju35/ha-vacuum-card` — Type: **Dashboard**
 3. Search for **Vacuum Card** and click **Download**
 4. Clear your browser cache and refresh
 
 ### Manual
 
-1. Download `vacuum-card.js` from the [latest release](https://github.com/juju35/ha-roborock-card/releases/latest)
+1. Download `vacuum-card.js` from the [latest release](https://github.com/juju35/ha-vacuum-card/releases/latest)
 2. Copy it to `/config/www/vacuum-card.js`
 3. Go to **Settings → Dashboards → ⋮ → Resources** → Add resource:
    - URL: `/local/vacuum-card.js`
    - Type: **JavaScript Module**
 4. Clear your browser cache and refresh
 
-### Upgrading from `roborock-card.js` (1.x)
+### Upgrading from ha-roborock-card (1.x)
 
-The file is now `vacuum-card.js`. With HACS, check after the update that **Settings → Dashboards → ⋮ → Resources** points to `/hacsfiles/ha-roborock-card/vacuum-card.js` (and not to the former `roborock-card.js`, which you can remove). For a manual install, replace the file and the resource URL as above; the releases still carry a `roborock-card.js` copy for the transition. Dashboards using `custom:roborock-card` keep working: the former types stay registered (see [Card types](#card-types)).
+The repository was renamed from `ha-roborock-card` to `ha-vacuum-card` (GitHub redirects the former address, HACS keeps updating it) and the file from `roborock-card.js` to `vacuum-card.js`. With HACS, check after the update that **Settings → Dashboards → ⋮ → Resources** points to `vacuum-card.js` (`/hacsfiles/ha-vacuum-card/vacuum-card.js` for a new install; an existing install may keep its `ha-roborock-card` folder) and remove the former `roborock-card.js` resource. For a manual install, replace the file and the resource URL as above; the releases still carry a `roborock-card.js` copy for the transition. Dashboards using `custom:roborock-card` keep working: the former types stay registered (see [Card types](#card-types)).
 
 ## Configuration
 
