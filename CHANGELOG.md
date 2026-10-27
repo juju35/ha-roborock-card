@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.15.2
+### Changes
+- The Dreame logo has rounded corners, like the Xiaomi and Mi Home ones (card header and README).
+
 ## 1.15.1
 ### Fixes
 - Dreame Vacuum: the battery level is shown (its `battery_level` sensor was not read).
