@@ -43,6 +43,7 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 - Detail button on the mini card (top right): it switches the mini card to the full card's content and back; a click anywhere outside the card brings the compact view back
 - Map of the current floor while the robot is cleaning (or always, or never), with optional cropping, enlarged full screen on click
 - Click any value to open its Home Assistant history (more-info dialog)
+- Brand colors: the buttons take the color of the brand (Roborock red, Xiaomi orange, Mi Home green, Dreame gold)
 - Brand logo (Roborock, Xiaomi or Dreame, from the model; else the integration's, e.g. Mi Home on Xiaomi Miio), opening the brand's site on click
 - Visual editor in the dashboard UI for both cards (no YAML needed)
 - Light and dark mode, English and French

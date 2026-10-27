@@ -1,8 +1,9 @@
 # Changelog
 
-## 1.15.2
+## 1.16.0
 ### Changes
 - The Dreame logo has rounded corners, like the Xiaomi and Mi Home ones (card header and README).
+- Buttons, room chips and section icons follow the brand of the device instead of always the Roborock red: Roborock red, Xiaomi orange, Mi Home green, Dreame gold (colors taken from the logos).
 
 ## 1.15.1
 ### Fixes

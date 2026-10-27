@@ -377,3 +377,16 @@ test("robot-vacuum-card and robot-vacuum-mini-card are aliases of the cards", ()
   assert.match(card.shadowRoot.innerHTML, /title="Roborock"/);
   assert.ok(new (rr.window.customElements.get("robot-vacuum-mini-card"))() instanceof rr.RoborockMiniCard);
 });
+
+test("the accent color of the buttons follows the brand", () => {
+  const accent = (device, Card = rr.RoborockCard) => {
+    const card = new Card();
+    card.setConfig({ device });
+    card.hass = makeHass();
+    return card.shadowRoot.innerHTML.match(/:host \{ --rr-accent: (#[0-9a-f]+); \}/)?.[1];
+  };
+  assert.equal(accent("saros"), "#ea0029"); // Roborock
+  assert.equal(accent("q5"), "#ff6900"); // Mi Robot Vacuum 1S: Xiaomi
+  assert.equal(accent("l10"), "#c9a46e"); // L10s Ultra: Dreame
+  assert.equal(accent("l10", rr.RoborockMiniCard), "#c9a46e");
+});
