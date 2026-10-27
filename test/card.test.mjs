@@ -256,3 +256,49 @@ test("zoom: false removes the detail button", () => {
   const full = newCard(makeHass());
   assert.doesNotMatch(full.shadowRoot.innerHTML, /class="zoom"/);
 });
+
+test("Xiaomi Miio: only the vacuum is listed, its keys read like the Roborock ones", () => {
+  const model = rr.resolve(makeHass());
+  assert.ok(!model.devices.some((d) => d.id === "purifier"));
+  const q5 = model.devices.find((d) => d.id === "q5");
+  assert.equal(q5.platform, "xiaomi_miio");
+  assert.equal(q5.kind, "robot");
+  assert.equal(q5.vacuum, "vacuum.dustbusters");
+  assert.equal(q5.entities.main_brush_time_left, "sensor.dustbusters_main_brush_remaining");
+  assert.equal(q5.entities.sensor_time_left, "sensor.dustbusters_sensor_dirty_remaining");
+  assert.equal(q5.entities.cleaning_time, "sensor.dustbusters_current_clean_duration");
+  assert.equal(q5.entities.total_cleaning_count, "sensor.dustbusters_total_clean_count");
+  assert.equal(q5.entities.reset_air_filter_consumable, "button.dustbusters_reset_filter");
+});
+
+test("Xiaomi Miio: the card shows the Mi Home logo, maintenance and statistics, Start cleans right away", () => {
+  const hass = makeHass();
+  const card = new rr.RoborockCard();
+  card.setConfig({ device: "q5", show_map: "always", map_entity: "camera.dustbusters_map", collapsed: [] });
+  card.hass = hass;
+  const html = card.shadowRoot.innerHTML;
+  assert.match(html, /title="Xiaomi Mi Home"/);
+  assert.match(html, /href="https:\/\/home\.mi\.com"/);
+  assert.match(html, /data-entity="sensor\.dustbusters_main_brush_remaining"/);
+  assert.match(html, /data-entity="button\.dustbusters_reset_filter"/);
+  assert.match(html, /1,182/);
+  assert.match(html, /data-map="camera\.dustbusters_map"/);
+  assert.doesNotMatch(html, /open_rooms/);
+  assert.match(html, /data-action="start"/);
+});
+
+test("the Roborock integration keeps its logo and room selector", () => {
+  const html = newCard(makeHass()).shadowRoot.innerHTML;
+  assert.match(html, /title="Roborock"/);
+  assert.match(html, /open_rooms/);
+});
+
+test("Xiaomi Home: a vacuum of that integration gets the Xiaomi logo", () => {
+  const ent = { ...entities, "vacuum.xh": { entity_id: "vacuum.xh", device_id: "xh", platform: "xiaomi_home", translation_key: null } };
+  const dev = { ...devices, xh: { id: "xh", name: "Xiaomi Home robot", model: "roborock.vacuum.a72", identifiers: [["xiaomi_home", "xh"]] } };
+  const st = { ...states, "vacuum.xh": { entity_id: "vacuum.xh", state: "docked", attributes: {} } };
+  const card = new rr.RoborockCard();
+  card.setConfig({ device: "xh" });
+  card.hass = { ...makeHass(st), entities: ent, devices: dev };
+  assert.match(card.shadowRoot.innerHTML, /title="Xiaomi"/);
+});

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.13.0
+### Changes
+- Roborock robots set up with the Xiaomi Miio or Xiaomi Home integration are supported (#16): their vacuums are discovered with the Roborock devices (other Xiaomi devices are skipped). Xiaomi Miio sensors are matched by their `translation_key` (current / last clean, totals, maintenance with reset buttons) and errors come from the vacuum's `error` attribute; Xiaomi Home shows the vacuum and battery. No room selector for these integrations (no `roborock.get_maps`): Start cleans the whole home.
+- The header logo follows the device's integration: Roborock, Xiaomi Mi Home (Xiaomi Miio) or Xiaomi (Xiaomi Home), each linking to its brand's site. Logos from the Home Assistant brands repository, embedded in the bundle.
+- New `map_entity` option (full card, visual editor): a camera or image entity shown as the map, e.g. the camera of Xiaomi Cloud Map Extractor.
+
+### Maintenance
+- Mock Xiaomi Miio Q5 Pro (and a purifier that must be skipped), 4 new tests, `card-xiaomi` / `mini-card-xiaomi` screenshots.
+
 ## 1.12.0 - 2026-10-26
 ### Fixes
 - Harden the `image` option against inherited property names: `_picture()` now uses `Object.hasOwn(IMAGES, img)` so that only real presets are recognised. A value matching an inherited prototype property (`__proto__`, `constructor`, `hasOwnProperty`…) no longer returns a truthy non-callable value that crashed the render with a `TypeError`. Legitimate values (`auto`, presets, custom URL, `none`) are unchanged.

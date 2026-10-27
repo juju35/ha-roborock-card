@@ -1,13 +1,14 @@
 // Mock Home Assistant registries and states shaped like the Roborock integration (a Saros 20 with
-// its dock and an F25 Ultra), used to render screenshots. Entity ids are in French on purpose
+// its dock and an F25 Ultra) and the Xiaomi Miio integration (a Q5 Pro, and a purifier the cards must skip), used to render screenshots. Entity ids are in French on purpose
 // (the cards never rely on them); the names shown are in English.
 export const states = {};
 export const entities = {};
 export const devices = {};
 
-const device = (id, name, model, identifier) => (devices[id] = { id, name, model, identifiers: [["roborock", identifier]], name_by_user: null });
-const entity = (entity_id, device_id, translation_key, state, attributes = {}) => {
-  entities[entity_id] = { entity_id, device_id, platform: "roborock", translation_key: translation_key || null };
+const device = (id, name, model, identifier, domain = "roborock") =>
+  (devices[id] = { id, name, model, identifiers: [[domain, identifier]], name_by_user: null });
+const entity = (entity_id, device_id, translation_key, state, attributes = {}, platform = "roborock") => {
+  entities[entity_id] = { entity_id, device_id, platform, translation_key: translation_key || null };
   states[entity_id] = { entity_id, state: String(state), attributes };
 };
 const hoursAgo = (h) => new Date(Date.now() - h * 3600e3).toISOString();
@@ -93,6 +94,39 @@ entity("sensor.balai_erreur", "f25", "a01_error", "none");
 entity("sensor.balai_filtre", "f25", "filter_time_left", "95.95", { unit_of_measurement: "h", device_class: "duration" });
 entity("sensor.balai_rouleau", "f25", "brush_remaining", "95.95", { unit_of_measurement: "h", device_class: "duration" });
 entity("sensor.balai_duree_totale", "f25", "total_cleaning_time", "0.0", { unit_of_measurement: "h", device_class: "duration" });
+
+// Q5 Pro set up with Xiaomi Miio (translation keys of that integration, durations in hours as HA shows them),
+// with its map from a Xiaomi Cloud Map Extractor camera, which belongs to no device.
+const miio = (entity_id, translation_key, state, attributes = {}) => entity(entity_id, "q5", translation_key, state, attributes, "xiaomi_miio");
+device("q5", "Xiaomi Q5 Pro", "roborock.vacuum.a72", "q5", "xiaomi_miio");
+miio("vacuum.dustbusters", null, "docked", {
+  status: "Charging",
+  fan_speed: "Standard",
+  fan_speed_list: ["Silent", "Standard", "Medium", "Turbo", "Gentle", "Auto"],
+  friendly_name: "Xiaomi Q5 Pro",
+});
+miio("sensor.dustbusters_battery", null, "100", { device_class: "battery", unit_of_measurement: "%" });
+miio("sensor.dustbusters_current_clean_duration", "clean_time", "0.6", { unit_of_measurement: "h", device_class: "duration" });
+miio("sensor.dustbusters_current_clean_area", "clean_area", "31.5", { unit_of_measurement: "m²" });
+miio("sensor.dustbusters_last_clean_duration", "duration", "2160", { unit_of_measurement: "s", device_class: "duration" });
+miio("sensor.dustbusters_total_duration", "total_duration", "677.7", { unit_of_measurement: "h", device_class: "duration" });
+miio("sensor.dustbusters_total_clean_area", "total_area", "16921.76", { unit_of_measurement: "m²" });
+miio("sensor.dustbusters_total_clean_count", "count", "1182");
+miio("sensor.dustbusters_last_clean_start", "last_clean_start", hoursAgo(26.6), { device_class: "timestamp" });
+miio("sensor.dustbusters_last_clean_end", "last_clean_end", hoursAgo(26), { device_class: "timestamp" });
+miio("sensor.dustbusters_main_brush_remaining", "main_brush_left", "212.4", { unit_of_measurement: "h", device_class: "duration" });
+miio("sensor.dustbusters_side_brush_remaining", "side_brush_left", "112.4", { unit_of_measurement: "h", device_class: "duration" });
+miio("sensor.dustbusters_filter_remaining", "filter_left", "62.4", { unit_of_measurement: "h", device_class: "duration" });
+miio("sensor.dustbusters_sensor_dirty_remaining", "sensor_dirty_left", "-6.5", { unit_of_measurement: "h", device_class: "duration" });
+for (const k of ["main_brush", "side_brush", "filter", "sensor_dirty"]) miio(`button.dustbusters_reset_${k}`, `reset_vacuum_${k}`, "unknown");
+entities["camera.dustbusters_map"] = { entity_id: "camera.dustbusters_map", device_id: null, platform: "xiaomi_cloud_map_extractor", translation_key: null };
+states["camera.dustbusters_map"] = {
+  entity_id: "camera.dustbusters_map",
+  state: "idle",
+  attributes: { friendly_name: "DustBusters map", entity_picture: `data:image/svg+xml;base64,${Buffer.from(MAP).toString("base64")}` },
+};
+device("purifier", "Air purifier", "zhimi.airpurifier.mb4", "purifier", "xiaomi_miio");
+entity("sensor.purificateur_filtre", "purifier", "filter_life_remaining", "80", { unit_of_measurement: "%" }, "xiaomi_miio");
 
 // Same robot while it is cleaning (vacuum + mop), with the mop drying in the dock and the dirty water tank
 // full. Picture activity: "vacmop" — the robot sways, its side brushes spin and dust and water trail behind.
