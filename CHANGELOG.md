@@ -3,7 +3,7 @@
 ## 1.16.0
 ### Changes
 - The Dreame logo has rounded corners, like the Xiaomi and Mi Home ones (card header and README).
-- Buttons, room chips and section icons follow the brand of the device instead of always the Roborock red: Roborock red, Xiaomi orange, Mi Home green, Dreame gold (colors taken from the logos).
+- Buttons, room chips and section icons follow the brand of the device instead of always the Roborock red: Roborock red, Xiaomi orange, Mi Home green, Dreame gold (colors taken from the logos). In the light theme a darker shade is used (contrast at least that of the Roborock red on a white card), the logo color in the dark theme (Home Assistant's `themes.darkMode`).
 
 ## 1.15.1
 ### Fixes

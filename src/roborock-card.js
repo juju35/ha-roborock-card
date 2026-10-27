@@ -303,16 +303,18 @@ const activityOf = (status, mode, drying) => {
 };
 const svgUri = (svg) => svg && `data:image/svg+xml,${encodeURIComponent(svg)}`;
 // Brands: the brand of the model (brandOf), else the one of the integration (PLATFORMS) gives the logo of the
-// header and the accent color of the buttons (taken from the logo).
+// header and the accent color of the buttons, from the logo: [light theme, dark theme]. The light-theme shades are
+// darker so that the tinted buttons keep at least the contrast of the Roborock red (≈ 3.5:1) on a white card;
+// the dark-theme ones are the logo colors.
 const BRANDS = {
-  roborock: { logo: IMG_LOGO, name: "Roborock", site: "https://www.roborock.com", accent: "#ea0029" },
-  mihome: { logo: IMG_LOGO_MIHOME, name: "Xiaomi Mi Home", site: "https://home.mi.com", accent: "#43b17e" },
-  xiaomi: { logo: IMG_LOGO_XIAOMI, name: "Xiaomi", site: "https://www.mi.com", accent: "#ff6900" },
-  dreame: { logo: IMG_LOGO_DREAME, name: "Dreame", site: "https://www.dreametech.com", accent: "#c9a46e" },
+  roborock: { logo: IMG_LOGO, name: "Roborock", site: "https://www.roborock.com", accent: ["#ea0029", "#ea0029"] },
+  mihome: { logo: IMG_LOGO_MIHOME, name: "Xiaomi Mi Home", site: "https://home.mi.com", accent: ["#2a7f57", "#43b17e"] },
+  xiaomi: { logo: IMG_LOGO_XIAOMI, name: "Xiaomi", site: "https://www.mi.com", accent: ["#c24c00", "#ff6900"] },
+  dreame: { logo: IMG_LOGO_DREAME, name: "Dreame", site: "https://www.dreametech.com", accent: ["#8a6a3c", "#c9a46e"] },
 };
 const brandFor = (dev) => BRANDS[brandOf(dev.model)] || BRANDS[PLATFORMS[dev.platform]] || BRANDS.roborock;
-// Accent of the device's brand, overriding the default red of the shared styles.
-const accentStyle = (dev) => `:host { --rr-accent: ${brandFor(dev).accent}; }`;
+// Accent of the device's brand for the current theme, overriding the default red of the shared styles.
+const accentStyle = (dev, hass) => `:host { --rr-accent: ${brandFor(dev).accent[hass?.themes?.darkMode ? 1 : 0]}; }`;
 // Integrations the cards read → their logo.
 const PLATFORMS = { roborock: "roborock", xiaomi_miio: "mihome", xiaomi_home: "xiaomi", dreame_vacuum: "dreame" };
 // Xiaomi Miio translation_key → the Roborock integration's, so the cards read both the same way.
@@ -1017,7 +1019,7 @@ class RoborockBase extends HTMLElement {
     const { dev } = findDevice(h, this._config);
     if (!dev) return null;
     const ids = [dev.vacuum, ...Object.values(dev.entities), ...Object.values(dev.dock), ...Object.values(dev.extra).flat()];
-    return [h.entities, h.devices, h.language, h.locale, h.localize, h.formatEntityState, this._lastClean(dev), ...ids.map((id) => h.states[id])];
+    return [h.entities, h.devices, h.language, h.locale, h.localize, h.formatEntityState, h.themes?.darkMode, this._lastClean(dev), ...ids.map((id) => h.states[id])];
   }
 
   get hass() {
@@ -1579,7 +1581,7 @@ class RoborockCard extends RoborockBase {
     if (c.show_consumables !== false) parts.push(this._consumables(dev));
     if (c.show_stats !== false) parts.push(this._stats(dev));
     if (this._showMap(dev)) parts.push(this._map(dev));
-    return `<style>${BASE_STYLE}${FULL_STYLE}${accentStyle(dev)}</style>
+    return `<style>${BASE_STYLE}${FULL_STYLE}${accentStyle(dev, this._hass)}</style>
       <ha-card>
         ${this._header(dev, status, this._lastClean(dev))}
         <div class="content">${parts.filter(Boolean).join("")}</div>
@@ -1970,7 +1972,7 @@ class RoborockMiniCard extends RoborockCard {
     const lines = [this._errorLine(dev), this._roomLine(dev)];
     const last = this._lastClean(dev);
     if (last) lines.push(`<div class="line">${svgIcon(ICONS.clock)}<span>${esc(last)}</span></div>`);
-    return `<style>${BASE_STYLE}${MINI_STYLE}${accentStyle(dev)}</style>
+    return `<style>${BASE_STYLE}${MINI_STYLE}${accentStyle(dev, this._hass)}</style>
       <ha-card>
         ${this._header(dev, status, "")}
         <div class="content">
