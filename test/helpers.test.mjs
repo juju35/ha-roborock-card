@@ -88,6 +88,10 @@ test("the device picture follows the model, the image option overrides it", () =
   assert.equal(byModel("dreame.vacuum.p2041o"), robotSvg({ white: true })); // Mop 2 Pro+, with its dock
   assert.equal(rr.brandOf("viomi.vacuum.v8"), "xiaomi");
   assert.equal(rr.brandOf("dreame.vacuum.p2009"), null);
+  assert.equal(rr.brandOf("dreame.vacuum.p2114a"), "xiaomi"); // Mi Robot Vacuum X10+
+  assert.equal(byModel("dreame.vacuum.p2114a"), robotSvg({ white: true })); // with its station
+  assert.equal(byModel("xiaomi.vacuum.c102cn"), robotSvg({ white: true })); // Mijia Omni 2
+  assert.equal(byModel("roborock.vacuum.a187"), robotSvg({ white: true })); // Qrevo Edge
   // One editor preset per commercial name, labelled with the brand.
   const labels = rr.MODEL_PRESETS.map((p) => p.label);
   assert.equal(new Set(labels).size, labels.length);

@@ -150,7 +150,8 @@ const IMAGES = {
 const colorOf = (color) => (color === "white" ? true : color === "dark" ? false : undefined);
 // Commercial names of the common Roborock models, by the model id the integrations report (Roborock, Xiaomi Miio
 // and Xiaomi Home alike): the picture and the logo then follow the model even when the device was renamed
-// (« DustBusters »). Sources: python-roborock and python-miio.
+// (« DustBusters »). Sources: python-roborock (const.py, device_info.yaml), python-miio, the tested vacuums of
+// python-roborock's local server and the Mijia list of Tasshack/dreame-vacuum (Xiaomi Home).
 const MODEL_NAMES = {
   "rockrobo.vacuum.v1": "Mi Robot Vacuum",
   "roborock.vacuum.m1s": "Mi Robot Vacuum 1S",
@@ -159,9 +160,29 @@ const MODEL_NAMES = {
   "dreame.vacuum.mc1808": "Mi Robot Vacuum-Mop 1C",
   "viomi.vacuum.v7": "Mi Robot Vacuum-Mop P",
   "viomi.vacuum.v8": "Mi Robot Vacuum-Mop P",
-  "dreame.vacuum.p2150o": "Mi Robot Vacuum-Mop 2",
+  "dreame.vacuum.p2150o": "Mi Robot Vacuum-Mop",
+  "dreame.vacuum.p2140o": "Mi Robot Vacuum-Mop 2",
+  "dreame.vacuum.p2140p": "Mi Robot Vacuum-Mop 2",
+  "dreame.vacuum.p2140q": "Mi Robot Vacuum-Mop 2",
   "ijai.vacuum.v3": "Mi Robot Vacuum-Mop 2 Pro",
   "dreame.vacuum.p2041o": "Mi Robot Vacuum-Mop 2 Pro+",
+  "dreame.vacuum.p2150a": "Mi Robot Vacuum-Mop 2 Ultra",
+  "dreame.vacuum.p2150b": "Mi Robot Vacuum-Mop 2 Ultra Set",
+  "dreame.vacuum.p2148o": "Mi Robot Vacuum-Mop Ultra Slim",
+  "dreame.vacuum.r2209": "Mi Robot Vacuum X10",
+  "dreame.vacuum.p2114a": "Mi Robot Vacuum X10+",
+  "xiaomi.vacuum.c102gl": "Mi Robot Vacuum X20+",
+  "dreame.vacuum.r2211o": "Robot Vacuum S10+",
+  "dreame.vacuum.r2254": "Mijia 1S",
+  "dreame.vacuum.p2041": "Mijia 1T",
+  "dreame.vacuum.p2140": "Mijia 2C",
+  "dreame.vacuum.p2140a": "Mijia 2C",
+  "dreame.vacuum.r2210": "Mijia Cleaning and Mopping Robot 2 Pro",
+  "dreame.vacuum.p2114o": "Mijia Self-Cleaning Robot Vacuum-Mop",
+  "dreame.vacuum.p2149o": "Mijia Self-Cleaning Robot Vacuum-Mop Pro",
+  "xiaomi.vacuum.d110ch": "Mijia M40",
+  "xiaomi.vacuum.c102cn": "Mijia Omni 2",
+  "xiaomi.vacuum.d103cn": "Mijia Omni M30S",
   "roborock.vacuum.c1": "C1",
   "roborock.vacuum.e2": "E2",
   "roborock.vacuum.a01": "E4",
@@ -189,9 +210,12 @@ const MODEL_NAMES = {
   "roborock.vacuum.a26": "G10S Pro",
   "roborock.vacuum.a34": "Q5",
   "roborock.vacuum.a72": "Q5 Pro",
+  "roborock.vacuum.a125": "Q5 Max+",
   "roborock.vacuum.a40": "Q7",
   "roborock.vacuum.a38": "Q7 Max",
   "roborock.vacuum.a73": "Q8 Max",
+  "roborock.vacuum.sc01": "Q7 Series",
+  "roborock.vacuum.sc05": "Q7 Series",
   "roborock.vacuum.ss07": "Q10",
   "roborock.vacuum.a75": "Qrevo",
   "roborock.vacuum.a87": "Qrevo MaxV",
@@ -199,29 +223,35 @@ const MODEL_NAMES = {
   "roborock.vacuum.a104": "Qrevo S",
   "roborock.vacuum.a117": "Qrevo Master",
   "roborock.vacuum.a135": "Qrevo Curv",
+  "roborock.vacuum.a123": "Qrevo Plus",
+  "roborock.vacuum.a170": "Qrevo C",
+  "roborock.vacuum.a187": "Qrevo Edge",
+  "roborock.vacuum.a245": "Qrevo Curv 2 Flow",
+  "roborock.vacuum.a294": "Qrevo 2 Pro",
+  "roborock.vacuum.a298": "Qrevo Edge 2",
+  "roborock.vacuum.a326": "Qrevo S Pro",
+  "roborock.vacuum.a168": "QV 35A",
+  "roborock.vacuum.a306": "P30 Pro",
+  "roborock.vacuum.a146": "G30",
   "roborock.vacuum.a143": "Saros 10R",
   "roborock.vacuum.a144": "Saros 10R",
   "roborock.vacuum.a147": "Saros 10",
   "roborock.vacuum.a288": "Saros 20",
+  "roborock.vacuum.a279": "Saros 20 Sonic",
+  "roborock.vacuum.a307": "Saros 20 Flow",
   "roborock.wetdryvac.a56": "Dyad Pro",
   "roborock.wetdryvac.a83": "Dyad Pro Combo",
   "roborock.wetdryvac.a107": "Dyad Air",
   "roborock.wdv.a194": "F25 Ultra",
+  "roborock.wetdryvac.a01": "Dyad",
 };
 // Brand of a model id, for the logo: Xiaomi for the Mi / Xiaomi robots (built by Roborock for the first ones),
 // Roborock for the other Roborock models, null when unknown (the logo of the integration is shown).
-const XIAOMI_MODELS = new Set([
-  "rockrobo.vacuum.v1",
-  "roborock.vacuum.m1s",
-  "dreame.vacuum.mc1808",
-  "viomi.vacuum.v7",
-  "viomi.vacuum.v8",
-  "dreame.vacuum.p2150o",
-  "dreame.vacuum.p2041o",
-]);
+const XIAOMI_MODELS = new Set(["rockrobo.vacuum.v1", "roborock.vacuum.m1s"]);
 const brandOf = (model) => {
   const m = String(model || "").toLowerCase();
-  if (XIAOMI_MODELS.has(m) || /^(xiaomi|mijia|ijai)\./.test(m)) return "xiaomi";
+  // The Dreame and Viomi models of the table are the ones sold as Mi / Xiaomi / Mijia.
+  if (XIAOMI_MODELS.has(m) || /^(xiaomi|mijia|ijai)\./.test(m) || (/^(dreame|viomi)\./.test(m) && m in MODEL_NAMES)) return "xiaomi";
   return /^(roborock|rockrobo)\./.test(m) ? "roborock" : null;
 };
 // Model presets of the `image` option (the model id as value), one per commercial name, by brand then name.
@@ -235,7 +265,7 @@ const presetDevice = (model) => ({ kind: /\.(wdv|wetdryvac)\./.test(model) ? "we
 const modelName = (dev) => [dev.rawName || dev.name, MODEL_NAMES[String(dev.model || "").toLowerCase()]].filter(Boolean).join(" ");
 // Automatic picture: Saros robots, the E / C1 series and the Mi Essential / 1C have no LiDAR turret, the Q series
 // (Q5…Q10, Qrevo) and the Mi / Xiaomi robots are white, the dock is drawn when the integration reports one (or the
-// model name implies it: Ultra, Plus / +, Saros, Qrevo, G10); Dyad wet-dry vacuums are dark.
+// model name implies it: Ultra, Plus / +, Saros, Qrevo, Omni, Self-Cleaning, G10 / G30); Dyad wet-dry vacuums are dark.
 const autoSvg = (dev, activity = null, white = undefined) => {
   const name = modelName(dev);
   if (dev.kind === "wetdry") return wetdrySvg({ white: white ?? !/dyad/i.test(name), activity });
@@ -243,7 +273,7 @@ const autoSvg = (dev, activity = null, white = undefined) => {
   return robotSvg({
     turret: !/saros|essential|\b(e\d|c1|1c)\b/i.test(name),
     white: white ?? (/\bq\s?(revo|\d)|\bmi robot/i.test(name) || brandOf(dev.model) === "xiaomi"),
-    dock: Object.keys(dev.dock || {}).length > 0 || /ultra|plus|\+|saros|q\s?revo|\bg\d\d/i.test(name),
+    dock: Object.keys(dev.dock || {}).length > 0 || /ultra|plus|\+|saros|q\s?revo|omni|self-cleaning|\bg\d\d/i.test(name),
     activity,
   });
 };
