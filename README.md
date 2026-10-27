@@ -19,9 +19,10 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=juju35&repository=ha-roborock-card&category=plugin)
 
-| Roborock Card | Roborock Mini Card |
-|---|---|
-| ![roborock-card](https://raw.githubusercontent.com/juju35/ha-roborock-card/main/screenshots/card.png) | ![roborock-mini-card](https://raw.githubusercontent.com/juju35/ha-roborock-card/main/screenshots/mini-card.png) |
+| <img src="images/logo.svg" alt="" width="20"> Roborock | <img src="images/xiaomi.png" alt="" width="20"> Xiaomi | <img src="images/dreame.png" alt="" width="20"> Dreame |
+|---|---|---|
+| ![roborock-card](https://raw.githubusercontent.com/juju35/ha-roborock-card/main/screenshots/card.png) | ![xiaomi card](https://raw.githubusercontent.com/juju35/ha-roborock-card/main/screenshots/card-xiaomi.png) | ![dreame card](https://raw.githubusercontent.com/juju35/ha-roborock-card/main/screenshots/card-dreame.png) |
+| ![roborock-mini-card](https://raw.githubusercontent.com/juju35/ha-roborock-card/main/screenshots/mini-card.png) | ![xiaomi mini card](https://raw.githubusercontent.com/juju35/ha-roborock-card/main/screenshots/mini-card-xiaomi.png) | ![dreame mini card](https://raw.githubusercontent.com/juju35/ha-roborock-card/main/screenshots/mini-card-dreame.png) |
 
 ## Features
 
@@ -189,6 +190,8 @@ Click the map to open it full screen; click anywhere or press Escape to close it
 
 ## Screenshots
 
+### <img src="images/logo.svg" alt="" width="24"> Roborock
+
 The picture animates to match what the device is doing and settles back to a still card once it is idle. Each state plays its own animation, and every one of them honours `prefers-reduced-motion`.
 
 While the robot is out vacuuming and mopping, it sways across the floor, its side brushes spin, and dust and water trail behind it:
@@ -232,19 +235,39 @@ Wet-dry vacuum (F25 Ultra):
 |---|---|
 | ![card f25](screenshots/card-f25.png) | ![mini card f25](screenshots/mini-card-f25.png) |
 
-Roborock robot set up with Xiaomi Miio (a renamed Q5 Pro, map from Xiaomi Cloud Map Extractor):
+Drawn Roborock models (a few of the ~60 recognized):
 
-| Roborock Card | Roborock Mini Card |
+<p align="center"><img src="images/models-roborock.svg" alt="Roborock device pictures" width="760"></p>
+
+### <img src="images/xiaomi.png" alt="" width="24"> Xiaomi / Mijia
+
+Mi Robot Vacuum 1S renamed « Robot vacuum », set up with Xiaomi Miio, map from Xiaomi Cloud Map Extractor (`map_entity`). Roborock models set up with Xiaomi Miio or Xiaomi Home keep the Roborock logo; the integration's logo (<img src="images/mihome.png" alt="Mi Home" width="16"> Mi Home for Xiaomi Miio) is shown for models of other brands.
+
+| Card | Mini card |
 |---|---|
 | ![card xiaomi](screenshots/card-xiaomi.png) | ![mini card xiaomi](screenshots/mini-card-xiaomi.png) |
+
+Drawn Xiaomi / Mijia models (white; the ones with a station are drawn in it):
+
+<p align="center"><img src="images/models-xiaomi.svg" alt="Xiaomi device pictures" width="760"></p>
+
+### <img src="images/dreame.png" alt="" width="24"> Dreame
+
+L10s Ultra renamed « Upstairs robot », set up with Dreame Vacuum, with the map camera of the integration, under the brand-neutral type `custom:robot-vacuum-card` (dark theme):
+
+| Card | Mini card |
+|---|---|
+| ![card dreame](screenshots/card-dreame.png) | ![mini card dreame](screenshots/mini-card-dreame.png) |
+
+Drawn Dreame models:
+
+<p align="center"><img src="images/models-dreame.svg" alt="Dreame device pictures" width="560"></p>
 
 ## How it works
 
 The cards read the Home Assistant entity and device registries instead of entity ids: every entity of the Roborock integration is matched by its `translation_key` (`status`, `current_room`, `main_brush_time_left`, `dirty_box_full`…) and by the device it belongs to. The dock entities, which the integration puts on a separate "… Dock" device, are attached to their robot. Entity ids can therefore be in any language or renamed without breaking the cards.
 
 States and errors are shown with the card's own translations when available, otherwise with Home Assistant's translation of the integration.
-
-<p align="center"><img src="images/models.svg" alt="Device pictures" width="640"></p>
 
 The device picture is drawn from the device name and the commercial name of its model id (`roborock.vacuum.a72` → Q5 Pro…, about 90 Roborock and Xiaomi models compatible with the integrations: Roborock E2 / S4 to S8, Q5 to Q10, the Qrevo range (Edge, Curv 2, S Pro…), Saros 10 / 20, G10 / G30, Dyad and F25; Xiaomi / Mijia Mi Robot Vacuum, 1S, Vacuum-Mop Essential / 1C / P / 2 / 2 Pro+ / 2 Ultra, X10 / X10+ / X20+, S10+, Omni 2, M40…), so a renamed device keeps the right picture: Saros robots, the E / C1 series and the Mi Vacuum-Mop Essential / 1C have no LiDAR turret, the Q series (Q5…Q10, Qrevo) and the Mi / Xiaomi robots are white, the other robots (S series…) are dark; the dock is drawn when the integration reports one or the name implies it (Ultra, Plus / +, Qrevo, Saros, G10). Wet-dry vacuums (`roborock.wdv.*`, `roborock.wetdryvac.*`) show an upright vacuum, dark for the Dyad series. The picture is animated by the current activity, from the status, the cleaning mode and the dock drying: vacuuming (side brushes and dust), mopping (wet trail and drops), both, returning to the dock, washing the mops (bubbles) and drying them (heat waves); it stays still otherwise and with the reduced-motion setting. Use the `image` option to pick another one or your own, and `color` (`white` / `dark`) when your model exists in both colors.
 
@@ -271,6 +294,7 @@ Maintenance thresholds: the remaining time turns orange under 10 % of the part l
 npm install
 npm run build        # bundles src/roborock-card.js + the logos of images/ into dist/roborock-card.js
 npm run check        # builds and checks the card (run in CI)
+node scripts/models.mjs  # renders the drawn model galleries of the README into images/models-*.svg
 npm run screenshots  # renders the cards (and one GIF per animated state, needs ffmpeg) with mock data into screenshots/
 ```
 

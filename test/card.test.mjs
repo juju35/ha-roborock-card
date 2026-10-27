@@ -271,13 +271,13 @@ test("Xiaomi Miio: only the vacuum is listed, its keys read like the Roborock on
   assert.equal(q5.entities.reset_air_filter_consumable, "button.dustbusters_reset_filter");
 });
 
-test("Xiaomi Miio: the card shows the Roborock logo of a Roborock model, maintenance and statistics, Start cleans right away", () => {
+test("Xiaomi Miio: the card shows the Xiaomi logo of a Mi robot, maintenance and statistics, Start cleans right away", () => {
   const hass = makeHass();
   const card = new rr.RoborockCard();
   card.setConfig({ device: "q5", show_map: "always", map_entity: "camera.dustbusters_map", collapsed: [] });
   card.hass = hass;
   const html = card.shadowRoot.innerHTML;
-  assert.match(html, /title="Roborock"/); // a Roborock model (Q5 Pro), whatever the integration
+  assert.match(html, /title="Xiaomi"/); // Mi Robot Vacuum 1S, a Xiaomi model
   assert.match(html, /data-entity="sensor\.dustbusters_main_brush_remaining"/);
   assert.match(html, /data-entity="button\.dustbusters_reset_filter"/);
   assert.match(html, /1,182/);
@@ -354,6 +354,7 @@ test("Dreame Vacuum: vacuum discovered, keys mapped, Dreame logo, map camera; Xi
   assert.equal(dev.entities.sensor_time_left, "sensor.l10_sensor_dirty_time_left");
   assert.equal(dev.entities.reset_air_filter_consumable, "button.l10_reset_filter");
   assert.equal(dev.entities.total_cleaning_count, "sensor.l10_cleaning_count");
+  assert.equal(dev.entities.battery, "sensor.l10_battery_level");
   const card = new rr.RoborockCard();
   card.setConfig({ device: "dr", show_map: "always" });
   card.hass = hass;
