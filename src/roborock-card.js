@@ -146,16 +146,79 @@ const IMAGES = {
   dyad_pro: (activity) => wetdrySvg({ white: false, activity }),
 };
 const IMAGE_LABELS = { saros_20: "Saros 20", s8_maxv_ultra: "S8 MaxV Ultra", qrevo: "Qrevo", q7: "Q7", f25_ultra: "F25 Ultra", dyad_pro: "Dyad Pro" };
-// Automatic picture: Saros robots have no LiDAR turret, the Q series (Q7, Q8, Qrevo) is white, the dock is drawn
-// when the integration reports one (or the model name implies it); Dyad wet-dry vacuums are dark.
+// Commercial names of the common Roborock models, by the model id the integrations report (Roborock, Xiaomi Miio
+// and Xiaomi Home alike): the picture and the logo then follow the model even when the device was renamed
+// (« DustBusters »). Sources: python-roborock and python-miio.
+const MODEL_NAMES = {
+  "rockrobo.vacuum.v1": "Mi Robot Vacuum",
+  "roborock.vacuum.m1s": "Mi Robot Vacuum 1S",
+  "roborock.vacuum.c1": "C1",
+  "roborock.vacuum.e2": "E2",
+  "roborock.vacuum.a01": "E4",
+  "roborock.vacuum.s4": "S4",
+  "roborock.vacuum.a19": "S4 Max",
+  "roborock.vacuum.s5": "S5",
+  "roborock.vacuum.s5e": "S5 Max",
+  "roborock.vacuum.s6": "S6",
+  "roborock.vacuum.t6": "T6",
+  "roborock.vacuum.a08": "S6 Pure",
+  "roborock.vacuum.a10": "S6 MaxV",
+  "roborock.vacuum.a11": "T7",
+  "roborock.vacuum.a14": "T7S",
+  "roborock.vacuum.a23": "T7S Plus",
+  "roborock.vacuum.a15": "S7",
+  "roborock.vacuum.a27": "S7 MaxV",
+  "roborock.vacuum.a62": "S7 Pro Ultra",
+  "roborock.vacuum.a65": "S7 MaxV Ultra",
+  "roborock.vacuum.a51": "S8",
+  "roborock.vacuum.a70": "S8 Pro Ultra",
+  "roborock.vacuum.a97": "S8 MaxV Ultra",
+  "roborock.vacuum.a29": "G10",
+  "roborock.vacuum.a30": "G10",
+  "roborock.vacuum.a46": "G10S",
+  "roborock.vacuum.a26": "G10S Pro",
+  "roborock.vacuum.a34": "Q5",
+  "roborock.vacuum.a72": "Q5 Pro",
+  "roborock.vacuum.a40": "Q7",
+  "roborock.vacuum.a38": "Q7 Max",
+  "roborock.vacuum.a73": "Q8 Max",
+  "roborock.vacuum.ss07": "Q10",
+  "roborock.vacuum.a75": "Qrevo",
+  "roborock.vacuum.a87": "Qrevo MaxV",
+  "roborock.vacuum.a101": "Qrevo Pro",
+  "roborock.vacuum.a104": "Qrevo S",
+  "roborock.vacuum.a117": "Qrevo Master",
+  "roborock.vacuum.a135": "Qrevo Curv",
+  "roborock.vacuum.a143": "Saros 10R",
+  "roborock.vacuum.a144": "Saros 10R",
+  "roborock.vacuum.a147": "Saros 10",
+  "roborock.vacuum.a288": "Saros 20",
+  "roborock.wetdryvac.a56": "Dyad Pro",
+  "roborock.wetdryvac.a83": "Dyad Pro Combo",
+  "roborock.wetdryvac.a107": "Dyad Air",
+  "roborock.wdv.a194": "F25 Ultra",
+};
+// Brand of a model id, for the logo: Xiaomi for the Mi / Xiaomi robots (built by Roborock for the first ones),
+// Roborock for the other Roborock models, null when unknown (the logo of the integration is shown).
+const XIAOMI_MODELS = new Set(["rockrobo.vacuum.v1", "roborock.vacuum.m1s"]);
+const brandOf = (model) => {
+  const m = String(model || "").toLowerCase();
+  if (XIAOMI_MODELS.has(m) || /^(xiaomi|mijia|ijai)\./.test(m)) return "xiaomi";
+  return /^(roborock|rockrobo)\./.test(m) ? "roborock" : null;
+};
+// Name the picture is drawn from: the device name and the commercial name of its model.
+const modelName = (dev) => [dev.rawName || dev.name, MODEL_NAMES[String(dev.model || "").toLowerCase()]].filter(Boolean).join(" ");
+// Automatic picture: Saros robots and the E / C1 series have no LiDAR turret, the Q series (Q5…Q10, Qrevo) and the
+// Mi / Xiaomi robots are white, the dock is drawn when the integration reports one (or the model name implies it:
+// Ultra, Plus, Saros, Qrevo, G10); Dyad wet-dry vacuums are dark.
 const autoSvg = (dev, activity = null) => {
-  const name = dev.rawName || dev.name || "";
+  const name = modelName(dev);
   if (dev.kind === "wetdry") return wetdrySvg({ white: !/dyad/i.test(name), activity });
   if (dev.kind !== "robot") return null;
   return robotSvg({
-    turret: !/saros/i.test(name),
-    white: /\bq\s?(revo|\d)/i.test(name),
-    dock: Object.keys(dev.dock || {}).length > 0 || /ultra|plus|saros|q\s?revo/i.test(name),
+    turret: !/saros|\b(e\d|c1)\b/i.test(name),
+    white: /\bq\s?(revo|\d)|\bmi robot/i.test(name) || brandOf(dev.model) === "xiaomi",
+    dock: Object.keys(dev.dock || {}).length > 0 || /ultra|plus|saros|q\s?revo|\bg\d/i.test(name),
     activity,
   });
 };
@@ -307,7 +370,7 @@ const STRINGS = {
     image: "Device picture",
     image_auto: "Automatic (per model)",
     image_none: "None",
-    show_logo: "Show the integration logo",
+    show_logo: "Show the brand logo",
     show_controls: "Show control buttons",
     show_modes: "Show cleaning settings",
     show_routines: "Show routines",
@@ -455,7 +518,7 @@ const STRINGS = {
     image: "Image de l'appareil",
     image_auto: "Automatique (selon le modèle)",
     image_none: "Aucune",
-    show_logo: "Afficher le logo de l'intégration",
+    show_logo: "Afficher le logo de la marque",
     show_controls: "Afficher les boutons de commande",
     show_modes: "Afficher les réglages de nettoyage",
     show_routines: "Afficher les routines",
@@ -680,7 +743,7 @@ const resolve = (hass) => {
     if (item.platform !== "roborock" && !vacuum) continue;
     if (item.platform === "roborock" && isDock(d)) docks.push({ d, item });
     else {
-      const kind = vacuum?.startsWith("vacuum.") ? "robot" : /\.wdv\./.test(d.model || "") ? "wetdry" : "other";
+      const kind = vacuum?.startsWith("vacuum.") ? "robot" : /\.(wdv|wetdryvac)\./.test(d.model || "") ? "wetdry" : "other";
       devices.push({
         id,
         name: devName(d),
@@ -1155,9 +1218,11 @@ class RoborockBase extends HTMLElement {
     return svgUri(preset ? IMAGES[img](activity) : autoSvg(dev, activity));
   }
 
-  // Logo of the integration the device comes from (Roborock, Xiaomi Mi Home or Xiaomi), linking to its site.
+  // Logo of the brand of the model (Roborock or Xiaomi), else of the integration the device comes from
+  // (Roborock, Xiaomi Mi Home or Xiaomi Home), linking to its site.
   _logo(dev) {
-    const b = BRANDS[dev.platform] || BRANDS.roborock;
+    const brand = brandOf(dev.model);
+    const b = BRANDS[brand === "xiaomi" ? "xiaomi_home" : brand] || BRANDS[dev.platform] || BRANDS.roborock;
     return `<a class="logo-link" href="${b.site}" target="_blank" rel="noopener noreferrer" title="${esc(b.name)}">${imgTag(b.logo, `class="logo" alt="${esc(b.name)}"`)}</a>`;
   }
 

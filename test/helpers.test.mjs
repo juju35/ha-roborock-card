@@ -65,6 +65,17 @@ test("the device picture follows the model, the image option overrides it", () =
   assert.equal(autoSvg({ kind: "wetdry", rawName: "Roborock Dyad Pro" }), wetdrySvg({ white: false }));
   assert.equal(autoSvg({ kind: "other", rawName: "Roborock Saros 20 Dock" }), null);
   assert.equal(IMAGES.f25_ultra(), wetdrySvg());
+  // Renamed devices: the model id gives the commercial name.
+  const byModel = (model, kind = "robot") => autoSvg({ kind, rawName: "DustBusters", model });
+  assert.equal(byModel("roborock.vacuum.a72"), robotSvg({ white: true, dock: false })); // Q5 Pro
+  assert.equal(byModel("roborock.vacuum.a147"), robotSvg({ turret: false })); // Saros 10
+  assert.equal(byModel("roborock.vacuum.a65"), robotSvg()); // S7 MaxV Ultra
+  assert.equal(byModel("roborock.vacuum.a26"), robotSvg()); // G10S Pro, with its dock
+  assert.equal(byModel("roborock.vacuum.a01"), robotSvg({ turret: false, dock: false })); // E4, no LiDAR
+  assert.equal(byModel("roborock.vacuum.m1s"), robotSvg({ white: true, dock: false })); // Mi Robot Vacuum 1S
+  assert.equal(byModel("xiaomi.vacuum.b108gl"), robotSvg({ white: true, dock: false })); // Xiaomi brand
+  assert.equal(byModel("roborock.wetdryvac.a56", "wetdry"), wetdrySvg({ white: false })); // Dyad Pro
+  assert.equal(byModel("roborock.vacuum.zz99"), robotSvg({ dock: false })); // unknown model
 });
 
 test("the picture animation follows the status, the cleaning mode and the dock drying", () => {
