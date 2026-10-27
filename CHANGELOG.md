@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.15.0
+### Changes
+- Dreame robots set up with the Dreame Vacuum custom integration (Tasshack/dreame-vacuum) are supported: status, room, progress, error, cleaning statistics, maintenance with reset buttons and the map camera of the integration.
+- Dreame logo: shown for `dreame.*` models (except the ones sold by Xiaomi, which keep the Xiaomi logo) and for unknown models of the Dreame Vacuum integration.
+- Brand-neutral aliases `custom:robot-vacuum-card` and `custom:robot-vacuum-mini-card` (same cards and options); `vacuum-card` is left to denysdovhan/vacuum-card.
+- README: Xiaomi and Dreame integrations, aliases, logos.
+
 ## 1.14.0
 ### Changes
 - About 90 Roborock and Xiaomi / Mijia models compatible with the integrations are recognized from their model id (`roborock.vacuum.a72` → Q5 Pro, `roborock.vacuum.m1s` → Mi Robot Vacuum 1S, `dreame.vacuum.mc1808` → Mi Robot Vacuum-Mop 1C, `roborock.wetdryvac.a56` → Dyad Pro…): the device picture and its animations follow the model even when the device was renamed. New rules: E / C1 series and Mi Vacuum-Mop Essential / 1C without LiDAR turret, Mi / Xiaomi robots white, G10 / G30 series, `+`, Omni and Self-Cleaning models with their station. Sources: python-roborock, python-miio, the tested vacuums of python-roborock's local server and the Mijia list of Tasshack/dreame-vacuum.

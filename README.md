@@ -6,11 +6,16 @@
 [![Release](https://img.shields.io/github/v/release/juju35/ha-roborock-card)](https://github.com/juju35/ha-roborock-card/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-<p align="center"><img src="images/logo.svg" alt="Roborock" width="80"></p>
+<p align="center">
+  <img src="images/logo.svg" alt="Roborock" width="64">&nbsp;&nbsp;
+  <img src="images/xiaomi.png" alt="Xiaomi" width="64">&nbsp;&nbsp;
+  <img src="images/mihome.png" alt="Xiaomi Mi Home" width="64">&nbsp;&nbsp;
+  <img src="images/dreame.png" alt="Dreame" width="64">
+</p>
 
-Lovelace cards for Home Assistant to monitor and control [Roborock](https://www.roborock.com) robot vacuums and wet-dry vacuums: status, battery, room, routines, dock, maintenance and statistics at a glance.
+Lovelace cards for Home Assistant to monitor and control robot vacuums and wet-dry vacuums — [Roborock](https://www.roborock.com) first, also Xiaomi / Mijia and [Dreame](https://www.dreametech.com): status, battery, room, routines, dock, maintenance and statistics at a glance.
 
-The cards are built on top of the [Roborock integration](https://www.home-assistant.io/integrations/roborock/) included in Home Assistant, and also work with Roborock robots set up with [Xiaomi Miio](https://www.home-assistant.io/integrations/xiaomi_miio/) or [Xiaomi Home](https://github.com/XiaoMi/ha_xiaomi_home): entities are **discovered automatically** from the Home Assistant registries, you don't have to pick them one by one, and it works whatever your Home Assistant language.
+The cards are built on top of the [Roborock integration](https://www.home-assistant.io/integrations/roborock/) included in Home Assistant, and also work with robot vacuums set up with [Xiaomi Miio](https://www.home-assistant.io/integrations/xiaomi_miio/), [Xiaomi Home](https://github.com/XiaoMi/ha_xiaomi_home) or [Dreame Vacuum](https://github.com/Tasshack/dreame-vacuum): entities are **discovered automatically** from the Home Assistant registries, you don't have to pick them one by one, and it works whatever your Home Assistant language.
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=juju35&repository=ha-roborock-card&category=plugin)
 
@@ -20,11 +25,11 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 
 ## Features
 
-- Two cards: a full **Roborock Card** and a compact **Roborock Mini Card**
+- Two cards: a full **Roborock Card** and a compact **Roborock Mini Card**, also available under the brand-neutral types `custom:robot-vacuum-card` and `custom:robot-vacuum-mini-card`
 - Robot vacuums and wet-dry vacuums, with a drawn device picture that follows the model (robot with or without LiDAR turret and dock, wet-dry vacuum) or your own
 - Automatic discovery of the Roborock devices (several devices supported, dock merged with its robot)
-- Roborock robots set up with Xiaomi Miio or Xiaomi Home are supported too (see [Xiaomi integrations](#xiaomi-integrations))
-- Common Roborock and Xiaomi models recognized from their model id, even when the device was renamed: the picture, its animations and the logo follow the model
+- Robot vacuums set up with Xiaomi Miio, Xiaomi Home or Dreame Vacuum are supported too (see [Xiaomi and Dreame integrations](#xiaomi-and-dreame-integrations))
+- Roborock, Xiaomi and Dreame models recognized from their model id, even when the device was renamed: the picture, its animations and the logo follow the model
 - Battery, status, current room, cleaning progress and errors
 - Cleaning settings: mode, suction power, mop intensity and route
 - Start / pause, stop, return to dock and locate buttons
@@ -37,14 +42,14 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 - Detail button on the mini card (top right): it switches the mini card to the full card's content and back; a click anywhere outside the card brings the compact view back
 - Map of the current floor while the robot is cleaning (or always, or never), with optional cropping, enlarged full screen on click
 - Click any value to open its Home Assistant history (more-info dialog)
-- Brand logo (Roborock or Xiaomi, from the model; Mi Home for other models on Xiaomi Miio), opening the brand's site on click
+- Brand logo (Roborock, Xiaomi or Dreame, from the model; else the integration's, e.g. Mi Home on Xiaomi Miio), opening the brand's site on click
 - Visual editor in the dashboard UI for both cards (no YAML needed)
 - Light and dark mode, English and French
 - Single file, no external dependency, the logos and pictures are embedded
 
 ## Prerequisites
 
-The [Roborock integration](https://www.home-assistant.io/integrations/roborock/) (or [Xiaomi Miio](https://www.home-assistant.io/integrations/xiaomi_miio/) / [Xiaomi Home](https://github.com/XiaoMi/ha_xiaomi_home) for a Roborock robot paired with the Mi Home app) must be configured, with Home Assistant 2024.8 or later.
+The [Roborock integration](https://www.home-assistant.io/integrations/roborock/) (or [Xiaomi Miio](https://www.home-assistant.io/integrations/xiaomi_miio/) / [Xiaomi Home](https://github.com/XiaoMi/ha_xiaomi_home) for a robot paired with the Mi Home app, or [Dreame Vacuum](https://github.com/Tasshack/dreame-vacuum) for a Dreame robot) must be configured, with Home Assistant 2024.8 or later.
 
 ## Installation
 
@@ -87,6 +92,18 @@ type: custom:roborock-card
 ```yaml
 type: custom:roborock-mini-card
 ```
+
+For a Xiaomi or Dreame robot, the same cards can be used under brand-neutral types (same options):
+
+```yaml
+type: custom:robot-vacuum-card
+```
+
+```yaml
+type: custom:robot-vacuum-mini-card
+```
+
+(`custom:vacuum-card` is not used: it belongs to the popular [vacuum-card](https://github.com/denysdovhan/vacuum-card), with which these cards can be installed side by side.)
 
 ### Full options
 
@@ -138,7 +155,7 @@ language: fr
 | `title` | both | Device name | Card title |
 | `image` | both | `auto` | Device picture: `auto` (per model), a model id to draw another model (e.g. `roborock.vacuum.a72` for the Q5 Pro — the visual editor lists the Roborock and Xiaomi models by name), `none`, or the URL of your own picture (e.g. `/local/my-robot.png`). The former presets `saros_20`, `s8_maxv_ultra`, `qrevo`, `q7`, `f25_ultra` and `dyad_pro` still work |
 | `color` | both | `auto` | Color of the drawn picture: `auto` (per model), `white` or `dark` — for models sold in both colors (F25 Ultra, S7, Q5…) |
-| `show_logo` | both | `true` | Show the brand logo: Roborock or Xiaomi from the model, else the integration's (Roborock, Mi Home for Xiaomi Miio, Xiaomi for Xiaomi Home); it opens the brand's site in a new tab |
+| `show_logo` | both | `true` | Show the brand logo: Roborock, Xiaomi or Dreame from the model, else the integration's (Roborock, Mi Home for Xiaomi Miio, Xiaomi for Xiaomi Home, Dreame for Dreame Vacuum); it opens the brand's site in a new tab |
 | `show_controls` | both | `true` | Start / pause, stop, dock and locate buttons (robot vacuums), dock actions (empty bin, wash and dry mop) and maintenance reset buttons |
 | `room_selection` | both | `true` | The Start button opens the room selector; `false` starts a full cleaning right away |
 | `zoom` | mini | `true` | Detail button at the top right of the mini card: it shows the full card's content (with the same options, so `show_dock`, `show_map`, `collapsed`… can be set on the mini card too) and switches back to the compact view; a click outside the card also brings the compact view back. `false` removes the button |
@@ -237,13 +254,14 @@ Routines created in the Roborock app appear as buttons in the integration; the c
 
 Each maintenance line has a reset button when the integration exposes the matching **Reset … consumable** button (main brush, side brush, filter, sensors, dock strainer, dock brush). It asks for confirmation before resetting the counter.
 
-### Xiaomi integrations
+### Xiaomi and Dreame integrations
 
-Roborock robots paired with the Mi Home app are often set up with Xiaomi Miio (or Xiaomi Home) rather than the Roborock integration. The cards list the vacuums of these integrations too (their other Xiaomi devices are skipped). The logo follows the brand of the model (a Q5 Pro shows the Roborock logo, a Mi Robot Vacuum 1S the Xiaomi one); a model of another brand shows the integration's logo: Mi Home for Xiaomi Miio, Xiaomi for Xiaomi Home.
+Robots paired with the Mi Home app are often set up with Xiaomi Miio (or Xiaomi Home) rather than the Roborock integration, and Dreame robots with the Dreame Vacuum custom integration. The cards list the vacuums of these integrations too (their other devices are skipped). The logo follows the brand of the model: a Q5 Pro shows the Roborock logo, a Mi Robot Vacuum 1S or a Mi Robot Vacuum X10+ (built by Dreame, sold by Xiaomi) the Xiaomi one, other `dreame.*` models the Dreame one; a model of another brand shows the integration's logo: Mi Home for Xiaomi Miio, Xiaomi for Xiaomi Home, Dreame for Dreame Vacuum.
 
 - **Xiaomi Miio**: its sensors are matched by their `translation_key` like the Roborock ones — current / last clean (`clean_time`, `clean_area`), totals (`total_duration`, `total_area`, `count`), last clean start / end, maintenance (`main_brush_left`, `side_brush_left`, `filter_left`, `sensor_dirty_left`) with their **Reset** buttons. The status comes from the vacuum entity, errors from its `error` attribute. Some of these sensors are disabled by default in the integration (totals, DND): enable them to see the statistics.
 - **Xiaomi Home**: its entities have no `translation_key`, so the cards show the vacuum (status, fan speed, controls) and the battery only.
-- These integrations have no `roborock.get_maps` service: the Start button starts a full cleaning (no room selector), and there is no routine or dock section. The map is not part of them either: set `map_entity` to the camera of [Xiaomi Cloud Map Extractor](https://github.com/PiotrMachowski/Home-Assistant-custom-components-Xiaomi-Cloud-Map-Extractor).
+- **Dreame Vacuum**: status, current room, cleaning progress, error, current and total cleaning, maintenance (`main_brush_time_left`, `side_brush_time_left`, `filter_time_left`, `sensor_dirty_time_left`, `mop_pad_time_left`) with the **Reset** buttons of the integration, and its map camera.
+- These integrations have no `roborock.get_maps` service: the Start button starts a full cleaning (no room selector), and there is no routine or dock section. Xiaomi Miio and Xiaomi Home have no map: set `map_entity` to the camera of [Xiaomi Cloud Map Extractor](https://github.com/PiotrMachowski/Home-Assistant-custom-components-Xiaomi-Cloud-Map-Extractor).
 
 Maintenance thresholds: the remaining time turns orange under 10 % of the part lifetime (or under 10 h when the lifetime is unknown), and red when it reaches 0. Bars use the Roborock lifetimes: main brush 300 h, side brush 200 h, filter 150 h, sensors 30 h.
 
@@ -277,7 +295,7 @@ Contributions for additional languages are welcome!
 
 ## Credits
 
-Roborock, the Roborock logo and the product pictures are trademarks and property of Roborock; Xiaomi, Mi Home and their logos are trademarks of Xiaomi (logos from the [Home Assistant brands](https://github.com/home-assistant/brands) repository). This project is not affiliated with Roborock or Xiaomi.
+Roborock, the Roborock logo and the product pictures are trademarks and property of Roborock; Xiaomi, Mi Home and their logos are trademarks of Xiaomi; Dreame and its logo are trademarks of Dreame Technology (logos from the [Home Assistant brands](https://github.com/home-assistant/brands) repository). This project is not affiliated with Roborock, Xiaomi or Dreame.
 
 ## License
 

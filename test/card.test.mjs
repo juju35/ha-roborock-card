@@ -308,8 +308,10 @@ test("the logo follows the brand of the model, else the integration", () => {
   assert.equal(logoOf("xiaomi_miio", "roborock.vacuum.m1s"), "Xiaomi");
   assert.equal(logoOf("roborock", "rockrobo.vacuum.v1"), "Xiaomi");
   assert.equal(logoOf("xiaomi_home", "xiaomi.vacuum.b108gl"), "Xiaomi");
-  assert.equal(logoOf("xiaomi_miio", "dreame.vacuum.p2009"), "Xiaomi Mi Home");
-  assert.equal(logoOf("xiaomi_home", "dreame.vacuum.p2009"), "Xiaomi");
+  assert.equal(logoOf("xiaomi_miio", "dreame.vacuum.p2009"), "Dreame");
+  assert.equal(logoOf("xiaomi_miio", "viomi.vacuum.v99"), "Xiaomi Mi Home");
+  assert.equal(logoOf("xiaomi_home", "viomi.vacuum.v99"), "Xiaomi");
+  assert.equal(logoOf("dreame_vacuum", "mova.vacuum.x1"), "Dreame");
   assert.equal(logoOf("roborock", "roborock.vacuum.zz99"), "Roborock");
 });
 
@@ -327,4 +329,50 @@ test("a model id as image option draws that model, with the color option", () =>
   card.hass = makeHass();
   const dev = rr.resolve(card._hass).devices.find((d) => d.id === "saros");
   assert.equal(card._picture(dev, null), `data:image/svg+xml,${encodeURIComponent(rr.wetdrySvg({ white: true }))}`);
+});
+
+test("Dreame Vacuum: vacuum discovered, keys mapped, Dreame logo, map camera; Xiaomi-sold model keeps the Xiaomi logo", () => {
+  const ent = { ...entities };
+  const st = { ...states };
+  const add = (entity_id, translation_key, state, attributes = {}) => {
+    ent[entity_id] = { entity_id, device_id: "dr", platform: "dreame_vacuum", translation_key };
+    st[entity_id] = { entity_id, state, attributes };
+  };
+  add("vacuum.l10", null, "docked", { fan_speed: "standard" });
+  add("sensor.l10_status", "status", "charging");
+  add("sensor.l10_battery_level", "battery_level", "88", { device_class: "battery", unit_of_measurement: "%" });
+  add("sensor.l10_error", "error", "no_error");
+  add("sensor.l10_main_brush_time_left", "main_brush_time_left", "120", { unit_of_measurement: "h" });
+  add("sensor.l10_sensor_dirty_time_left", "sensor_dirty_time_left", "12", { unit_of_measurement: "h" });
+  add("button.l10_reset_filter", "reset_filter", "unknown");
+  add("sensor.l10_cleaning_count", "cleaning_count", "42");
+  add("camera.l10_map", "map", "idle", { entity_picture: "/api/camera_proxy/camera.l10_map" });
+  const devs = { ...devices, dr: { id: "dr", name: "Dreame L10", model: "dreame.vacuum.p2029", identifiers: [["dreame_vacuum", "dr"]] } };
+  const hass = { ...makeHass(st), entities: ent, devices: devs };
+  const dev = rr.resolve(hass).devices.find((d) => d.id === "dr");
+  assert.equal(dev.vacuum, "vacuum.l10");
+  assert.equal(dev.entities.sensor_time_left, "sensor.l10_sensor_dirty_time_left");
+  assert.equal(dev.entities.reset_air_filter_consumable, "button.l10_reset_filter");
+  assert.equal(dev.entities.total_cleaning_count, "sensor.l10_cleaning_count");
+  const card = new rr.RoborockCard();
+  card.setConfig({ device: "dr", show_map: "always" });
+  card.hass = hass;
+  const html = card.shadowRoot.innerHTML;
+  assert.match(html, /title="Dreame"/);
+  assert.match(html, /data-map="camera\.l10_map"/);
+  assert.doesNotMatch(html, /class="alert-line/); // "no_error" is no error
+  devs.dr = { ...devs.dr, model: "dreame.vacuum.p2114a" }; // Mi Robot Vacuum X10+
+  const card2 = new rr.RoborockCard();
+  card2.setConfig({ device: "dr" });
+  card2.hass = { ...hass, devices: { ...devs } };
+  assert.match(card2.shadowRoot.innerHTML, /title="Xiaomi"/);
+});
+
+test("robot-vacuum-card and robot-vacuum-mini-card are aliases of the cards", () => {
+  const card = new (rr.window.customElements.get("robot-vacuum-card"))();
+  card.setConfig({ device: "saros", show_map: "never" });
+  card.hass = makeHass();
+  assert.ok(card instanceof rr.RoborockCard);
+  assert.match(card.shadowRoot.innerHTML, /title="Roborock"/);
+  assert.ok(new (rr.window.customElements.get("robot-vacuum-mini-card"))() instanceof rr.RoborockMiniCard);
 });
