@@ -2,13 +2,17 @@
  * Roborock Card for Home Assistant
  * https://github.com/juju35/ha-roborock-card
  *
- * Lovelace cards for the Roborock integration (https://www.home-assistant.io/integrations/roborock/).
+ * Lovelace cards for the Roborock integration (https://www.home-assistant.io/integrations/roborock/), also
+ * for Roborock robots set up with Xiaomi Miio (https://www.home-assistant.io/integrations/xiaomi_miio/) or
+ * Xiaomi Home (https://github.com/XiaoMi/ha_xiaomi_home).
  * Entities are resolved through the entity and device registries (platform, translation_key and
  * device), so they work whatever the Home Assistant language or entity ids.
  */
 
 const VERSION = "__VERSION__";
 const IMG_LOGO = "__IMG_LOGO__";
+const IMG_LOGO_MIHOME = "__IMG_LOGO_MIHOME__";
+const IMG_LOGO_XIAOMI = "__IMG_LOGO_XIAOMI__";
 // Roborock pictures: drawn illustrations, picked from the device name (robot with or without LiDAR turret,
 // with or without its dock, dark or white) or the wet-dry vacuum kind, and animated by what the device is doing
 // (`activity`): vacuum, mop, vacmop (vacuum and mop), returning, washing (the mops), drying (the mops).
@@ -170,7 +174,30 @@ const activityOf = (status, mode, drying) => {
   return /mop/.test(m) ? "mop" : "vacuum";
 };
 const svgUri = (svg) => svg && `data:image/svg+xml,${encodeURIComponent(svg)}`;
-const ROBOROCK_SITE = "https://www.roborock.com";
+// Integrations the cards read, with the logo shown in the header.
+const BRANDS = {
+  roborock: { logo: IMG_LOGO, name: "Roborock", site: "https://www.roborock.com" },
+  xiaomi_miio: { logo: IMG_LOGO_MIHOME, name: "Xiaomi Mi Home", site: "https://home.mi.com" },
+  xiaomi_home: { logo: IMG_LOGO_XIAOMI, name: "Xiaomi", site: "https://www.mi.com" },
+};
+// Xiaomi Miio translation_key → the Roborock integration's, so the cards read both the same way.
+// Their last clean "duration" / "area" are left aside: "clean_time" / "clean_area" hold the current
+// clean while the robot works and the last one afterwards, like the Roborock cleaning_time / cleaning_area.
+const MIIO_KEYS = {
+  clean_time: "cleaning_time",
+  clean_area: "cleaning_area",
+  total_duration: "total_cleaning_time",
+  total_area: "total_cleaning_area",
+  count: "total_cleaning_count",
+  main_brush_left: "main_brush_time_left",
+  side_brush_left: "side_brush_time_left",
+  filter_left: "filter_time_left",
+  sensor_dirty_left: "sensor_time_left",
+  reset_vacuum_main_brush: "reset_main_brush_consumable",
+  reset_vacuum_side_brush: "reset_side_brush_consumable",
+  reset_vacuum_filter: "reset_air_filter_consumable",
+  reset_vacuum_sensor_dirty: "reset_sensor_consumable",
+};
 const PENDING_MS = 45000;
 const DEFAULT_COLLAPSED = ["stats", "dock"];
 
@@ -271,7 +298,7 @@ const STRINGS = {
     ok: "OK",
     empty: "Empty",
     full: "Full",
-    no_device: "No Roborock device found. Is the Roborock integration installed?",
+    no_device: "No Roborock device found. Is the Roborock, Xiaomi Miio or Xiaomi Home integration installed?",
     unknown_device: "Roborock device not found",
     no_registry: "This card needs Home Assistant 2024.8 or later.",
     // Editor
@@ -280,7 +307,7 @@ const STRINGS = {
     image: "Device picture",
     image_auto: "Automatic (per model)",
     image_none: "None",
-    show_logo: "Show Roborock logo",
+    show_logo: "Show the integration logo",
     show_controls: "Show control buttons",
     show_modes: "Show cleaning settings",
     show_routines: "Show routines",
@@ -289,6 +316,7 @@ const STRINGS = {
     show_stats: "Show statistics",
     show_map: "Show map",
     collapsed: "Sections folded by default",
+    map_entity: "Map entity (optional, e.g. Xiaomi Cloud Map Extractor camera)",
     crop: "Map crop (pixels)",
     map_size: "Map image size: {w} × {h} px. Values are in pixels of this image.",
     top: "Top",
@@ -419,7 +447,7 @@ const STRINGS = {
     ok: "OK",
     empty: "Vide",
     full: "Plein",
-    no_device: "Aucun appareil Roborock trouvé. L'intégration Roborock est-elle installée ?",
+    no_device: "Aucun appareil Roborock trouvé. L'intégration Roborock, Xiaomi Miio ou Xiaomi Home est-elle installée ?",
     unknown_device: "Appareil Roborock introuvable",
     no_registry: "Cette carte nécessite Home Assistant 2024.8 ou plus récent.",
     device: "Appareil Roborock",
@@ -427,7 +455,7 @@ const STRINGS = {
     image: "Image de l'appareil",
     image_auto: "Automatique (selon le modèle)",
     image_none: "Aucune",
-    show_logo: "Afficher le logo Roborock",
+    show_logo: "Afficher le logo de l'intégration",
     show_controls: "Afficher les boutons de commande",
     show_modes: "Afficher les réglages de nettoyage",
     show_routines: "Afficher les routines",
@@ -436,6 +464,7 @@ const STRINGS = {
     show_stats: "Afficher les statistiques",
     show_map: "Afficher la carte",
     collapsed: "Sections repliées par défaut",
+    map_entity: "Entité de la carte (facultatif, ex. caméra Xiaomi Cloud Map Extractor)",
     crop: "Recadrage de la carte (pixels)",
     map_size: "Taille de l'image de la carte : {w} × {h} px. Les valeurs sont en pixels de cette image.",
     top: "Haut",
@@ -626,11 +655,12 @@ const resolve = (hass) => {
 
   const byDevice = new Map();
   for (const e of Object.values(hass.entities)) {
-    if (e.platform !== "roborock" || !e.device_id || e.hidden) continue;
+    if (!(e.platform in BRANDS) || !e.device_id || e.hidden) continue;
     const domain = e.entity_id.split(".")[0];
-    const item = byDevice.get(e.device_id) || { entities: {}, extra: {} };
-    if (e.translation_key && e.translation_key !== "map") {
-      if (!(e.translation_key in item.entities)) item.entities[e.translation_key] = e.entity_id;
+    const item = byDevice.get(e.device_id) || { platform: e.platform, entities: {}, extra: {} };
+    const key = e.platform === "xiaomi_miio" ? MIIO_KEYS[e.translation_key] || e.translation_key : e.translation_key;
+    if (key && key !== "map") {
+      if (!(key in item.entities)) item.entities[key] = e.entity_id;
     } else {
       (item.extra[domain] = item.extra[domain] || []).push(e.entity_id);
       if (!(`_${domain}` in item.entities)) item.entities[`_${domain}`] = e.entity_id;
@@ -645,11 +675,24 @@ const resolve = (hass) => {
   for (const [id, item] of byDevice) {
     const d = hass.devices[id];
     if (!d) continue;
-    if (isDock(d)) docks.push({ d, item });
+    const vacuum = item.entities.roborock || item.entities._vacuum;
+    // The Xiaomi integrations cover every Xiaomi device (purifiers, lamps…): only their vacuums are kept.
+    if (item.platform !== "roborock" && !vacuum) continue;
+    if (item.platform === "roborock" && isDock(d)) docks.push({ d, item });
     else {
-      const vacuum = item.entities.roborock || item.entities._vacuum;
       const kind = vacuum?.startsWith("vacuum.") ? "robot" : /\.wdv\./.test(d.model || "") ? "wetdry" : "other";
-      devices.push({ id, name: devName(d), rawName: d.name, model: d.model, kind, vacuum, entities: item.entities, extra: item.extra, dock: {} });
+      devices.push({
+        id,
+        name: devName(d),
+        rawName: d.name,
+        model: d.model,
+        platform: item.platform,
+        kind,
+        vacuum,
+        entities: item.entities,
+        extra: item.extra,
+        dock: {},
+      });
     }
   }
   for (const { d, item } of docks) {
@@ -664,6 +707,10 @@ const resolve = (hass) => {
   _cache.set(hass.entities, { devices: hass.devices, model });
   return model;
 };
+
+// Map pictures of a device: the integration's map images, or the camera / image entity set with map_entity
+// (Xiaomi Cloud Map Extractor, Valetudo…), which belongs to no Roborock device.
+const mapIds = (dev, config) => (config?.map_entity ? [config.map_entity] : dev.extra.image || []);
 
 const listDevices = (hass) => {
   const m = hass && resolve(hass);
@@ -1064,6 +1111,9 @@ class RoborockBase extends HTMLElement {
     if (valid(dock) && dock.state !== "ok") return { entity: dock.entity_id, text: `${this._t("dock_state")} · ${this._fmt(dock, "e_")}` };
     const water = this._s(dev.entities.water_shortage);
     if (water?.state === "on") return { entity: water.entity_id, text: this._t("water_shortage") };
+    // Xiaomi Miio: no error sensor, the vacuum carries it in its "error" attribute.
+    const vac = this._s(dev.vacuum);
+    if (dev.platform !== "roborock" && vac?.state === "error" && vac.attributes?.error) return { entity: vac.entity_id, text: String(vac.attributes.error) };
     return null;
   }
 
@@ -1105,14 +1155,18 @@ class RoborockBase extends HTMLElement {
     return svgUri(preset ? IMAGES[img](activity) : autoSvg(dev, activity));
   }
 
+  // Logo of the integration the device comes from (Roborock, Xiaomi Mi Home or Xiaomi), linking to its site.
+  _logo(dev) {
+    const b = BRANDS[dev.platform] || BRANDS.roborock;
+    return `<a class="logo-link" href="${b.site}" target="_blank" rel="noopener noreferrer" title="${esc(b.name)}">${imgTag(b.logo, `class="logo" alt="${esc(b.name)}"`)}</a>`;
+  }
+
   _header(dev, status, sub) {
     const c = this._config;
     return `
       <div class="header">
         ${
-          c.show_logo !== false
-            ? `<a class="logo-link" href="${ROBOROCK_SITE}" target="_blank" rel="noopener noreferrer" title="Roborock">${imgTag(IMG_LOGO, 'class="logo" alt="Roborock"')}</a>`
-            : ""
+          c.show_logo !== false ? this._logo(dev) : ""
         }
         <div class="titles">
           <div class="name">${esc(c.title || dev.name)}</div>
@@ -1160,7 +1214,7 @@ class RoborockBase extends HTMLElement {
     const list = [
       cleaning
         ? btn("pause", ICONS.pause, this._t("pause"), "primary")
-        : btn(this._config.room_selection !== false && vac.state !== "paused" ? "open_rooms" : "start", ICONS.play, this._t("start"), "primary"),
+        : btn(this._config.room_selection !== false && dev.platform === "roborock" && vac.state !== "paused" ? "open_rooms" : "start", ICONS.play, this._t("start"), "primary"),
       round ? "" : btn("stop", ICONS.stop, this._t("stop")),
       btn("return_to_base", ICONS.home, this._t("dock")),
       round ? "" : btn("locate", ICONS.locate, this._t("locate")),
@@ -1606,7 +1660,7 @@ class RoborockCard extends RoborockBase {
   }
 
   _map(dev) {
-    const maps = (dev.extra.image || []).map((id) => this._s(id)).filter((s) => s?.attributes?.entity_picture);
+    const maps = mapIds(dev, this._config).map((id) => this._s(id)).filter((s) => s?.attributes?.entity_picture);
     if (!maps.length) return "";
     const selected = this._s(dev.entities.selected_map)?.state;
     const map = (selected && maps.find((s) => (s.attributes.friendly_name || "").endsWith(selected))) || maps[0];
@@ -1900,7 +1954,7 @@ class RoborockEditorBase extends HTMLElement {
   _loadMapSize(device) {
     if (!this.constructor.extraFields(() => "").some((f) => f.name === "crop")) return;
     const { dev } = findDevice(this._hass, { device });
-    const id = dev && (dev.extra.image || []).find((i) => this._hass.states[i]?.attributes?.entity_picture);
+    const id = dev && mapIds(dev, this._config).find((i) => this._hass.states[i]?.attributes?.entity_picture);
     if (!id || this._mapSizeFor === id) return;
     this._mapSizeFor = id;
     const img = new Image();
@@ -1955,6 +2009,7 @@ class RoborockCardEditor extends RoborockEditorBase {
           },
         },
       },
+      { name: "map_entity", selector: { entity: { domain: ["camera", "image"] } } },
       {
         type: "expandable",
         name: "crop",
