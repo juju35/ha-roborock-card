@@ -271,14 +271,13 @@ test("Xiaomi Miio: only the vacuum is listed, its keys read like the Roborock on
   assert.equal(q5.entities.reset_air_filter_consumable, "button.dustbusters_reset_filter");
 });
 
-test("Xiaomi Miio: the card shows the Mi Home logo, maintenance and statistics, Start cleans right away", () => {
+test("Xiaomi Miio: the card shows the Roborock logo of a Roborock model, maintenance and statistics, Start cleans right away", () => {
   const hass = makeHass();
   const card = new rr.RoborockCard();
   card.setConfig({ device: "q5", show_map: "always", map_entity: "camera.dustbusters_map", collapsed: [] });
   card.hass = hass;
   const html = card.shadowRoot.innerHTML;
-  assert.match(html, /title="Xiaomi Mi Home"/);
-  assert.match(html, /href="https:\/\/home\.mi\.com"/);
+  assert.match(html, /title="Roborock"/); // a Roborock model (Q5 Pro), whatever the integration
   assert.match(html, /data-entity="sensor\.dustbusters_main_brush_remaining"/);
   assert.match(html, /data-entity="button\.dustbusters_reset_filter"/);
   assert.match(html, /1,182/);
@@ -293,12 +292,39 @@ test("the Roborock integration keeps its logo and room selector", () => {
   assert.match(html, /open_rooms/);
 });
 
-test("Xiaomi Home: a vacuum of that integration gets the Xiaomi logo", () => {
-  const ent = { ...entities, "vacuum.xh": { entity_id: "vacuum.xh", device_id: "xh", platform: "xiaomi_home", translation_key: null } };
-  const dev = { ...devices, xh: { id: "xh", name: "Xiaomi Home robot", model: "roborock.vacuum.a72", identifiers: [["xiaomi_home", "xh"]] } };
-  const st = { ...states, "vacuum.xh": { entity_id: "vacuum.xh", state: "docked", attributes: {} } };
+// Card rendered for one extra vacuum `vacuum.x` of `platform`, with the device `model`.
+const logoOf = (platform, model) => {
+  const ent = { ...entities, "vacuum.x": { entity_id: "vacuum.x", device_id: "x", platform, translation_key: null } };
+  const dev = { ...devices, x: { id: "x", name: "Robot", model, identifiers: [[platform, "x"]] } };
+  const st = { ...states, "vacuum.x": { entity_id: "vacuum.x", state: "docked", attributes: {} } };
   const card = new rr.RoborockCard();
-  card.setConfig({ device: "xh" });
+  card.setConfig({ device: "x" });
   card.hass = { ...makeHass(st), entities: ent, devices: dev };
-  assert.match(card.shadowRoot.innerHTML, /title="Xiaomi"/);
+  return card.shadowRoot.innerHTML.match(/title="([^"]+)"><img/)?.[1];
+};
+
+test("the logo follows the brand of the model, else the integration", () => {
+  assert.equal(logoOf("xiaomi_miio", "roborock.vacuum.a72"), "Roborock");
+  assert.equal(logoOf("xiaomi_miio", "roborock.vacuum.m1s"), "Xiaomi");
+  assert.equal(logoOf("roborock", "rockrobo.vacuum.v1"), "Xiaomi");
+  assert.equal(logoOf("xiaomi_home", "xiaomi.vacuum.b108gl"), "Xiaomi");
+  assert.equal(logoOf("xiaomi_miio", "dreame.vacuum.p2009"), "Xiaomi Mi Home");
+  assert.equal(logoOf("xiaomi_home", "dreame.vacuum.p2009"), "Xiaomi");
+  assert.equal(logoOf("roborock", "roborock.vacuum.zz99"), "Roborock");
+});
+
+test("the color option paints the F25 Ultra black", () => {
+  const card = new rr.RoborockCard();
+  card.setConfig({ device: "Roborock F25 Ultra", color: "dark" });
+  card.hass = makeHass();
+  const dev = rr.resolve(card._hass).devices.find((d) => d.id === "f25");
+  assert.equal(card._picture(dev, card._status(dev)), `data:image/svg+xml,${encodeURIComponent(rr.wetdrySvg({ white: false }))}`);
+});
+
+test("a model id as image option draws that model, with the color option", () => {
+  const card = new rr.RoborockCard();
+  card.setConfig({ device: "saros", image: "roborock.wetdryvac.a56", color: "white" });
+  card.hass = makeHass();
+  const dev = rr.resolve(card._hass).devices.find((d) => d.id === "saros");
+  assert.equal(card._picture(dev, null), `data:image/svg+xml,${encodeURIComponent(rr.wetdrySvg({ white: true }))}`);
 });

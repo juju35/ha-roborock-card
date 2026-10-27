@@ -23,7 +23,8 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 - Two cards: a full **Roborock Card** and a compact **Roborock Mini Card**
 - Robot vacuums and wet-dry vacuums, with a drawn device picture that follows the model (robot with or without LiDAR turret and dock, wet-dry vacuum) or your own
 - Automatic discovery of the Roborock devices (several devices supported, dock merged with its robot)
-- Roborock robots set up with Xiaomi Miio or Xiaomi Home are supported too, with their integration's logo (see [Xiaomi integrations](#xiaomi-integrations))
+- Roborock robots set up with Xiaomi Miio or Xiaomi Home are supported too (see [Xiaomi integrations](#xiaomi-integrations))
+- Common Roborock and Xiaomi models recognized from their model id, even when the device was renamed: the picture, its animations and the logo follow the model
 - Battery, status, current room, cleaning progress and errors
 - Cleaning settings: mode, suction power, mop intensity and route
 - Start / pause, stop, return to dock and locate buttons
@@ -36,7 +37,7 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 - Detail button on the mini card (top right): it switches the mini card to the full card's content and back; a click anywhere outside the card brings the compact view back
 - Map of the current floor while the robot is cleaning (or always, or never), with optional cropping, enlarged full screen on click
 - Click any value to open its Home Assistant history (more-info dialog)
-- Click the logo to open the site of the integration's brand (Roborock, Xiaomi Mi Home or Xiaomi)
+- Brand logo (Roborock or Xiaomi, from the model; Mi Home for other models on Xiaomi Miio), opening the brand's site on click
 - Visual editor in the dashboard UI for both cards (no YAML needed)
 - Light and dark mode, English and French
 - Single file, no external dependency, the logos and pictures are embedded
@@ -94,6 +95,7 @@ type: custom:roborock-card
 device: Roborock Saros 20
 title: Saros
 image: auto
+color: auto
 show_logo: true
 show_controls: true
 room_selection: true
@@ -120,6 +122,7 @@ type: custom:roborock-mini-card
 device: Roborock F25 Ultra
 title: F25
 image: auto
+color: dark
 show_logo: true
 show_controls: true
 room_selection: true
@@ -133,8 +136,9 @@ language: fr
 |---|---|---|---|
 | `device` | both | First robot vacuum | Roborock device to display: its name (as shown in Home Assistant) or its device id (set by the visual editor) |
 | `title` | both | Device name | Card title |
-| `image` | both | `auto` | Device picture: `auto` (per model), `saros_20`, `s8_maxv_ultra`, `qrevo`, `q7`, `f25_ultra`, `dyad_pro`, `none`, or the URL of your own picture (e.g. `/local/my-robot.png`) |
-| `show_logo` | both | `true` | Show the logo of the device's integration: Roborock, Xiaomi Mi Home (Xiaomi Miio) or Xiaomi (Xiaomi Home); it opens the brand's site in a new tab |
+| `image` | both | `auto` | Device picture: `auto` (per model), a model id to draw another model (e.g. `roborock.vacuum.a72` for the Q5 Pro — the visual editor lists the Roborock and Xiaomi models by name), `none`, or the URL of your own picture (e.g. `/local/my-robot.png`). The former presets `saros_20`, `s8_maxv_ultra`, `qrevo`, `q7`, `f25_ultra` and `dyad_pro` still work |
+| `color` | both | `auto` | Color of the drawn picture: `auto` (per model), `white` or `dark` — for models sold in both colors (F25 Ultra, S7, Q5…) |
+| `show_logo` | both | `true` | Show the brand logo: Roborock or Xiaomi from the model, else the integration's (Roborock, Mi Home for Xiaomi Miio, Xiaomi for Xiaomi Home); it opens the brand's site in a new tab |
 | `show_controls` | both | `true` | Start / pause, stop, dock and locate buttons (robot vacuums), dock actions (empty bin, wash and dry mop) and maintenance reset buttons |
 | `room_selection` | both | `true` | The Start button opens the room selector; `false` starts a full cleaning right away |
 | `zoom` | mini | `true` | Detail button at the top right of the mini card: it shows the full card's content (with the same options, so `show_dock`, `show_map`, `collapsed`… can be set on the mini card too) and switches back to the compact view; a click outside the card also brings the compact view back. `false` removes the button |
@@ -211,7 +215,7 @@ Wet-dry vacuum (F25 Ultra):
 |---|---|
 | ![card f25](screenshots/card-f25.png) | ![mini card f25](screenshots/mini-card-f25.png) |
 
-Roborock robot set up with Xiaomi Miio (Q5 Pro, map from Xiaomi Cloud Map Extractor):
+Roborock robot set up with Xiaomi Miio (a renamed Q5 Pro, map from Xiaomi Cloud Map Extractor):
 
 | Roborock Card | Roborock Mini Card |
 |---|---|
@@ -225,7 +229,7 @@ States and errors are shown with the card's own translations when available, oth
 
 <p align="center"><img src="images/models.svg" alt="Device pictures" width="640"></p>
 
-The device picture is drawn from the model name: Saros robots have no LiDAR turret, the Q series (Q7, Q8, Qrevo) is white, the other robots (S series…) are dark; the dock is drawn when the integration reports one or the name implies it (Ultra, Plus, Qrevo, Saros). Wet-dry vacuums (`roborock.wdv.*`) show an upright vacuum, dark for the Dyad series. The picture is animated by the current activity, from the status, the cleaning mode and the dock drying: vacuuming (side brushes and dust), mopping (wet trail and drops), both, returning to the dock, washing the mops (bubbles) and drying them (heat waves); it stays still otherwise and with the reduced-motion setting. Use the `image` option to pick another one or your own.
+The device picture is drawn from the device name and the commercial name of its model id (`roborock.vacuum.a72` → Q5 Pro…, about 90 Roborock and Xiaomi models compatible with the integrations: Roborock E2 / S4 to S8, Q5 to Q10, the Qrevo range (Edge, Curv 2, S Pro…), Saros 10 / 20, G10 / G30, Dyad and F25; Xiaomi / Mijia Mi Robot Vacuum, 1S, Vacuum-Mop Essential / 1C / P / 2 / 2 Pro+ / 2 Ultra, X10 / X10+ / X20+, S10+, Omni 2, M40…), so a renamed device keeps the right picture: Saros robots, the E / C1 series and the Mi Vacuum-Mop Essential / 1C have no LiDAR turret, the Q series (Q5…Q10, Qrevo) and the Mi / Xiaomi robots are white, the other robots (S series…) are dark; the dock is drawn when the integration reports one or the name implies it (Ultra, Plus / +, Qrevo, Saros, G10). Wet-dry vacuums (`roborock.wdv.*`, `roborock.wetdryvac.*`) show an upright vacuum, dark for the Dyad series. The picture is animated by the current activity, from the status, the cleaning mode and the dock drying: vacuuming (side brushes and dust), mopping (wet trail and drops), both, returning to the dock, washing the mops (bubbles) and drying them (heat waves); it stays still otherwise and with the reduced-motion setting. Use the `image` option to pick another one or your own, and `color` (`white` / `dark`) when your model exists in both colors.
 
 The room selector reads the rooms of the current map (the one chosen in the integration's **Selected map** select) with the `roborock.get_maps` service, then cleans the selected rooms with the same `app_segment_clean` command the integration uses. When the robot is paused, the Start button resumes the cleaning instead.
 
@@ -235,7 +239,7 @@ Each maintenance line has a reset button when the integration exposes the matchi
 
 ### Xiaomi integrations
 
-Roborock robots paired with the Mi Home app are often set up with Xiaomi Miio (or Xiaomi Home) rather than the Roborock integration. The cards list the vacuums of these integrations too (their other Xiaomi devices are skipped) and show the integration's logo: Mi Home for Xiaomi Miio, Xiaomi for Xiaomi Home.
+Roborock robots paired with the Mi Home app are often set up with Xiaomi Miio (or Xiaomi Home) rather than the Roborock integration. The cards list the vacuums of these integrations too (their other Xiaomi devices are skipped). The logo follows the brand of the model (a Q5 Pro shows the Roborock logo, a Mi Robot Vacuum 1S the Xiaomi one); a model of another brand shows the integration's logo: Mi Home for Xiaomi Miio, Xiaomi for Xiaomi Home.
 
 - **Xiaomi Miio**: its sensors are matched by their `translation_key` like the Roborock ones — current / last clean (`clean_time`, `clean_area`), totals (`total_duration`, `total_area`, `count`), last clean start / end, maintenance (`main_brush_left`, `side_brush_left`, `filter_left`, `sensor_dirty_left`) with their **Reset** buttons. The status comes from the vacuum entity, errors from its `error` attribute. Some of these sensors are disabled by default in the integration (totals, DND): enable them to see the statistics.
 - **Xiaomi Home**: its entities have no `translation_key`, so the cards show the vacuum (status, fan speed, controls) and the battery only.
@@ -247,7 +251,7 @@ Maintenance thresholds: the remaining time turns orange under 10 % of the part l
 
 ```bash
 npm install
-npm run build        # bundles src/roborock-card.js + images/logo.svg into dist/roborock-card.js
+npm run build        # bundles src/roborock-card.js + the logos of images/ into dist/roborock-card.js
 npm run check        # builds and checks the card (run in CI)
 npm run screenshots  # renders the cards (and one GIF per animated state, needs ffmpeg) with mock data into screenshots/
 ```
@@ -273,7 +277,7 @@ Contributions for additional languages are welcome!
 
 ## Credits
 
-Roborock, the Roborock logo and the product pictures are trademarks and property of Roborock. This project is not affiliated with Roborock.
+Roborock, the Roborock logo and the product pictures are trademarks and property of Roborock; Xiaomi, Mi Home and their logos are trademarks of Xiaomi (logos from the [Home Assistant brands](https://github.com/home-assistant/brands) repository). This project is not affiliated with Roborock or Xiaomi.
 
 ## License
 

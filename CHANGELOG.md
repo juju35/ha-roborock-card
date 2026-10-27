@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.14.0
+### Changes
+- About 90 Roborock and Xiaomi / Mijia models compatible with the integrations are recognized from their model id (`roborock.vacuum.a72` → Q5 Pro, `roborock.vacuum.m1s` → Mi Robot Vacuum 1S, `dreame.vacuum.mc1808` → Mi Robot Vacuum-Mop 1C, `roborock.wetdryvac.a56` → Dyad Pro…): the device picture and its animations follow the model even when the device was renamed. New rules: E / C1 series and Mi Vacuum-Mop Essential / 1C without LiDAR turret, Mi / Xiaomi robots white, G10 / G30 series, `+`, Omni and Self-Cleaning models with their station. Sources: python-roborock, python-miio, the tested vacuums of python-roborock's local server and the Mijia list of Tasshack/dreame-vacuum.
+- The `image` option accepts a model id, and the visual editor lists every recognized Roborock and Xiaomi model by name (the former six presets still work).
+- The logo follows the brand of the model: Roborock for Roborock models (also on Xiaomi Miio / Xiaomi Home), Xiaomi for the Mi / Xiaomi robots (`rockrobo.vacuum.v1`, `roborock.vacuum.m1s`, the Mi / Mijia models sold by Dreame and Viomi, `xiaomi.*`, `mijia.*`, `ijai.*`); other models keep the integration's logo (Mi Home on Xiaomi Miio).
+- Wet-dry vacuums reported as `roborock.wetdryvac.*` are recognized (was `roborock.wdv.*` only).
+- New `color` option (both cards, visual editor): `auto` (per model), `white` or `dark` drawn picture, also applied to the `image` presets — for models sold in both colors (F25 Ultra, S7, Q5…).
+
 ## 1.13.0
 ### Changes
 - Roborock robots set up with the Xiaomi Miio or Xiaomi Home integration are supported (#16): their vacuums are discovered with the Roborock devices (other Xiaomi devices are skipped). Xiaomi Miio sensors are matched by their `translation_key` (current / last clean, totals, maintenance with reset buttons) and errors come from the vacuum's `error` attribute; Xiaomi Home shows the vacuum and battery. No room selector for these integrations (no `roborock.get_maps`): Start cleans the whole home.

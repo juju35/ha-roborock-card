@@ -98,12 +98,12 @@ entity("sensor.balai_duree_totale", "f25", "total_cleaning_time", "0.0", { unit_
 // Q5 Pro set up with Xiaomi Miio (translation keys of that integration, durations in hours as HA shows them),
 // with its map from a Xiaomi Cloud Map Extractor camera, which belongs to no device.
 const miio = (entity_id, translation_key, state, attributes = {}) => entity(entity_id, "q5", translation_key, state, attributes, "xiaomi_miio");
-device("q5", "Xiaomi Q5 Pro", "roborock.vacuum.a72", "q5", "xiaomi_miio");
+device("q5", "Robot vacuum", "roborock.vacuum.a72", "q5", "xiaomi_miio");
 miio("vacuum.dustbusters", null, "docked", {
   status: "Charging",
   fan_speed: "Standard",
   fan_speed_list: ["Silent", "Standard", "Medium", "Turbo", "Gentle", "Auto"],
-  friendly_name: "Xiaomi Q5 Pro",
+  friendly_name: "Robot vacuum",
 });
 miio("sensor.dustbusters_battery", null, "100", { device_class: "battery", unit_of_measurement: "%" });
 miio("sensor.dustbusters_current_clean_duration", "clean_time", "0.6", { unit_of_measurement: "h", device_class: "duration" });

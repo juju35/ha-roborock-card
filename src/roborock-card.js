@@ -137,25 +137,143 @@ const wetdrySvg = ({ white = true, activity = null } = {}) => {
   return svgDoc(100, 200, s, "", !!activity);
 };
 // Presets offered in the editor (`image` option); the keys of the former photos still work.
+// `white`: color forced by the `color` option (true / false), undefined to keep the model's.
 const IMAGES = {
-  saros_20: (activity) => robotSvg({ turret: false, activity }),
-  s8_maxv_ultra: (activity) => robotSvg({ activity }),
-  qrevo: (activity) => robotSvg({ white: true, activity }),
-  q7: (activity) => robotSvg({ white: true, dock: false, activity }),
-  f25_ultra: (activity) => wetdrySvg({ activity }),
-  dyad_pro: (activity) => wetdrySvg({ white: false, activity }),
+  saros_20: (activity, white = false) => robotSvg({ turret: false, white, activity }),
+  s8_maxv_ultra: (activity, white = false) => robotSvg({ white, activity }),
+  qrevo: (activity, white = true) => robotSvg({ white, activity }),
+  q7: (activity, white = true) => robotSvg({ white, dock: false, activity }),
+  f25_ultra: (activity, white = true) => wetdrySvg({ white, activity }),
+  dyad_pro: (activity, white = false) => wetdrySvg({ white, activity }),
 };
-const IMAGE_LABELS = { saros_20: "Saros 20", s8_maxv_ultra: "S8 MaxV Ultra", qrevo: "Qrevo", q7: "Q7", f25_ultra: "F25 Ultra", dyad_pro: "Dyad Pro" };
-// Automatic picture: Saros robots have no LiDAR turret, the Q series (Q7, Q8, Qrevo) is white, the dock is drawn
-// when the integration reports one (or the model name implies it); Dyad wet-dry vacuums are dark.
-const autoSvg = (dev, activity = null) => {
-  const name = dev.rawName || dev.name || "";
-  if (dev.kind === "wetdry") return wetdrySvg({ white: !/dyad/i.test(name), activity });
+// `color` option → forced color of the picture: true (white), false (dark), undefined (per model).
+const colorOf = (color) => (color === "white" ? true : color === "dark" ? false : undefined);
+// Commercial names of the common Roborock models, by the model id the integrations report (Roborock, Xiaomi Miio
+// and Xiaomi Home alike): the picture and the logo then follow the model even when the device was renamed
+// (« DustBusters »). Sources: python-roborock (const.py, device_info.yaml), python-miio, the tested vacuums of
+// python-roborock's local server and the Mijia list of Tasshack/dreame-vacuum (Xiaomi Home).
+const MODEL_NAMES = {
+  "rockrobo.vacuum.v1": "Mi Robot Vacuum",
+  "roborock.vacuum.m1s": "Mi Robot Vacuum 1S",
+  "mijia.vacuum.v1": "Mi Robot Vacuum-Mop Essential",
+  "mijia.vacuum.v2": "Mi Robot Vacuum-Mop Essential G1",
+  "dreame.vacuum.mc1808": "Mi Robot Vacuum-Mop 1C",
+  "viomi.vacuum.v7": "Mi Robot Vacuum-Mop P",
+  "viomi.vacuum.v8": "Mi Robot Vacuum-Mop P",
+  "dreame.vacuum.p2150o": "Mi Robot Vacuum-Mop",
+  "dreame.vacuum.p2140o": "Mi Robot Vacuum-Mop 2",
+  "dreame.vacuum.p2140p": "Mi Robot Vacuum-Mop 2",
+  "dreame.vacuum.p2140q": "Mi Robot Vacuum-Mop 2",
+  "ijai.vacuum.v3": "Mi Robot Vacuum-Mop 2 Pro",
+  "dreame.vacuum.p2041o": "Mi Robot Vacuum-Mop 2 Pro+",
+  "dreame.vacuum.p2150a": "Mi Robot Vacuum-Mop 2 Ultra",
+  "dreame.vacuum.p2150b": "Mi Robot Vacuum-Mop 2 Ultra Set",
+  "dreame.vacuum.p2148o": "Mi Robot Vacuum-Mop Ultra Slim",
+  "dreame.vacuum.r2209": "Mi Robot Vacuum X10",
+  "dreame.vacuum.p2114a": "Mi Robot Vacuum X10+",
+  "xiaomi.vacuum.c102gl": "Mi Robot Vacuum X20+",
+  "dreame.vacuum.r2211o": "Robot Vacuum S10+",
+  "dreame.vacuum.r2254": "Mijia 1S",
+  "dreame.vacuum.p2041": "Mijia 1T",
+  "dreame.vacuum.p2140": "Mijia 2C",
+  "dreame.vacuum.p2140a": "Mijia 2C",
+  "dreame.vacuum.r2210": "Mijia Cleaning and Mopping Robot 2 Pro",
+  "dreame.vacuum.p2114o": "Mijia Self-Cleaning Robot Vacuum-Mop",
+  "dreame.vacuum.p2149o": "Mijia Self-Cleaning Robot Vacuum-Mop Pro",
+  "xiaomi.vacuum.d110ch": "Mijia M40",
+  "xiaomi.vacuum.c102cn": "Mijia Omni 2",
+  "xiaomi.vacuum.d103cn": "Mijia Omni M30S",
+  "roborock.vacuum.c1": "C1",
+  "roborock.vacuum.e2": "E2",
+  "roborock.vacuum.a01": "E4",
+  "roborock.vacuum.s4": "S4",
+  "roborock.vacuum.a19": "S4 Max",
+  "roborock.vacuum.s5": "S5",
+  "roborock.vacuum.s5e": "S5 Max",
+  "roborock.vacuum.s6": "S6",
+  "roborock.vacuum.t6": "T6",
+  "roborock.vacuum.a08": "S6 Pure",
+  "roborock.vacuum.a10": "S6 MaxV",
+  "roborock.vacuum.a11": "T7",
+  "roborock.vacuum.a14": "T7S",
+  "roborock.vacuum.a23": "T7S Plus",
+  "roborock.vacuum.a15": "S7",
+  "roborock.vacuum.a27": "S7 MaxV",
+  "roborock.vacuum.a62": "S7 Pro Ultra",
+  "roborock.vacuum.a65": "S7 MaxV Ultra",
+  "roborock.vacuum.a51": "S8",
+  "roborock.vacuum.a70": "S8 Pro Ultra",
+  "roborock.vacuum.a97": "S8 MaxV Ultra",
+  "roborock.vacuum.a29": "G10",
+  "roborock.vacuum.a30": "G10",
+  "roborock.vacuum.a46": "G10S",
+  "roborock.vacuum.a26": "G10S Pro",
+  "roborock.vacuum.a34": "Q5",
+  "roborock.vacuum.a72": "Q5 Pro",
+  "roborock.vacuum.a125": "Q5 Max+",
+  "roborock.vacuum.a40": "Q7",
+  "roborock.vacuum.a38": "Q7 Max",
+  "roborock.vacuum.a73": "Q8 Max",
+  "roborock.vacuum.sc01": "Q7 Series",
+  "roborock.vacuum.sc05": "Q7 Series",
+  "roborock.vacuum.ss07": "Q10",
+  "roborock.vacuum.a75": "Qrevo",
+  "roborock.vacuum.a87": "Qrevo MaxV",
+  "roborock.vacuum.a101": "Qrevo Pro",
+  "roborock.vacuum.a104": "Qrevo S",
+  "roborock.vacuum.a117": "Qrevo Master",
+  "roborock.vacuum.a135": "Qrevo Curv",
+  "roborock.vacuum.a123": "Qrevo Plus",
+  "roborock.vacuum.a170": "Qrevo C",
+  "roborock.vacuum.a187": "Qrevo Edge",
+  "roborock.vacuum.a245": "Qrevo Curv 2 Flow",
+  "roborock.vacuum.a294": "Qrevo 2 Pro",
+  "roborock.vacuum.a298": "Qrevo Edge 2",
+  "roborock.vacuum.a326": "Qrevo S Pro",
+  "roborock.vacuum.a168": "QV 35A",
+  "roborock.vacuum.a306": "P30 Pro",
+  "roborock.vacuum.a146": "G30",
+  "roborock.vacuum.a143": "Saros 10R",
+  "roborock.vacuum.a144": "Saros 10R",
+  "roborock.vacuum.a147": "Saros 10",
+  "roborock.vacuum.a288": "Saros 20",
+  "roborock.vacuum.a279": "Saros 20 Sonic",
+  "roborock.vacuum.a307": "Saros 20 Flow",
+  "roborock.wetdryvac.a56": "Dyad Pro",
+  "roborock.wetdryvac.a83": "Dyad Pro Combo",
+  "roborock.wetdryvac.a107": "Dyad Air",
+  "roborock.wdv.a194": "F25 Ultra",
+  "roborock.wetdryvac.a01": "Dyad",
+};
+// Brand of a model id, for the logo: Xiaomi for the Mi / Xiaomi robots (built by Roborock for the first ones),
+// Roborock for the other Roborock models, null when unknown (the logo of the integration is shown).
+const XIAOMI_MODELS = new Set(["rockrobo.vacuum.v1", "roborock.vacuum.m1s"]);
+const brandOf = (model) => {
+  const m = String(model || "").toLowerCase();
+  // The Dreame and Viomi models of the table are the ones sold as Mi / Xiaomi / Mijia.
+  if (XIAOMI_MODELS.has(m) || /^(xiaomi|mijia|ijai)\./.test(m) || (/^(dreame|viomi)\./.test(m) && m in MODEL_NAMES)) return "xiaomi";
+  return /^(roborock|rockrobo)\./.test(m) ? "roborock" : null;
+};
+// Model presets of the `image` option (the model id as value), one per commercial name, by brand then name.
+const MODEL_PRESETS = Object.entries(MODEL_NAMES)
+  .filter(([, name], i, all) => all.findIndex(([, n]) => n === name) === i)
+  .map(([value, name]) => ({ value, label: `${brandOf(value) === "xiaomi" ? "Xiaomi" : "Roborock"} ${name}` }))
+  .sort((a, b) => a.label.localeCompare(b.label, "en", { numeric: true }));
+// Device of a model preset, drawn like an automatic picture (without the dock the integration reports).
+const presetDevice = (model) => ({ kind: /\.(wdv|wetdryvac)\./.test(model) ? "wetdry" : "robot", model, dock: {} });
+// Name the picture is drawn from: the device name and the commercial name of its model.
+const modelName = (dev) => [dev.rawName || dev.name, MODEL_NAMES[String(dev.model || "").toLowerCase()]].filter(Boolean).join(" ");
+// Automatic picture: Saros robots, the E / C1 series and the Mi Essential / 1C have no LiDAR turret, the Q series
+// (Q5…Q10, Qrevo) and the Mi / Xiaomi robots are white, the dock is drawn when the integration reports one (or the
+// model name implies it: Ultra, Plus / +, Saros, Qrevo, Omni, Self-Cleaning, G10 / G30); Dyad wet-dry vacuums are dark.
+const autoSvg = (dev, activity = null, white = undefined) => {
+  const name = modelName(dev);
+  if (dev.kind === "wetdry") return wetdrySvg({ white: white ?? !/dyad/i.test(name), activity });
   if (dev.kind !== "robot") return null;
   return robotSvg({
-    turret: !/saros/i.test(name),
-    white: /\bq\s?(revo|\d)/i.test(name),
-    dock: Object.keys(dev.dock || {}).length > 0 || /ultra|plus|saros|q\s?revo/i.test(name),
+    turret: !/saros|essential|\b(e\d|c1|1c)\b/i.test(name),
+    white: white ?? (/\bq\s?(revo|\d)|\bmi robot/i.test(name) || brandOf(dev.model) === "xiaomi"),
+    dock: Object.keys(dev.dock || {}).length > 0 || /ultra|plus|\+|saros|q\s?revo|omni|self-cleaning|\bg\d\d/i.test(name),
     activity,
   });
 };
@@ -307,7 +425,11 @@ const STRINGS = {
     image: "Device picture",
     image_auto: "Automatic (per model)",
     image_none: "None",
-    show_logo: "Show the integration logo",
+    color: "Device color",
+    color_auto: "Automatic (per model)",
+    color_white: "White",
+    color_dark: "Black",
+    show_logo: "Show the brand logo",
     show_controls: "Show control buttons",
     show_modes: "Show cleaning settings",
     show_routines: "Show routines",
@@ -455,7 +577,11 @@ const STRINGS = {
     image: "Image de l'appareil",
     image_auto: "Automatique (selon le modèle)",
     image_none: "Aucune",
-    show_logo: "Afficher le logo de l'intégration",
+    color: "Couleur de l'appareil",
+    color_auto: "Automatique (selon le modèle)",
+    color_white: "Blanc",
+    color_dark: "Noir",
+    show_logo: "Afficher le logo de la marque",
     show_controls: "Afficher les boutons de commande",
     show_modes: "Afficher les réglages de nettoyage",
     show_routines: "Afficher les routines",
@@ -680,7 +806,7 @@ const resolve = (hass) => {
     if (item.platform !== "roborock" && !vacuum) continue;
     if (item.platform === "roborock" && isDock(d)) docks.push({ d, item });
     else {
-      const kind = vacuum?.startsWith("vacuum.") ? "robot" : /\.wdv\./.test(d.model || "") ? "wetdry" : "other";
+      const kind = vacuum?.startsWith("vacuum.") ? "robot" : /\.(wdv|wetdryvac)\./.test(d.model || "") ? "wetdry" : "other";
       devices.push({
         id,
         name: devName(d),
@@ -1147,17 +1273,21 @@ class RoborockBase extends HTMLElement {
     // Object.hasOwn, not IMAGES[img]: an inherited property name ("__proto__", "constructor"…) as the image
     // option would otherwise be a truthy non-function and crash the render.
     const preset = img && Object.hasOwn(IMAGES, img);
-    if (img && !preset && img !== "auto") return img;
+    const model = img && Object.hasOwn(MODEL_NAMES, img);
+    if (img && !preset && !model && img !== "auto") return img;
     // Mops drying: the drying status of the dock, or its remaining time while the robot is not out cleaning.
     const d = dev.dock;
     const drying = [d.mop_drying_status].some((id) => this._isOn(id)) || hours(this._s(d.mop_drying_remaining_time)) > 0;
     const activity = activityOf(status?.state, this._s(dev.entities.cleaning_mode)?.state, drying);
-    return svgUri(preset ? IMAGES[img](activity) : autoSvg(dev, activity));
+    const white = colorOf(this._config.color);
+    return svgUri(preset ? IMAGES[img](activity, white) : autoSvg(model ? presetDevice(img) : dev, activity, white));
   }
 
-  // Logo of the integration the device comes from (Roborock, Xiaomi Mi Home or Xiaomi), linking to its site.
+  // Logo of the brand of the model (Roborock or Xiaomi), else of the integration the device comes from
+  // (Roborock, Xiaomi Mi Home or Xiaomi Home), linking to its site.
   _logo(dev) {
-    const b = BRANDS[dev.platform] || BRANDS.roborock;
+    const brand = brandOf(dev.model);
+    const b = BRANDS[brand === "xiaomi" ? "xiaomi_home" : brand] || BRANDS[dev.platform] || BRANDS.roborock;
     return `<a class="logo-link" href="${b.site}" target="_blank" rel="noopener noreferrer" title="${esc(b.name)}">${imgTag(b.logo, `class="logo" alt="${esc(b.name)}"`)}</a>`;
   }
 
@@ -1870,10 +2000,16 @@ class RoborockEditorBase extends HTMLElement {
             custom_value: true,
             options: [
               { value: "auto", label: tr("image_auto") },
-              ...Object.entries(IMAGE_LABELS).map(([value, label]) => ({ value, label })),
+              ...MODEL_PRESETS,
               { value: "none", label: tr("image_none") },
             ],
           },
+        },
+      },
+      {
+        name: "color",
+        selector: {
+          select: { mode: "dropdown", options: ["auto", "white", "dark"].map((v) => ({ value: v, label: tr(`color_${v}`) })) },
         },
       },
       ...this.constructor.extraFields(tr),
@@ -1911,7 +2047,7 @@ class RoborockEditorBase extends HTMLElement {
       this._form.addEventListener("value-changed", (ev) => {
         ev.stopPropagation();
         const config = { ...ev.detail.value };
-        const defaults = { ...Object.fromEntries(toggles), image: "auto", ...this.constructor.selects };
+        const defaults = { ...Object.fromEntries(toggles), image: "auto", color: "auto", ...this.constructor.selects };
         for (let [k, v] of Object.entries(config)) {
           // Keep the YAML minimal: drop empty values and options left at their default.
           if (v && typeof v === "object" && !Array.isArray(v)) {
@@ -1925,7 +2061,7 @@ class RoborockEditorBase extends HTMLElement {
       });
       this.appendChild(this._form);
     }
-    const data = { image: "auto", ...this.constructor.selects, ...this._config };
+    const data = { image: "auto", color: "auto", ...this.constructor.selects, ...this._config };
     if (data.show_map === true) data.show_map = "always";
     if (data.show_map === false) data.show_map = "never";
     // The nested form of an expandable section needs an object, even when the option is not set.
