@@ -82,6 +82,8 @@ const shots = [
   { file: "mini-card-dark", type: "roborock-mini-card", theme: "dark", width: 380, config: {}, overrides: cleaning },
   { file: "mini-card-f25", type: "roborock-mini-card", theme: "light", width: 380, config: { device: "Roborock F25 Ultra" } },
   { file: "mini-card-xiaomi", type: "roborock-mini-card", theme: "light", width: 380, config: { device: "Robot vacuum" } },
+  { file: "card-dreame", type: "robot-vacuum-card", theme: "dark", width: 460, config: { device: "Upstairs robot", show_map: "always", collapsed: ["stats"] } },
+  { file: "mini-card-dreame", type: "robot-vacuum-mini-card", theme: "dark", width: 380, config: { device: "Upstairs robot" } },
   { file: "mini-card-zoom", type: "roborock-mini-card", theme: "light", width: 460, config: {}, clicks: [".zoom"] },
   { file: "mini-card-zoom-dark", type: "roborock-mini-card", theme: "dark", width: 460, config: {}, overrides: cleaning, clicks: [".zoom"] },
 ];

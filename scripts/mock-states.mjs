@@ -1,5 +1,6 @@
 // Mock Home Assistant registries and states shaped like the Roborock integration (a Saros 20 with
-// its dock and an F25 Ultra) and the Xiaomi Miio integration (a Q5 Pro, and a purifier the cards must skip), used to render screenshots. Entity ids are in French on purpose
+// its dock and an F25 Ultra) the Xiaomi Miio integration (a Mi Robot Vacuum 1S, and a purifier the cards must skip) and the Dreame Vacuum
+// integration (an L10s Ultra), used to render screenshots. Entity ids are in French on purpose
 // (the cards never rely on them); the names shown are in English.
 export const states = {};
 export const entities = {};
@@ -95,10 +96,10 @@ entity("sensor.balai_filtre", "f25", "filter_time_left", "95.95", { unit_of_meas
 entity("sensor.balai_rouleau", "f25", "brush_remaining", "95.95", { unit_of_measurement: "h", device_class: "duration" });
 entity("sensor.balai_duree_totale", "f25", "total_cleaning_time", "0.0", { unit_of_measurement: "h", device_class: "duration" });
 
-// Q5 Pro set up with Xiaomi Miio (translation keys of that integration, durations in hours as HA shows them),
+// Mi Robot Vacuum 1S (renamed « Robot vacuum ») set up with Xiaomi Miio (translation keys of that integration, durations in hours as HA shows them),
 // with its map from a Xiaomi Cloud Map Extractor camera, which belongs to no device.
 const miio = (entity_id, translation_key, state, attributes = {}) => entity(entity_id, "q5", translation_key, state, attributes, "xiaomi_miio");
-device("q5", "Robot vacuum", "roborock.vacuum.a72", "q5", "xiaomi_miio");
+device("q5", "Robot vacuum", "roborock.vacuum.m1s", "q5", "xiaomi_miio");
 miio("vacuum.dustbusters", null, "docked", {
   status: "Charging",
   fan_speed: "Standard",
@@ -127,6 +128,34 @@ states["camera.dustbusters_map"] = {
 };
 device("purifier", "Air purifier", "zhimi.airpurifier.mb4", "purifier", "xiaomi_miio");
 entity("sensor.purificateur_filtre", "purifier", "filter_life_remaining", "80", { unit_of_measurement: "%" }, "xiaomi_miio");
+
+// L10s Ultra set up with Dreame Vacuum (translation keys of that integration), with its map camera.
+const dreame = (entity_id, translation_key, state, attributes = {}) => entity(entity_id, "l10", translation_key, state, attributes, "dreame_vacuum");
+device("l10", "Upstairs robot", "dreame.vacuum.r2228o", "l10", "dreame_vacuum");
+dreame("vacuum.etage", null, "docked", {
+  fan_speed: "standard",
+  fan_speed_list: ["silent", "standard", "strong", "turbo"],
+  friendly_name: "Upstairs robot",
+});
+dreame("sensor.etage_statut", "status", "charging");
+dreame("sensor.etage_batterie", "battery_level", "96", { device_class: "battery", unit_of_measurement: "%" });
+dreame("sensor.etage_erreur", "error", "no_error");
+dreame("sensor.etage_piece", "current_room", "Office");
+dreame("sensor.etage_duree", "cleaning_time", "42", { unit_of_measurement: "min", device_class: "duration" });
+dreame("sensor.etage_surface", "cleaned_area", "36", { unit_of_measurement: "m²" });
+dreame("sensor.etage_nombre", "cleaning_count", "318");
+dreame("sensor.etage_surface_totale", "total_cleaned_area", "9120", { unit_of_measurement: "m²" });
+dreame("sensor.etage_duree_totale", "total_cleaning_time", "14520", { unit_of_measurement: "min", device_class: "duration" });
+dreame("sensor.etage_brosse_principale", "main_brush_time_left", "251", { unit_of_measurement: "h", device_class: "duration" });
+dreame("sensor.etage_brosse_laterale", "side_brush_time_left", "143", { unit_of_measurement: "h", device_class: "duration" });
+dreame("sensor.etage_filtre", "filter_time_left", "88", { unit_of_measurement: "h", device_class: "duration" });
+dreame("sensor.etage_capteurs", "sensor_dirty_time_left", "21", { unit_of_measurement: "h", device_class: "duration" });
+dreame("sensor.etage_serpilliere", "mop_pad_time_left", "64", { unit_of_measurement: "h", device_class: "duration" });
+for (const k of ["main_brush", "side_brush", "filter", "sensor"]) dreame(`button.etage_reset_${k}`, `reset_${k}`, "unknown");
+dreame("camera.etage_carte", "map", "idle", {
+  friendly_name: "Upstairs robot map",
+  entity_picture: `data:image/svg+xml;base64,${Buffer.from(MAP).toString("base64")}`,
+});
 
 // Same robot while it is cleaning (vacuum + mop), with the mop drying in the dock and the dirty water tank
 // full. Picture activity: "vacmop" — the robot sways, its side brushes spin and dust and water trail behind.

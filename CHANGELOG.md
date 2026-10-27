@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.15.1
+### Fixes
+- Dreame Vacuum: the battery level is shown (its `battery_level` sensor was not read).
+
+### Changes
+- Dreame models recognized (F9, D9, Z10 Pro, L10 Pro, D10 Plus, L10s Ultra), with the Dreame logo; Dreame robots are drawn white.
+
+### Documentation
+- README: Roborock / Xiaomi / Dreame screenshots side by side at the top, one section per brand with its logo, card screenshots and a gallery of the drawn models (`scripts/models.mjs` renders `images/models-*.svg`, replacing `images/models.svg`).
+- Xiaomi screenshots show a Mi Robot Vacuum 1S (Xiaomi logo), new Dreame screenshots (L10s Ultra, dark theme, `custom:robot-vacuum-card`).
+
 ## 1.15.0
 ### Changes
 - Dreame robots set up with the Dreame Vacuum custom integration (Tasshack/dreame-vacuum) are supported: status, room, progress, error, cleaning statistics, maintenance with reset buttons and the map camera of the integration.

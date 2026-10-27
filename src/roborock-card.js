@@ -245,14 +245,20 @@ const MODEL_NAMES = {
   "roborock.wetdryvac.a107": "Dyad Air",
   "roborock.wdv.a194": "F25 Ultra",
   "roborock.wetdryvac.a01": "Dyad",
+  "dreame.vacuum.p2008": "F9",
+  "dreame.vacuum.p2009": "D9",
+  "dreame.vacuum.p2028": "Z10 Pro",
+  "dreame.vacuum.p2029": "L10 Pro",
+  "dreame.vacuum.r2205": "D10 Plus",
+  "dreame.vacuum.r2228o": "L10s Ultra",
 };
 // Brand of a model id, for the logo: Xiaomi for the Mi / Xiaomi robots (built by Roborock for the first ones),
 // Roborock for the other Roborock models, null when unknown (the logo of the integration is shown).
 const XIAOMI_MODELS = new Set(["rockrobo.vacuum.v1", "roborock.vacuum.m1s"]);
 const brandOf = (model) => {
   const m = String(model || "").toLowerCase();
-  // The Dreame and Viomi models of the table are the ones sold as Mi / Xiaomi / Mijia.
-  if (XIAOMI_MODELS.has(m) || /^(xiaomi|mijia|ijai)\./.test(m) || (/^(dreame|viomi)\./.test(m) && m in MODEL_NAMES)) return "xiaomi";
+  // Dreame and Viomi build some of the Mi / Xiaomi / Mijia robots: their names in the table tell them apart.
+  if (XIAOMI_MODELS.has(m) || /^(xiaomi|mijia|ijai)\./.test(m) || (/^(dreame|viomi)\./.test(m) && /^(mi |mijia|robot vacuum)/i.test(MODEL_NAMES[m] || ""))) return "xiaomi";
   if (/^(roborock|rockrobo)\./.test(m)) return "roborock";
   return /^dreame\./.test(m) ? "dreame" : null;
 };
@@ -268,7 +274,7 @@ const presetDevice = (model) => ({ kind: /\.(wdv|wetdryvac)\./.test(model) ? "we
 // Name the picture is drawn from: the device name and the commercial name of its model.
 const modelName = (dev) => [dev.rawName || dev.name, MODEL_NAMES[String(dev.model || "").toLowerCase()]].filter(Boolean).join(" ");
 // Automatic picture: Saros robots, the E / C1 series and the Mi Essential / 1C have no LiDAR turret, the Q series
-// (Q5…Q10, Qrevo) and the Mi / Xiaomi robots are white, the dock is drawn when the integration reports one (or the
+// (Q5…Q10, Qrevo), the Mi / Xiaomi and the Dreame robots are white, the dock is drawn when the integration reports one (or the
 // model name implies it: Ultra, Plus / +, Saros, Qrevo, Omni, Self-Cleaning, G10 / G30); Dyad wet-dry vacuums are dark.
 const autoSvg = (dev, activity = null, white = undefined) => {
   const name = modelName(dev);
@@ -276,7 +282,7 @@ const autoSvg = (dev, activity = null, white = undefined) => {
   if (dev.kind !== "robot") return null;
   return robotSvg({
     turret: !/saros|essential|\b(e\d|c1|1c)\b/i.test(name),
-    white: white ?? (/\bq\s?(revo|\d)|\bmi robot/i.test(name) || brandOf(dev.model) === "xiaomi"),
+    white: white ?? (/\bq\s?(revo|\d)|\bmi robot/i.test(name) || ["xiaomi", "dreame"].includes(brandOf(dev.model))),
     dock: Object.keys(dev.dock || {}).length > 0 || /ultra|plus|\+|saros|q\s?revo|omni|self-cleaning|\bg\d\d/i.test(name),
     activity,
   });
@@ -325,6 +331,7 @@ const MIIO_KEYS = {
 };
 // Dreame Vacuum translation_key → the Roborock integration's.
 const DREAME_KEYS = {
+  battery_level: "battery",
   cleaned_area: "cleaning_area",
   cleaning_progress: "clean_percent",
   cleaning_count: "total_cleaning_count",
