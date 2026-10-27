@@ -87,7 +87,8 @@ test("the device picture follows the model, the image option overrides it", () =
   assert.equal(byModel("mijia.vacuum.v2"), robotSvg({ turret: false, white: true, dock: false })); // Essential G1
   assert.equal(byModel("dreame.vacuum.p2041o"), robotSvg({ white: true })); // Mop 2 Pro+, with its dock
   assert.equal(rr.brandOf("viomi.vacuum.v8"), "xiaomi");
-  assert.equal(rr.brandOf("dreame.vacuum.p2009"), null);
+  assert.equal(rr.brandOf("dreame.vacuum.p2009"), "dreame");
+  assert.equal(rr.brandOf("viomi.vacuum.v99"), null);
   assert.equal(rr.brandOf("dreame.vacuum.p2114a"), "xiaomi"); // Mi Robot Vacuum X10+
   assert.equal(byModel("dreame.vacuum.p2114a"), robotSvg({ white: true })); // with its station
   assert.equal(byModel("xiaomi.vacuum.c102cn"), robotSvg({ white: true })); // Mijia Omni 2

@@ -3,8 +3,8 @@
  * https://github.com/juju35/ha-roborock-card
  *
  * Lovelace cards for the Roborock integration (https://www.home-assistant.io/integrations/roborock/), also
- * for Roborock robots set up with Xiaomi Miio (https://www.home-assistant.io/integrations/xiaomi_miio/) or
- * Xiaomi Home (https://github.com/XiaoMi/ha_xiaomi_home).
+ * for robot vacuums set up with Xiaomi Miio (https://www.home-assistant.io/integrations/xiaomi_miio/),
+ * Xiaomi Home (https://github.com/XiaoMi/ha_xiaomi_home) or Dreame Vacuum (https://github.com/Tasshack/dreame-vacuum).
  * Entities are resolved through the entity and device registries (platform, translation_key and
  * device), so they work whatever the Home Assistant language or entity ids.
  */
@@ -13,6 +13,7 @@ const VERSION = "__VERSION__";
 const IMG_LOGO = "__IMG_LOGO__";
 const IMG_LOGO_MIHOME = "__IMG_LOGO_MIHOME__";
 const IMG_LOGO_XIAOMI = "__IMG_LOGO_XIAOMI__";
+const IMG_LOGO_DREAME = "__IMG_LOGO_DREAME__";
 // Roborock pictures: drawn illustrations, picked from the device name (robot with or without LiDAR turret,
 // with or without its dock, dark or white) or the wet-dry vacuum kind, and animated by what the device is doing
 // (`activity`): vacuum, mop, vacmop (vacuum and mop), returning, washing (the mops), drying (the mops).
@@ -252,12 +253,15 @@ const brandOf = (model) => {
   const m = String(model || "").toLowerCase();
   // The Dreame and Viomi models of the table are the ones sold as Mi / Xiaomi / Mijia.
   if (XIAOMI_MODELS.has(m) || /^(xiaomi|mijia|ijai)\./.test(m) || (/^(dreame|viomi)\./.test(m) && m in MODEL_NAMES)) return "xiaomi";
-  return /^(roborock|rockrobo)\./.test(m) ? "roborock" : null;
+  if (/^(roborock|rockrobo)\./.test(m)) return "roborock";
+  return /^dreame\./.test(m) ? "dreame" : null;
 };
+// Label of the brand of a model, for the editor presets.
+const BRAND_LABELS = { roborock: "Roborock", xiaomi: "Xiaomi", dreame: "Dreame" };
 // Model presets of the `image` option (the model id as value), one per commercial name, by brand then name.
 const MODEL_PRESETS = Object.entries(MODEL_NAMES)
   .filter(([, name], i, all) => all.findIndex(([, n]) => n === name) === i)
-  .map(([value, name]) => ({ value, label: `${brandOf(value) === "xiaomi" ? "Xiaomi" : "Roborock"} ${name}` }))
+  .map(([value, name]) => ({ value, label: `${BRAND_LABELS[brandOf(value)] || "Roborock"} ${name}` }))
   .sort((a, b) => a.label.localeCompare(b.label, "en", { numeric: true }));
 // Device of a model preset, drawn like an automatic picture (without the dock the integration reports).
 const presetDevice = (model) => ({ kind: /\.(wdv|wetdryvac)\./.test(model) ? "wetdry" : "robot", model, dock: {} });
@@ -292,12 +296,15 @@ const activityOf = (status, mode, drying) => {
   return /mop/.test(m) ? "mop" : "vacuum";
 };
 const svgUri = (svg) => svg && `data:image/svg+xml,${encodeURIComponent(svg)}`;
-// Integrations the cards read, with the logo shown in the header.
+// Logos shown in the header: the brand of the model (brandOf), else the one of the integration (PLATFORMS).
 const BRANDS = {
   roborock: { logo: IMG_LOGO, name: "Roborock", site: "https://www.roborock.com" },
-  xiaomi_miio: { logo: IMG_LOGO_MIHOME, name: "Xiaomi Mi Home", site: "https://home.mi.com" },
-  xiaomi_home: { logo: IMG_LOGO_XIAOMI, name: "Xiaomi", site: "https://www.mi.com" },
+  mihome: { logo: IMG_LOGO_MIHOME, name: "Xiaomi Mi Home", site: "https://home.mi.com" },
+  xiaomi: { logo: IMG_LOGO_XIAOMI, name: "Xiaomi", site: "https://www.mi.com" },
+  dreame: { logo: IMG_LOGO_DREAME, name: "Dreame", site: "https://www.dreametech.com" },
 };
+// Integrations the cards read → their logo.
+const PLATFORMS = { roborock: "roborock", xiaomi_miio: "mihome", xiaomi_home: "xiaomi", dreame_vacuum: "dreame" };
 // Xiaomi Miio translation_key → the Roborock integration's, so the cards read both the same way.
 // Their last clean "duration" / "area" are left aside: "clean_time" / "clean_area" hold the current
 // clean while the robot works and the last one afterwards, like the Roborock cleaning_time / cleaning_area.
@@ -316,6 +323,21 @@ const MIIO_KEYS = {
   reset_vacuum_filter: "reset_air_filter_consumable",
   reset_vacuum_sensor_dirty: "reset_sensor_consumable",
 };
+// Dreame Vacuum translation_key → the Roborock integration's.
+const DREAME_KEYS = {
+  cleaned_area: "cleaning_area",
+  cleaning_progress: "clean_percent",
+  cleaning_count: "total_cleaning_count",
+  total_cleaned_area: "total_cleaning_area",
+  sensor_dirty_time_left: "sensor_time_left",
+  mop_pad_time_left: "mop_life_time_left",
+  error: "dreame_error",
+  reset_main_brush: "reset_main_brush_consumable",
+  reset_side_brush: "reset_side_brush_consumable",
+  reset_filter: "reset_air_filter_consumable",
+  reset_sensor: "reset_sensor_consumable",
+};
+const KEY_MAPS = { xiaomi_miio: MIIO_KEYS, dreame_vacuum: DREAME_KEYS };
 const PENDING_MS = 45000;
 const DEFAULT_COLLAPSED = ["stats", "dock"];
 
@@ -416,11 +438,11 @@ const STRINGS = {
     ok: "OK",
     empty: "Empty",
     full: "Full",
-    no_device: "No Roborock device found. Is the Roborock, Xiaomi Miio or Xiaomi Home integration installed?",
-    unknown_device: "Roborock device not found",
+    no_device: "No robot vacuum found. Is the Roborock, Xiaomi Miio, Xiaomi Home or Dreame Vacuum integration installed?",
+    unknown_device: "Robot vacuum not found",
     no_registry: "This card needs Home Assistant 2024.8 or later.",
     // Editor
-    device: "Roborock device",
+    device: "Robot vacuum",
     title: "Title (optional, defaults to the device name)",
     image: "Device picture",
     image_auto: "Automatic (per model)",
@@ -569,10 +591,10 @@ const STRINGS = {
     ok: "OK",
     empty: "Vide",
     full: "Plein",
-    no_device: "Aucun appareil Roborock trouvé. L'intégration Roborock, Xiaomi Miio ou Xiaomi Home est-elle installée ?",
-    unknown_device: "Appareil Roborock introuvable",
+    no_device: "Aucun aspirateur trouvé. L'intégration Roborock, Xiaomi Miio, Xiaomi Home ou Dreame Vacuum est-elle installée ?",
+    unknown_device: "Aspirateur introuvable",
     no_registry: "Cette carte nécessite Home Assistant 2024.8 ou plus récent.",
-    device: "Appareil Roborock",
+    device: "Aspirateur",
     title: "Titre (facultatif, nom de l'appareil par défaut)",
     image: "Image de l'appareil",
     image_auto: "Automatique (selon le modèle)",
@@ -781,10 +803,10 @@ const resolve = (hass) => {
 
   const byDevice = new Map();
   for (const e of Object.values(hass.entities)) {
-    if (!(e.platform in BRANDS) || !e.device_id || e.hidden) continue;
+    if (!(e.platform in PLATFORMS) || !e.device_id || e.hidden) continue;
     const domain = e.entity_id.split(".")[0];
     const item = byDevice.get(e.device_id) || { platform: e.platform, entities: {}, extra: {} };
-    const key = e.platform === "xiaomi_miio" ? MIIO_KEYS[e.translation_key] || e.translation_key : e.translation_key;
+    const key = KEY_MAPS[e.platform]?.[e.translation_key] || e.translation_key;
     if (key && key !== "map") {
       if (!(key in item.entities)) item.entities[key] = e.entity_id;
     } else {
@@ -803,6 +825,7 @@ const resolve = (hass) => {
     if (!d) continue;
     const vacuum = item.entities.roborock || item.entities._vacuum;
     // The Xiaomi integrations cover every Xiaomi device (purifiers, lamps…): only their vacuums are kept.
+    // Neither are Dreame devices without a vacuum (lawn mowers…).
     if (item.platform !== "roborock" && !vacuum) continue;
     if (item.platform === "roborock" && isDock(d)) docks.push({ d, item });
     else {
@@ -834,9 +857,9 @@ const resolve = (hass) => {
   return model;
 };
 
-// Map pictures of a device: the integration's map images, or the camera / image entity set with map_entity
-// (Xiaomi Cloud Map Extractor, Valetudo…), which belongs to no Roborock device.
-const mapIds = (dev, config) => (config?.map_entity ? [config.map_entity] : dev.extra.image || []);
+// Map pictures of a device: the integration's map images (Roborock) or cameras (Dreame Vacuum), or the camera /
+// image entity set with map_entity (Xiaomi Cloud Map Extractor, Valetudo…), which belongs to no device.
+const mapIds = (dev, config) => (config?.map_entity ? [config.map_entity] : [...(dev.extra.image || []), ...(dev.extra.camera || [])]);
 
 const listDevices = (hass) => {
   const m = hass && resolve(hass);
@@ -1229,9 +1252,9 @@ class RoborockBase extends HTMLElement {
   }
 
   _error(dev) {
-    for (const k of ["vacuum_error", "a01_error", "zeo_error"]) {
+    for (const k of ["vacuum_error", "a01_error", "zeo_error", "dreame_error"]) {
       const s = this._s(dev.entities[k]);
-      if (valid(s) && s.state !== "none") return { entity: s.entity_id, text: this._fmt(s, "e_") };
+      if (valid(s) && !["none", "no_error"].includes(s.state)) return { entity: s.entity_id, text: this._fmt(s, "e_") };
     }
     const dock = this._s(dev.dock.dock_error);
     if (valid(dock) && dock.state !== "ok") return { entity: dock.entity_id, text: `${this._t("dock_state")} · ${this._fmt(dock, "e_")}` };
@@ -1283,11 +1306,10 @@ class RoborockBase extends HTMLElement {
     return svgUri(preset ? IMAGES[img](activity, white) : autoSvg(model ? presetDevice(img) : dev, activity, white));
   }
 
-  // Logo of the brand of the model (Roborock or Xiaomi), else of the integration the device comes from
-  // (Roborock, Xiaomi Mi Home or Xiaomi Home), linking to its site.
+  // Logo of the brand of the model (Roborock, Xiaomi or Dreame), else of the integration the device comes from
+  // (Roborock, Xiaomi Mi Home, Xiaomi Home or Dreame Vacuum), linking to its site.
   _logo(dev) {
-    const brand = brandOf(dev.model);
-    const b = BRANDS[brand === "xiaomi" ? "xiaomi_home" : brand] || BRANDS[dev.platform] || BRANDS.roborock;
+    const b = BRANDS[brandOf(dev.model)] || BRANDS[PLATFORMS[dev.platform]] || BRANDS.roborock;
     return `<a class="logo-link" href="${b.site}" target="_blank" rel="noopener noreferrer" title="${esc(b.name)}">${imgTag(b.logo, `class="logo" alt="${esc(b.name)}"`)}</a>`;
   }
 
@@ -2176,6 +2198,10 @@ const define = (name, cls) => {
 };
 define("roborock-card", RoborockCard);
 define("roborock-mini-card", RoborockMiniCard);
+// Brand-neutral aliases (Xiaomi, Dreame…): same cards under another type. Not "vacuum-card", which belongs to
+// another popular card (denysdovhan/vacuum-card). A custom element class can only be defined once, hence the subclasses.
+define("robot-vacuum-card", class extends RoborockCard {});
+define("robot-vacuum-mini-card", class extends RoborockMiniCard {});
 define("roborock-card-editor", RoborockCardEditor);
 define("roborock-mini-card-editor", RoborockMiniCardEditor);
 
@@ -2184,12 +2210,13 @@ for (const card of [
   {
     type: "roborock-card",
     name: "Roborock Card",
-    description: "Monitor and control a Roborock robot vacuum or wet-dry vacuum: status, battery, routines, dock, maintenance and statistics.",
+    description:
+      "Monitor and control a Roborock, Xiaomi or Dreame robot vacuum or wet-dry vacuum: status, battery, routines, dock, maintenance and statistics. Also available as custom:robot-vacuum-card.",
   },
   {
     type: "roborock-mini-card",
     name: "Roborock Mini Card",
-    description: "Compact Roborock overview: status, battery, current room and quick controls.",
+    description: "Compact Roborock, Xiaomi or Dreame overview: status, battery, current room and quick controls. Also available as custom:robot-vacuum-mini-card.",
   },
 ]) {
   if (!window.customCards.some((c) => c.type === card.type))
