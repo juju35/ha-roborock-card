@@ -302,13 +302,19 @@ const activityOf = (status, mode, drying) => {
   return /mop/.test(m) ? "mop" : "vacuum";
 };
 const svgUri = (svg) => svg && `data:image/svg+xml,${encodeURIComponent(svg)}`;
-// Logos shown in the header: the brand of the model (brandOf), else the one of the integration (PLATFORMS).
+// Brands: the brand of the model (brandOf), else the one of the integration (PLATFORMS) gives the logo of the
+// header and the accent color of the buttons, from the logo: [light theme, dark theme]. The light-theme shades are
+// darker so that the tinted buttons keep at least the contrast of the Roborock red (≈ 3.5:1) on a white card;
+// the dark-theme ones are the logo colors.
 const BRANDS = {
-  roborock: { logo: IMG_LOGO, name: "Roborock", site: "https://www.roborock.com" },
-  mihome: { logo: IMG_LOGO_MIHOME, name: "Xiaomi Mi Home", site: "https://home.mi.com" },
-  xiaomi: { logo: IMG_LOGO_XIAOMI, name: "Xiaomi", site: "https://www.mi.com" },
-  dreame: { logo: IMG_LOGO_DREAME, name: "Dreame", site: "https://www.dreametech.com" },
+  roborock: { logo: IMG_LOGO, name: "Roborock", site: "https://www.roborock.com", accent: ["#ea0029", "#ea0029"] },
+  mihome: { logo: IMG_LOGO_MIHOME, name: "Xiaomi Mi Home", site: "https://home.mi.com", accent: ["#2a7f57", "#43b17e"] },
+  xiaomi: { logo: IMG_LOGO_XIAOMI, name: "Xiaomi", site: "https://www.mi.com", accent: ["#c24c00", "#ff6900"] },
+  dreame: { logo: IMG_LOGO_DREAME, name: "Dreame", site: "https://www.dreametech.com", accent: ["#8a6a3c", "#c9a46e"] },
 };
+const brandFor = (dev) => BRANDS[brandOf(dev.model)] || BRANDS[PLATFORMS[dev.platform]] || BRANDS.roborock;
+// Accent of the device's brand for the current theme, overriding the default red of the shared styles.
+const accentStyle = (dev, hass) => `:host { --rr-accent: ${brandFor(dev).accent[hass?.themes?.darkMode ? 1 : 0]}; }`;
 // Integrations the cards read → their logo.
 const PLATFORMS = { roborock: "roborock", xiaomi_miio: "mihome", xiaomi_home: "xiaomi", dreame_vacuum: "dreame" };
 // Xiaomi Miio translation_key → the Roborock integration's, so the cards read both the same way.
@@ -887,7 +893,7 @@ const findDevice = (hass, config) => {
 // ---------------------------------------------------------------------------
 
 const BASE_STYLE = `
-  :host { --rr-red: #ea0029; --rr-ok: var(--success-color, #43a047); --rr-warn: var(--warning-color, #ffa600);
+  :host { --rr-accent: #ea0029; --rr-ok: var(--success-color, #43a047); --rr-warn: var(--warning-color, #ffa600);
           --rr-crit: var(--error-color, #db4437); --rr-idle: var(--disabled-text-color, #9e9e9e); --rr-active: var(--info-color, #039be5); }
   ha-card { overflow: hidden; }
   .icon { width: 18px; height: 18px; fill: currentColor; flex: none; }
@@ -916,30 +922,30 @@ const BASE_STYLE = `
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: none; cursor: pointer; font: inherit; font-size: 13px;
          font-weight: 500; padding: 6px 12px; border-radius: 18px; background: var(--secondary-background-color, rgba(127,127,127,.12));
          color: var(--primary-text-color); min-width: 0; }
-  .btn:hover { background: color-mix(in srgb, var(--rr-red) 12%, var(--secondary-background-color, rgba(127,127,127,.12))); }
-  .btn.primary { background: color-mix(in srgb, var(--rr-red) 16%, transparent); color: var(--rr-red); }
-  .btn.primary:hover { background: color-mix(in srgb, var(--rr-red) 24%, transparent); }
+  .btn:hover { background: color-mix(in srgb, var(--rr-accent) 12%, var(--secondary-background-color, rgba(127,127,127,.12))); }
+  .btn.primary { background: color-mix(in srgb, var(--rr-accent) 16%, transparent); color: var(--rr-accent); }
+  .btn.primary:hover { background: color-mix(in srgb, var(--rr-accent) 24%, transparent); }
   .btn .icon { width: 18px; height: 18px; }
   .btn.round { width: 36px; height: 36px; padding: 0; border-radius: 50%; }
   .btn.disabled { opacity: .45; cursor: default; }
   .rooms { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 12px;
            border: 1px solid var(--divider-color, rgba(127,127,127,.25)); }
   .rooms-title { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; }
-  .rooms-title .icon { width: 18px; height: 18px; color: var(--rr-red); }
+  .rooms-title .icon { width: 18px; height: 18px; color: var(--rr-accent); }
   .rooms-msg { font-size: 13px; color: var(--secondary-text-color); }
   .room-list { display: flex; flex-wrap: wrap; gap: 6px; }
   .room { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 16px; cursor: pointer; color: var(--primary-text-color);
           background: var(--secondary-background-color, rgba(127,127,127,.12)); border: 1px solid transparent; }
-  .room.on { background: color-mix(in srgb, var(--rr-red) 16%, transparent); color: var(--rr-red); font-weight: 500; }
-  .room.on:hover { background: color-mix(in srgb, var(--rr-red) 24%, transparent); }
+  .room.on { background: color-mix(in srgb, var(--rr-accent) 16%, transparent); color: var(--rr-accent); font-weight: 500; }
+  .room.on:hover { background: color-mix(in srgb, var(--rr-accent) 24%, transparent); }
   .room.all { color: var(--secondary-text-color); }
-  .room.all.on { color: var(--rr-red); }
+  .room.all.on { color: var(--rr-accent); }
   .rooms-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
   .zoom { all: unset; flex: none; cursor: pointer; width: 24px; height: 24px; margin: -4px -4px -4px 0; border-radius: 50%;
           display: grid; place-items: center; color: var(--secondary-text-color); }
   .zoom .icon { width: 16px; height: 16px; }
   .zoom:hover { background: color-mix(in srgb, var(--rr-idle) 16%, transparent); color: var(--primary-text-color); }
-  .zoom:focus-visible { outline: 2px solid var(--primary-color, var(--rr-red)); outline-offset: 1px; }
+  .zoom:focus-visible { outline: 2px solid var(--primary-color, var(--rr-accent)); outline-offset: 1px; }
 `;
 
 // In-card confirmation popup, as in ha-system-monitor-card and ha-iptv: a backdrop over the card with a
@@ -1013,7 +1019,7 @@ class RoborockBase extends HTMLElement {
     const { dev } = findDevice(h, this._config);
     if (!dev) return null;
     const ids = [dev.vacuum, ...Object.values(dev.entities), ...Object.values(dev.dock), ...Object.values(dev.extra).flat()];
-    return [h.entities, h.devices, h.language, h.locale, h.localize, h.formatEntityState, this._lastClean(dev), ...ids.map((id) => h.states[id])];
+    return [h.entities, h.devices, h.language, h.locale, h.localize, h.formatEntityState, h.themes?.darkMode, this._lastClean(dev), ...ids.map((id) => h.states[id])];
   }
 
   get hass() {
@@ -1316,7 +1322,7 @@ class RoborockBase extends HTMLElement {
   // Logo of the brand of the model (Roborock, Xiaomi or Dreame), else of the integration the device comes from
   // (Roborock, Xiaomi Mi Home, Xiaomi Home or Dreame Vacuum), linking to its site.
   _logo(dev) {
-    const b = BRANDS[brandOf(dev.model)] || BRANDS[PLATFORMS[dev.platform]] || BRANDS.roborock;
+    const b = brandFor(dev);
     return `<a class="logo-link" href="${b.site}" target="_blank" rel="noopener noreferrer" title="${esc(b.name)}">${imgTag(b.logo, `class="logo" alt="${esc(b.name)}"`)}</a>`;
   }
 
@@ -1512,7 +1518,7 @@ const FULL_STYLE = `
   .section-title.toggle[aria-expanded="false"] .chevron { transform: rotate(-90deg); }
   .routines { display: flex; flex-wrap: wrap; gap: 6px; }
   .routines .btn { font-weight: 400; padding: 6px 12px 6px 8px; }
-  .routines .btn .icon { color: var(--rr-red); }
+  .routines .btn .icon { color: var(--rr-accent); }
   .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 6px; }
   .tiles.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tile { display: flex; flex-direction: column; gap: 2px; padding: 6px 10px; border-radius: 10px; min-width: 0;
@@ -1530,14 +1536,14 @@ const FULL_STYLE = `
   .cons.with-reset { grid-template-columns: 18px minmax(0, 1fr) 90px 56px 28px; }
   .reset { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: none; border-radius: 50%;
            background: transparent; color: var(--secondary-text-color); cursor: pointer; padding: 0; }
-  .reset:hover { background: var(--secondary-background-color, rgba(127,127,127,.12)); color: var(--rr-red); }
+  .reset:hover { background: var(--secondary-background-color, rgba(127,127,127,.12)); color: var(--rr-accent); }
   .reset .icon { width: 18px; height: 18px; }
   .map img { width: 100%; border-radius: 10px; display: block; background: var(--secondary-background-color, rgba(127,127,127,.08)); }
   .map .crop { overflow: hidden; border-radius: 10px; }
   .map { cursor: zoom-in; }
   .dock-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .dock-actions .btn { flex: 1 1 auto; }
-  .dock-actions .btn .icon { color: var(--rr-red); }
+  .dock-actions .btn .icon { color: var(--rr-accent); }
   .dock-actions .btn.running { background: color-mix(in srgb, var(--rr-active) 16%, transparent); color: var(--rr-active); }
   .dock-actions .btn.running .icon { color: var(--rr-active); }
   .map .crop img { max-width: none; border-radius: 0; background: none; }
@@ -1575,7 +1581,7 @@ class RoborockCard extends RoborockBase {
     if (c.show_consumables !== false) parts.push(this._consumables(dev));
     if (c.show_stats !== false) parts.push(this._stats(dev));
     if (this._showMap(dev)) parts.push(this._map(dev));
-    return `<style>${BASE_STYLE}${FULL_STYLE}</style>
+    return `<style>${BASE_STYLE}${FULL_STYLE}${accentStyle(dev, this._hass)}</style>
       <ha-card>
         ${this._header(dev, status, this._lastClean(dev))}
         <div class="content">${parts.filter(Boolean).join("")}</div>
@@ -1966,7 +1972,7 @@ class RoborockMiniCard extends RoborockCard {
     const lines = [this._errorLine(dev), this._roomLine(dev)];
     const last = this._lastClean(dev);
     if (last) lines.push(`<div class="line">${svgIcon(ICONS.clock)}<span>${esc(last)}</span></div>`);
-    return `<style>${BASE_STYLE}${MINI_STYLE}</style>
+    return `<style>${BASE_STYLE}${MINI_STYLE}${accentStyle(dev, this._hass)}</style>
       <ha-card>
         ${this._header(dev, status, "")}
         <div class="content">

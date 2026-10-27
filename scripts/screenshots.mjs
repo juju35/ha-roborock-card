@@ -56,17 +56,17 @@ async function openCard(browser, { file, type, config, theme, width, overrides }
   await page.addScriptTag({ content: HA_CARD });
   await page.addScriptTag({ content: cardJs });
   await page.evaluate(
-    ({ type, config, states, entities, devices, overrides, maps }) => {
+    ({ type, config, states, entities, devices, overrides, maps, theme }) => {
       for (const [id, o] of Object.entries(overrides || {})) states[id] = { ...states[id], ...o };
       const el = document.createElement(type);
       el.setConfig({ type: `custom:${type}`, ...config });
       el.hass = {
-        states, entities, devices, language: "en", locale: { language: "en" }, callService: () => {},
+        states, entities, devices, language: "en", locale: { language: "en" }, themes: { darkMode: theme === "dark" }, callService: () => {},
         callWS: async () => ({ response: maps }),
       };
       document.getElementById("root").appendChild(el);
     },
-    { type, config, states, entities, devices, overrides, maps }
+    { type, config, states, entities, devices, overrides, maps, theme }
   );
   return page;
 }
@@ -84,6 +84,8 @@ const shots = [
   { file: "mini-card-xiaomi", type: "roborock-mini-card", theme: "light", width: 380, config: { device: "Robot vacuum" } },
   { file: "card-dreame", type: "robot-vacuum-card", theme: "dark", width: 460, config: { device: "Upstairs robot", show_map: "always", collapsed: ["stats"] } },
   { file: "mini-card-dreame", type: "robot-vacuum-mini-card", theme: "dark", width: 380, config: { device: "Upstairs robot" } },
+  { file: "mini-card-dreame-light", type: "robot-vacuum-mini-card", theme: "light", width: 380, config: { device: "Upstairs robot" } },
+  { file: "mini-card-xiaomi-dark", type: "roborock-mini-card", theme: "dark", width: 380, config: { device: "Robot vacuum" } },
   { file: "mini-card-zoom", type: "roborock-mini-card", theme: "light", width: 460, config: {}, clicks: [".zoom"] },
   { file: "mini-card-zoom-dark", type: "roborock-mini-card", theme: "dark", width: 460, config: {}, overrides: cleaning, clicks: [".zoom"] },
 ];

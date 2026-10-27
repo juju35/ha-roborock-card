@@ -43,6 +43,7 @@ The cards are built on top of the [Roborock integration](https://www.home-assist
 - Detail button on the mini card (top right): it switches the mini card to the full card's content and back; a click anywhere outside the card brings the compact view back
 - Map of the current floor while the robot is cleaning (or always, or never), with optional cropping, enlarged full screen on click
 - Click any value to open its Home Assistant history (more-info dialog)
+- Brand colors: the buttons take the color of the brand (Roborock red, Xiaomi orange, Mi Home green, Dreame gold), with a darker shade in the light theme so that they stay readable in both themes
 - Brand logo (Roborock, Xiaomi or Dreame, from the model; else the integration's, e.g. Mi Home on Xiaomi Miio), opening the brand's site on click
 - Visual editor in the dashboard UI for both cards (no YAML needed)
 - Light and dark mode, English and French
@@ -246,6 +247,7 @@ Mi Robot Vacuum 1S renamed « Robot vacuum », set up with Xiaomi Miio, map from
 | Card | Mini card |
 |---|---|
 | ![card xiaomi](screenshots/card-xiaomi.png) | ![mini card xiaomi](screenshots/mini-card-xiaomi.png) |
+| | ![mini card xiaomi dark](screenshots/mini-card-xiaomi-dark.png) |
 
 Drawn Xiaomi / Mijia models (white; the ones with a station are drawn in it):
 
@@ -258,6 +260,7 @@ L10s Ultra renamed « Upstairs robot », set up with Dreame Vacuum, with the map
 | Card | Mini card |
 |---|---|
 | ![card dreame](screenshots/card-dreame.png) | ![mini card dreame](screenshots/mini-card-dreame.png) |
+| | ![mini card dreame light](screenshots/mini-card-dreame-light.png) |
 
 Drawn Dreame models:
 
