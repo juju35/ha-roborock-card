@@ -1064,12 +1064,17 @@ const CONFIRM_GUARD_MS = 400;
 
 // Inlined pictures (data: URIs of the logo and the robots, tens of KB) are written as <img data-img="id"> and get
 // their src once, then the same node is moved into every later render: the HTML stays small and the picture is not
-// decoded again on each update.
+// decoded again on each update. The id of each distinct picture is kept in a Map (O(1) lookup instead of
+// scanning the array on every render); the set is bounded by the variants actually shown (model × activity × color).
 const DATA_IMGS = [];
+const DATA_IMG_IDS = new Map();
 const imgTag = (src, attrs) => {
   if (!String(src).startsWith("data:")) return `<img src="${esc(src)}" ${attrs}>`;
-  let id = DATA_IMGS.indexOf(src);
-  if (id < 0) id = DATA_IMGS.push(src) - 1;
+  let id = DATA_IMG_IDS.get(src);
+  if (id === undefined) {
+    id = DATA_IMGS.push(src) - 1;
+    DATA_IMG_IDS.set(src, id);
+  }
   return `<img data-img="${id}" ${attrs}>`;
 };
 
@@ -1231,7 +1236,10 @@ class VacuumBase extends HTMLElement {
     const old = this._mapSizes?.[id];
     if (old && old.w === img.naturalWidth && old.h === img.naturalHeight) return;
     this._mapSizes = { ...this._mapSizes, [id]: { w: img.naturalWidth, h: img.naturalHeight } };
-    if (this._config.crop) setTimeout(() => this._update());
+    if (this._config.crop)
+      setTimeout(() => {
+        if (this.isConnected) this._update();
+      });
   }
 
   _onClick(ev) {
@@ -1337,7 +1345,7 @@ class VacuumBase extends HTMLElement {
   // Status of the device: the detailed status sensor, else the vacuum entity.
   _status(dev) {
     const e = dev.entities;
-    const s = this._s(e.status) || this._s(e.a01_status) || this._s(e.q7_status) || this._s(e.zeo_state);
+    const s = this._s(e.status) || this._s(e.a01_status) || this._s(e.q7_status);
     const vac = this._s(dev.vacuum);
     if (vac && (vac.state === "unavailable" || !valid(s))) return { state: vac.state, text: this._fmt(vac, "s_"), entity: vac.entity_id };
     if (s) return { state: s.state, text: this._fmt(s, "s_"), entity: s.entity_id };
@@ -1357,7 +1365,7 @@ class VacuumBase extends HTMLElement {
   }
 
   _error(dev) {
-    for (const k of ["vacuum_error", "a01_error", "zeo_error", "dreame_error", "ecovacs_error"]) {
+    for (const k of ["vacuum_error", "a01_error", "dreame_error", "ecovacs_error"]) {
       const s = this._s(dev.entities[k]);
       // Ecovacs: an error code ("0": none) with its description as attribute.
       if (valid(s) && !["none", "no_error", "0"].includes(s.state))
@@ -1728,7 +1736,7 @@ class VacuumCard extends VacuumBase {
                  ${svgIcon(ICONS.battery)}<span class="pct">${v === null ? "—" : Math.round(v)}<small>%</small></span>
                  ${charging ? svgIcon(ICONS.bolt, "bolt") : ""}
                </div>
-               <div class="bar ${cls}"><div style="width:${v ?? 0}%"></div></div>`
+               <div class="bar ${cls}"><div style="width:${Math.max(0, Math.min(100, v ?? 0))}%"></div></div>`
             : ""
         }
         ${lines.join("")}
@@ -2049,6 +2057,9 @@ class VacuumMiniCard extends VacuumCard {
   _setZoom(on) {
     this._zoomed = on;
     this._update();
+    // getCardSize()/getGridOptions() changed: tell the view to re-measure the card (masonry listens to
+    // iron-resize; harmless elsewhere).
+    this.dispatchEvent(new CustomEvent("iron-resize", { bubbles: true, composed: true }));
   }
 
   // The click never reaches the header or an action (stopped in _onClick). From the keyboard (Enter / Space: no
@@ -2077,9 +2088,10 @@ class VacuumMiniCard extends VacuumCard {
           <div class="info">
             ${
               batt
-                ? `<div class="batt clickable ${cls}" data-entity="${esc(batt.entity_id)}">${svgIcon(ICONS.battery)}<div class="bar ${cls}"><div style="width:${
-                    v ?? 0
-                  }%"></div></div><span class="v">${v === null ? "—" : `${Math.round(v)} %`}</span></div>`
+                ? `<div class="batt clickable ${cls}" data-entity="${esc(batt.entity_id)}">${svgIcon(ICONS.battery)}<div class="bar ${cls}"><div style="width:${Math.max(
+                    0,
+                    Math.min(100, v ?? 0),
+                  )}%"></div></div><span class="v">${v === null ? "—" : `${Math.round(v)} %`}</span></div>`
                 : ""
             }
             ${lines.join("")}
@@ -2225,7 +2237,10 @@ class VacuumEditorBase extends HTMLElement {
     const id = dev && mapIds(dev, this._config).find((i) => this._hass.states[i]?.attributes?.entity_picture);
     if (!id || this._mapSizeFor === id) return;
     this._mapSizeFor = id;
+    // Drop the previous probe: its late onload would overwrite the size of the newly selected device.
+    if (this._mapSizeImg) this._mapSizeImg.onload = null;
     const img = new Image();
+    this._mapSizeImg = img;
     img.onload = () => {
       this._mapSize = { w: img.naturalWidth, h: img.naturalHeight };
       if (this._form) this._form.schema = this._schema();
