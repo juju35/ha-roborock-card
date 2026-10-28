@@ -212,7 +212,7 @@ Click the map to open it full screen; click anywhere or press Escape to close it
 
 ### Animations
 
-The picture animates to match what the device is doing and settles back to a still card once it is idle, for every brand. Each state plays its own animation, and every one of them honours `prefers-reduced-motion`.
+The picture animates to match what the device is doing and settles back to a still card once it is idle, for every brand (Ecovacs and Dyson animations in their sections below). Each state plays its own animation, and every one of them honours `prefers-reduced-motion`.
 
 While the robot is out vacuuming and mopping, it sways across the floor, its side brushes spin, and dust and water trail behind it:
 
@@ -291,6 +291,8 @@ Drawn Dreame models:
 
 ### <img src="images/ecovacs.png" alt="" width="24"> Ecovacs
 
+<p><img src="images/ecovacs-logo.png" alt="Ecovacs" height="32"></p>
+
 DEEBOT X1 Omni renamed « Studio robot », set up with the Ecovacs integration, with its map image; maintenance in percent with the reset buttons of the integration:
 
 | Card | Mini card |
@@ -300,7 +302,17 @@ DEEBOT X1 Omni renamed « Studio robot », set up with the Ecovacs integration, 
 
 Drawn Ecovacs models:
 
-<p align="center"><img src="images/models-ecovacs.svg" alt="Ecovacs device pictures" width="680"></p>
+<p align="center"><img src="images/models-ecovacs.svg" alt="Ecovacs device pictures" width="700"></p>
+
+Animations of the DEEBOT: out vacuuming and mopping, heading back to its station, then the station washing and drying the mops — read from the integration's **Station state** sensor (`washing_mop`, `drying_mop`):
+
+| Cleaning | Returning |
+|---|---|
+| ![ecovacs cleaning animation](screenshots/ecovacs-cleaning.gif) | ![ecovacs returning animation](screenshots/ecovacs-returning.gif) |
+
+| Washing the mops (dark) | Drying the mops (dark) |
+|---|---|
+| ![ecovacs mop washing animation](screenshots/ecovacs-mop-washing.gif) | ![ecovacs mop drying animation](screenshots/ecovacs-mop-drying.gif) |
 
 ### <img src="images/dyson.png" alt="" width="24"> Dyson
 
@@ -314,6 +326,12 @@ Drawn Ecovacs models:
 Drawn Dyson models:
 
 <p align="center"><img src="images/models-dyson.svg" alt="Dyson device pictures" width="420"></p>
+
+The Dyson 360 robots have their own drawing — a tall drum on two tank tracks with the 360° camera on top (wider and lower for the Vis Nav, with its purple band). Vacuuming, the tracks roll and dust is sucked in; heading back, the robot slides in from the side (dark theme):
+
+| Cleaning | Returning |
+|---|---|
+| ![dyson cleaning animation](screenshots/dyson-cleaning.gif) | ![dyson returning animation](screenshots/dyson-returning.gif) |
 
 ## How it works
 
@@ -352,8 +370,8 @@ The picture is animated by the current activity, from the status, the cleaning m
 - **Xiaomi Miio**: current / last clean (`clean_time`, `clean_area`), totals (`total_duration`, `total_area`, `count`), last clean start / end, maintenance (`main_brush_left`, `side_brush_left`, `filter_left`, `sensor_dirty_left`) with their **Reset** buttons. The status comes from the vacuum entity, errors from its `error` attribute. Some of these sensors are disabled by default in the integration (totals, DND): enable them to see the statistics. No map: set `map_entity` to the camera of [Xiaomi Cloud Map Extractor](https://github.com/PiotrMachowski/Home-Assistant-custom-components-Xiaomi-Cloud-Map-Extractor).
 - **Xiaomi Home**: its entities have no `translation_key`, so the cards show the vacuum (status, fan speed, controls) and the battery only. No map: use `map_entity` as for Xiaomi Miio.
 - **Dreame Vacuum**: status, battery, current room, cleaning progress, error, current and total cleaning, maintenance (`main_brush_time_left`, `side_brush_time_left`, `filter_time_left`, `sensor_dirty_time_left`, `mop_pad_time_left`) with the **Reset** buttons of the integration, and its map camera.
-- **Ecovacs**: current and total cleaning (`stats_area`, `stats_time`, `total_stats_*`), cleaning mode (`work_mode`) and water amount (`water_amount`), maintenance in percent (`lifespan_brush`, `lifespan_side_brush`, `lifespan_filter`, `lifespan_round_mop`) with the `reset_lifespan_*` buttons, error code (`0`: no error) with its description, and the map image. The error sensor is disabled by default in the integration: enable it to see the errors.
-- **Dyson** (`dyson_local`): the vacuum entity only — status, power mode, controls — and the battery from its `battery_level` attribute.
+- **Ecovacs**: current and total cleaning (`stats_area`, `stats_time`, `total_stats_*`), cleaning mode (`work_mode`) and water amount (`water_amount`), maintenance in percent (`lifespan_brush`, `lifespan_side_brush`, `lifespan_filter`, `lifespan_round_mop`) with the `reset_lifespan_*` buttons, error code (`0`: no error) with its description, the station state (`station_state`: mops washed / dried, animated on the picture), and the map image. The error sensor is disabled by default in the integration: enable it to see the errors.
+- **Dyson** (`dyson_local`): the vacuum entity only — status, power mode, controls — and the battery from its `battery_level` attribute. The picture is a dedicated Dyson 360 drawing.
 - Xiaomi Miio, Xiaomi Home, Dreame Vacuum, Ecovacs and Dyson have no `roborock.get_maps` service: the Start button starts a full cleaning (no room selector), and there is no routine or dock section.
 
 Each maintenance line has a reset button when the integration exposes the matching reset button, and asks for confirmation before resetting the counter. The remaining time turns orange under 10 % of the part lifetime (or under 10 h when the lifetime is unknown), and red when it reaches 0; a percentage (Ecovacs, Roborock wet-dry vacuums) turns orange under 10 % and red at 0 %. Bars use the robot lifetimes: main brush 300 h, side brush 200 h, filter 150 h, sensors 30 h.
@@ -389,7 +407,7 @@ Contributions for additional languages are welcome!
 
 ## Credits
 
-Roborock, the Roborock logo and the product pictures are trademarks and property of Roborock; Xiaomi, Mi Home and their logos are trademarks of Xiaomi; Dreame and its logo are trademarks of Dreame Technology (logos from the [Home Assistant brands](https://github.com/home-assistant/brands) repository). Ecovacs and DEEBOT are trademarks of Ecovacs Robotics; Dyson and its logo are trademarks of Dyson. This project is not affiliated with Roborock, Xiaomi, Dreame, Ecovacs or Dyson.
+Roborock, the Roborock logo and the product pictures are trademarks and property of Roborock; Xiaomi, Mi Home and their logos are trademarks of Xiaomi; Dreame and its logo are trademarks of Dreame Technology (logos from the [Home Assistant brands](https://github.com/home-assistant/brands) repository). Ecovacs, its logo and DEEBOT are trademarks of Ecovacs Robotics; Dyson and its logo are trademarks of Dyson. This project is not affiliated with Roborock, Xiaomi, Dreame, Ecovacs or Dyson.
 
 ## License
 

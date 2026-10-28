@@ -175,6 +175,7 @@ eco("sensor.studio_serpilliere", "lifespan_round_mop", "8", { unit_of_measuremen
 for (const k of ["brush", "side_brush", "filter", "round_mop"]) eco(`button.studio_reset_${k}`, `reset_lifespan_${k}`, "unknown");
 eco("select.studio_mode", "work_mode", "vacuum_and_mop", { options: ["vacuum", "mop", "vacuum_and_mop", "mop_after_vacuum"] });
 eco("select.studio_eau", "water_amount", "high", { options: ["low", "medium", "high", "ultrahigh"] });
+eco("sensor.studio_station", "station_state", "idle", { device_class: "enum", options: ["idle", "emptying_dustbin", "washing_mop", "drying_mop"] });
 eco("image.studio_carte", "map", hoursAgo(2), { entity_picture: `data:image/svg+xml;base64,${Buffer.from(MAP).toString("base64")}` });
 
 // 360 Vis Nav set up with Dyson (dyson_local): a vacuum entity only, battery as an attribute.
@@ -242,6 +243,13 @@ export const ecovacsCleaning = {
   "vacuum.studio": { state: "cleaning" },
   "sensor.studio_batterie": { state: "61" },
 };
+
+// The DEEBOT X1 Omni heading back to its station. Picture activity: "returning" (home).
+export const ecovacsReturning = { "vacuum.studio": { state: "returning" }, "sensor.studio_batterie": { state: "23" } };
+
+// The DEEBOT X1 Omni docked, its station washing then drying the mops. Picture activities: "washing" (bub), "drying" (heat).
+export const ecovacsWashing = { "sensor.studio_station": { state: "washing_mop" } };
+export const ecovacsDrying = { "sensor.studio_station": { state: "drying_mop" } };
 
 // The Dyson 360 Vis Nav vacuuming. Picture activity: "vacuum" — the drum sways, its tracks roll (roll) and dust
 // is sucked in.

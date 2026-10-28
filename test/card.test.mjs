@@ -429,3 +429,16 @@ test("Dyson: vacuum only, battery from its attribute, Dyson logo", () => {
   assert.equal(rr.brandOf("277"), "dyson");
   assert.equal(rr.brandOf("DEEBOT X1 OMNI"), "ecovacs");
 });
+
+test("Ecovacs: the station state animates the picture (mops washed / dried)", () => {
+  const card = new rr.VacuumCard();
+  card.setConfig({ device: "x1" });
+  const pic = (state) => {
+    card.hass = makeHass({ ...states, "sensor.studio_station": { ...states["sensor.studio_station"], state } });
+    const dev = rr.resolve(card._hass).devices.find((d) => d.id === "x1");
+    return decodeURIComponent(card._picture(dev, card._status(dev)));
+  };
+  assert.match(pic("washing_mop"), /class="bub/);
+  assert.match(pic("drying_mop"), /class="heat/);
+  assert.doesNotMatch(pic("idle"), /class="(bub|heat)/);
+});

@@ -35,10 +35,10 @@ const GALLERIES = {
   ],
   ecovacs: [
     ["deebot n8", "DEEBOT N8"],
-    ["deebot t8 aivi", "T8 AIVI"],
-    ["deebot t9+", "T9+"],
-    ["deebot x1 omni", "X1 Omni"],
-    ["deebot t30 omni", "T30 Omni"],
+    ["deebot t8 aivi", "DEEBOT T8 AIVI"],
+    ["deebot t9+", "DEEBOT T9+"],
+    ["deebot x1 omni", "DEEBOT X1 Omni"],
+    ["deebot t30 omni", "DEEBOT T30 Omni"],
   ],
   dyson: [
     ["n223", "360 Eye"],
@@ -47,7 +47,7 @@ const GALLERIES = {
   ],
 };
 
-const CELL = 132;
+const CELL = 140;
 const PIC = 90;
 for (const [brand, models] of Object.entries(GALLERIES)) {
   const cells = models.map(([model, label], i) => {

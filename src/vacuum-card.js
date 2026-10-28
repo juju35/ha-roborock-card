@@ -434,6 +434,7 @@ const ECOVACS_KEYS = {
   error: "ecovacs_error",
   water_amount: "mop_intensity",
   work_mode: "cleaning_mode",
+  station_state: "ecovacs_station",
 };
 const KEY_MAPS = { xiaomi_miio: MIIO_KEYS, dreame_vacuum: DREAME_KEYS, ecovacs: ECOVACS_KEYS };
 const PENDING_MS = 45000;
@@ -1405,7 +1406,10 @@ class VacuumBase extends HTMLElement {
     // Mops drying: the drying status of the dock, or its remaining time while the robot is not out cleaning.
     const d = dev.dock;
     const drying = [d.mop_drying_status].some((id) => this._isOn(id)) || hours(this._s(d.mop_drying_remaining_time)) > 0;
-    const activity = activityOf(status?.state, this._s(dev.entities.cleaning_mode)?.state, drying);
+    let activity = activityOf(status?.state, this._s(dev.entities.cleaning_mode)?.state, drying);
+    // Ecovacs: the station state tells when the mops are washed or dried (the robot is then docked).
+    const station = { washing_mop: "washing", drying_mop: "drying" }[this._s(dev.entities.ecovacs_station)?.state];
+    if (station && !activity) activity = station;
     const white = colorOf(this._config.color);
     return svgUri(preset ? IMAGES[img](activity, white) : autoSvg(model ? presetDevice(img) : dev, activity, white));
   }

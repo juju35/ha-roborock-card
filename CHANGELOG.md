@@ -7,6 +7,9 @@
 - Ecovacs and Dyson logos (HA brands, on a white rounded tile to stay visible in the dark theme) and accent colors: Ecovacs blue `#0b6bc4` / `#3d9be9`, Dyson grey `#4a4a4a` / `#b8b8b8` (light / dark theme).
 - Battery taken from the vacuum's `battery_level` attribute when the integration has no battery sensor.
 - Percentage consumables (Roborock A01, Ecovacs) get their reset button when the integration exposes one.
+- Ecovacs station state (`station_state`): the picture shows the mops being washed / dried by the Omni station.
+- Dyson 360 robots get their own drawing: a drum on tank tracks with the 360° camera (Vis Nav wider, purple band); tracks roll and dust while vacuuming, slide home when returning.
+- Animations (GIF) for Ecovacs (cleaning, returning, mop washing, mop drying) and Dyson (cleaning, returning) in the README, Ecovacs wordmark, DEEBOT names in the gallery.
 
 ### Documentation
 - README: Ecovacs and Dyson in the supported integrations, screenshots and galleries.
