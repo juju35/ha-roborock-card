@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.0
+### Changes
+- German translation, and a "Deutsch" choice in the visual editor's language list, contributed by domwu0001.
+
 ## 2.1.2
 ### Fixes
 - The battery bar width stays between 0 and 100 % on both cards (consumable bars already did).
