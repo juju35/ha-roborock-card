@@ -63,7 +63,7 @@ export const load = () => {
   vm.createContext(sandbox);
   return vm.runInContext(
     `${source}
-    ({ fmtHours, hours, statusClass, esc, resolve, ago, RTF, autoSvg, robotSvg, wetdrySvg, dysonSvg, IMAGES, activityOf, brandOf, MODEL_NAMES, MODEL_PRESETS, VacuumCard: customElements.get("vacuum-card"),
+    ({ fmtHours, hours, statusClass, esc, resolve, ago, RTF, autoSvg, robotSvg, wetdrySvg, dysonSvg, IMAGES, activityOf, brandOf, MODEL_NAMES, MODEL_PRESETS, STRINGS, VacuumCard: customElements.get("vacuum-card"),
        VacuumMiniCard: customElements.get("vacuum-mini-card"), window })`,
     sandbox,
   );
