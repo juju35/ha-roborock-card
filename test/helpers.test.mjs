@@ -93,6 +93,12 @@ test("the device picture follows the model, the image option overrides it", () =
   assert.equal(byModel("dreame.vacuum.p2114a"), robotSvg({ white: true })); // with its station
   assert.equal(byModel("xiaomi.vacuum.c102cn"), robotSvg({ white: true })); // Mijia Omni 2
   assert.equal(byModel("roborock.vacuum.a187"), robotSvg({ white: true })); // Qrevo Edge
+  // Dyson 360: its own drawing (drum on tracks, 360° camera), Vis Nav wider with a purple band.
+  assert.equal(byModel("n223"), rr.dysonSvg()); // 360 Eye
+  assert.equal(byModel("277"), rr.dysonSvg({ visnav: true })); // 360 Vis Nav
+  assert.match(rr.dysonSvg({ activity: "vacuum" }), /class="roll"/);
+  assert.match(rr.dysonSvg({ activity: "returning" }), /class="home"/);
+  assert.doesNotMatch(rr.dysonSvg(), /<style>/);
   // One editor preset per commercial name, labelled with the brand.
   const labels = rr.MODEL_PRESETS.map((p) => p.label);
   assert.equal(new Set(labels).size, labels.length);

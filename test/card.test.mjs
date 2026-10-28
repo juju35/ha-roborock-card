@@ -399,3 +399,46 @@ test("the accent color of the buttons follows the brand", () => {
   assert.equal(accent("l10"), "#8a6a3c"); // L10s Ultra: Dreame
   assert.equal(accent("l10", rr.VacuumMiniCard, true), "#c9a46e");
 });
+
+test("Ecovacs: keys mapped, percentage consumables with reset, error code 0 is no error, Ecovacs logo", () => {
+  const hass = makeHass();
+  const dev = rr.resolve(hass).devices.find((d) => d.id === "x1");
+  assert.equal(dev.vacuum, "vacuum.studio");
+  assert.equal(dev.entities.main_brush_life, "sensor.studio_brosse");
+  assert.equal(dev.entities.reset_mop_consumable, "button.studio_reset_round_mop");
+  assert.equal(dev.entities.total_cleaning_count, "sensor.studio_nombre");
+  const card = new rr.VacuumCard();
+  card.setConfig({ device: "x1", collapsed: [] });
+  card.hass = hass;
+  const html = card.shadowRoot.innerHTML;
+  assert.match(html, /title="Ecovacs"/);
+  assert.match(html, /data-entity="button\.studio_reset_round_mop"/);
+  assert.match(html, />38 %</);
+  assert.doesNotMatch(html, /class="alert-line/);
+  card.hass = { ...hass, states: { ...states, "sensor.studio_erreur": { ...states["sensor.studio_erreur"], state: "102", attributes: { description: "HostHang: Robot is stuck" } } } };
+  assert.match(card.shadowRoot.innerHTML, /Robot is stuck/);
+});
+
+test("Dyson: vacuum only, battery from its attribute, Dyson logo", () => {
+  const card = new rr.VacuumMiniCard();
+  card.setConfig({ device: "visnav" });
+  card.hass = makeHass();
+  const html = card.shadowRoot.innerHTML;
+  assert.match(html, /title="Dyson"/);
+  assert.match(html, /100 %|>100</);
+  assert.equal(rr.brandOf("277"), "dyson");
+  assert.equal(rr.brandOf("DEEBOT X1 OMNI"), "ecovacs");
+});
+
+test("Ecovacs: the station state animates the picture (mops washed / dried)", () => {
+  const card = new rr.VacuumCard();
+  card.setConfig({ device: "x1" });
+  const pic = (state) => {
+    card.hass = makeHass({ ...states, "sensor.studio_station": { ...states["sensor.studio_station"], state } });
+    const dev = rr.resolve(card._hass).devices.find((d) => d.id === "x1");
+    return decodeURIComponent(card._picture(dev, card._status(dev)));
+  };
+  assert.match(pic("washing_mop"), /class="bub/);
+  assert.match(pic("drying_mop"), /class="heat/);
+  assert.doesNotMatch(pic("idle"), /class="(bub|heat)/);
+});

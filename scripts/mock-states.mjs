@@ -157,6 +157,37 @@ dreame("camera.etage_carte", "map", "idle", {
   entity_picture: `data:image/svg+xml;base64,${Buffer.from(MAP).toString("base64")}`,
 });
 
+// DEEBOT X1 Omni set up with Ecovacs (translation keys of that integration, percentage consumables).
+const eco = (entity_id, translation_key, state, attributes = {}) => entity(entity_id, "x1", translation_key, state, attributes, "ecovacs");
+device("x1", "Studio robot", "DEEBOT X1 OMNI", "x1", "ecovacs");
+eco("vacuum.studio", "vacuum", "docked", { fan_speed: "normal", fan_speed_list: ["quiet", "normal", "max", "max+"], friendly_name: "Studio robot" });
+eco("sensor.studio_batterie", null, "82", { device_class: "battery", unit_of_measurement: "%" });
+eco("sensor.studio_erreur", "error", "0", { description: "NoError: Robot is operational" });
+eco("sensor.studio_surface", "stats_area", "48", { unit_of_measurement: "m²" });
+eco("sensor.studio_duree", "stats_time", "52", { unit_of_measurement: "min", device_class: "duration" });
+eco("sensor.studio_surface_totale", "total_stats_area", "6240", { unit_of_measurement: "m²" });
+eco("sensor.studio_duree_totale", "total_stats_time", "412", { unit_of_measurement: "h", device_class: "duration" });
+eco("sensor.studio_nombre", "total_stats_cleanings", "187");
+eco("sensor.studio_brosse", "lifespan_brush", "71", { unit_of_measurement: "%" });
+eco("sensor.studio_brosse_laterale", "lifespan_side_brush", "54", { unit_of_measurement: "%" });
+eco("sensor.studio_filtre", "lifespan_filter", "38", { unit_of_measurement: "%" });
+eco("sensor.studio_serpilliere", "lifespan_round_mop", "8", { unit_of_measurement: "%" });
+for (const k of ["brush", "side_brush", "filter", "round_mop"]) eco(`button.studio_reset_${k}`, `reset_lifespan_${k}`, "unknown");
+eco("select.studio_mode", "work_mode", "vacuum_and_mop", { options: ["vacuum", "mop", "vacuum_and_mop", "mop_after_vacuum"] });
+eco("select.studio_eau", "water_amount", "high", { options: ["low", "medium", "high", "ultrahigh"] });
+eco("sensor.studio_station", "station_state", "idle", { device_class: "enum", options: ["idle", "emptying_dustbin", "washing_mop", "drying_mop"] });
+eco("image.studio_carte", "map", hoursAgo(2), { entity_picture: `data:image/svg+xml;base64,${Buffer.from(MAP).toString("base64")}` });
+
+// 360 Vis Nav set up with Dyson (dyson_local): a vacuum entity only, battery as an attribute.
+device("visnav", "Toy room robot", "277", "visnav", "dyson_local");
+entity("vacuum.salle_de_jeux", "visnav", null, "docked", {
+  battery_level: 100,
+  status: "Inactive, charged",
+  fan_speed: "Auto",
+  fan_speed_list: ["Auto", "Quick", "Quiet", "Boost"],
+  friendly_name: "Toy room robot",
+}, "dyson_local");
+
 // Same robot while it is cleaning (vacuum + mop), with the mop drying in the dock and the dirty water tank
 // full. Picture activity: "vacmop" — the robot sways, its side brushes spin and dust and water trail behind.
 export const cleaning = {
@@ -206,6 +237,26 @@ export const f25Cleaning = {
   "sensor.balai_etat": { state: "cleaning" },
   "sensor.balai_batterie": { state: "54" },
 };
+
+// The DEEBOT X1 Omni vacuuming and mopping. Picture activity: "vacmop" — out of its station, white.
+export const ecovacsCleaning = {
+  "vacuum.studio": { state: "cleaning" },
+  "sensor.studio_batterie": { state: "61" },
+};
+
+// The DEEBOT X1 Omni heading back to its station. Picture activity: "returning" (home).
+export const ecovacsReturning = { "vacuum.studio": { state: "returning" }, "sensor.studio_batterie": { state: "23" } };
+
+// The DEEBOT X1 Omni docked, its station washing then drying the mops. Picture activities: "washing" (bub), "drying" (heat).
+export const ecovacsWashing = { "sensor.studio_station": { state: "washing_mop" } };
+export const ecovacsDrying = { "sensor.studio_station": { state: "drying_mop" } };
+
+// The Dyson 360 Vis Nav vacuuming. Picture activity: "vacuum" — the drum sways, its tracks roll (roll) and dust
+// is sucked in.
+export const dysonCleaning = { "vacuum.salle_de_jeux": { state: "cleaning" } };
+
+// The Dyson 360 Vis Nav heading home. Picture activity: "returning" — it slides in from the side (home).
+export const dysonReturning = { "vacuum.salle_de_jeux": { state: "returning" } };
 
 // Response of the roborock.get_maps service, used by the room selector.
 export const maps = {

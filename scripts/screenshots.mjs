@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
-import { states, entities, devices, cleaning, returning, washing, drying, f25Cleaning, maps } from "./mock-states.mjs";
+import { states, entities, devices, cleaning, returning, washing, drying, f25Cleaning, ecovacsCleaning, ecovacsReturning, ecovacsWashing, ecovacsDrying, dysonCleaning, dysonReturning, maps } from "./mock-states.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const cardJs = readFileSync(`${root}dist/vacuum-card.js`, "utf8");
@@ -86,6 +86,12 @@ const shots = [
   { file: "mini-card-dreame", type: "vacuum-mini-card", theme: "dark", width: 380, config: { device: "Upstairs robot" } },
   { file: "mini-card-dreame-light", type: "vacuum-mini-card", theme: "light", width: 380, config: { device: "Upstairs robot" } },
   { file: "mini-card-xiaomi-dark", type: "vacuum-mini-card", theme: "dark", width: 380, config: { device: "Robot vacuum" } },
+  { file: "card-ecovacs", type: "vacuum-card", theme: "light", width: 460, config: { device: "Studio robot", show_map: "always", collapsed: ["stats"] } },
+  { file: "mini-card-ecovacs", type: "vacuum-mini-card", theme: "light", width: 380, config: { device: "Studio robot" } },
+  { file: "mini-card-ecovacs-dark", type: "vacuum-mini-card", theme: "dark", width: 380, config: { device: "Studio robot" } },
+  { file: "card-dyson", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Toy room robot" } },
+  { file: "mini-card-dyson", type: "vacuum-mini-card", theme: "dark", width: 380, config: { device: "Toy room robot" } },
+  { file: "mini-card-dyson-light", type: "vacuum-mini-card", theme: "light", width: 380, config: { device: "Toy room robot" } },
   { file: "mini-card-zoom", type: "vacuum-mini-card", theme: "light", width: 460, config: {}, clicks: [".zoom"] },
   { file: "mini-card-zoom-dark", type: "vacuum-mini-card", theme: "dark", width: 460, config: {}, overrides: cleaning, clicks: [".zoom"] },
 ];
@@ -154,12 +160,21 @@ async function makeGif(browser, gif, { fps = 20, seconds = 3 } = {}) {
 //   mop-washing  — robot docked, washing its mop (bub)
 //   mop-drying   — robot docked, drying its mop (heat)
 //   f25-cleaning — F25 Ultra wet-dry vacuum mid-clean (tilt, roll)
+//   ecovacs-cleaning / -returning / -mop-washing / -mop-drying — DEEBOT X1 Omni: out cleaning, heading home,
+//                      its station washing then drying the mops (station_state sensor)
+//   dyson-cleaning / dyson-returning — Dyson 360 Vis Nav: tracks rolling and dust / sliding home
 const gifs = [
   { file: "cleaning", type: "vacuum-card", theme: "light", width: 460, config: {}, overrides: cleaning },
   { file: "returning", type: "vacuum-card", theme: "light", width: 460, config: {}, overrides: returning },
   { file: "mop-washing", type: "vacuum-card", theme: "light", width: 460, config: {}, overrides: washing },
   { file: "mop-drying", type: "vacuum-card", theme: "light", width: 460, config: {}, overrides: drying },
   { file: "f25-cleaning", type: "vacuum-card", theme: "light", width: 460, config: { device: "Roborock F25 Ultra" }, overrides: f25Cleaning },
+  { file: "ecovacs-cleaning", type: "vacuum-card", theme: "light", width: 460, config: { device: "Studio robot", show_map: "never" }, overrides: ecovacsCleaning },
+  { file: "ecovacs-returning", type: "vacuum-card", theme: "light", width: 460, config: { device: "Studio robot", show_map: "never" }, overrides: ecovacsReturning },
+  { file: "ecovacs-mop-washing", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Studio robot", show_map: "never" }, overrides: ecovacsWashing },
+  { file: "ecovacs-mop-drying", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Studio robot", show_map: "never" }, overrides: ecovacsDrying },
+  { file: "dyson-cleaning", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Toy room robot" }, overrides: dysonCleaning },
+  { file: "dyson-returning", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Toy room robot" }, overrides: dysonReturning },
 ];
 for (const g of gifs) await makeGif(browser, g);
 await browser.close();

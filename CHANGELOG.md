@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.1.0
+### Changes
+- **Ecovacs** (core `ecovacs` integration): DEEBOT vacuums discovered; current / total cleaning, cleaning mode and water amount, maintenance in percent (brushes, filter, mop) with the `reset_lifespan_*` buttons, error code with its description (`0`: no error), map image. About 17 DEEBOT models recognized from their name (N8, OZMO, T8 to T30, X1 / X2 / X5), drawn white, Omni / + models with their station.
+- **Dyson** (custom `dyson_local` integration): 360 Eye, 360 Heurist, 360 Vis Nav vacuums discovered (vacuum and battery from its `battery_level` attribute).
+- Ecovacs and Dyson logos (HA brands, on a white rounded tile to stay visible in the dark theme) and accent colors: Ecovacs blue `#0b6bc4` / `#3d9be9`, Dyson grey `#4a4a4a` / `#b8b8b8` (light / dark theme).
+- Battery taken from the vacuum's `battery_level` attribute when the integration has no battery sensor.
+- Percentage consumables (Roborock A01, Ecovacs) get their reset button when the integration exposes one.
+- Ecovacs station state (`station_state`): the picture shows the mops being washed / dried by the Omni station.
+- Dyson 360 robots get their own drawing: a drum on tank tracks with the 360° camera (Vis Nav wider, purple band); tracks roll and dust while vacuuming, slide home when returning.
+- Animations (GIF) for Ecovacs (cleaning, returning, mop washing, mop drying) and Dyson (cleaning, returning) in the README, Ecovacs wordmark, DEEBOT names in the gallery.
+
+### Documentation
+- README: Ecovacs and Dyson in the supported integrations, screenshots and galleries.
+
 ## 2.0.0
 ### Changes
 - The cards are renamed **Vacuum Card** / **Vacuum Mini Card**, types `custom:vacuum-card` / `custom:vacuum-mini-card` (card picker and HACS name too). The former types `roborock-card`, `roborock-mini-card`, `robot-vacuum-card` and `robot-vacuum-mini-card` stay registered: existing dashboards keep working.

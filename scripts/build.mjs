@@ -1,5 +1,5 @@
 // Bundles src/vacuum-card.js into the single HACS file dist/vacuum-card.js,
-// inlining the integration logos (Roborock, Xiaomi Mi Home, Xiaomi, Dreame) so the card needs no extra resource.
+// inlining the integration logos (Roborock, Xiaomi Mi Home, Xiaomi, Dreame, Ecovacs, Dyson) so the card needs no extra resource.
 // Usage: node scripts/build.mjs  (dist/ is not committed: CI and the release workflow build it)
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -14,7 +14,9 @@ const out = readFileSync(`${root}src/vacuum-card.js`, "utf8")
   .replace("__IMG_LOGO__", dataUri("logo.svg"))
   .replace("__IMG_LOGO_MIHOME__", dataUri("mihome.png"))
   .replace("__IMG_LOGO_XIAOMI__", dataUri("xiaomi.png"))
-  .replace("__IMG_LOGO_DREAME__", dataUri("dreame.png"));
+  .replace("__IMG_LOGO_DREAME__", dataUri("dreame.png"))
+  .replace("__IMG_LOGO_ECOVACS__", dataUri("ecovacs.png"))
+  .replace("__IMG_LOGO_DYSON__", dataUri("dyson.png"));
 
 const target = `${root}dist/vacuum-card.js`;
 mkdirSync(`${root}dist`, { recursive: true });
