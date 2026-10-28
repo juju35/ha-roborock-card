@@ -2,8 +2,8 @@
  * Vacuum Card for Home Assistant
  * https://github.com/juju35/ha-vacuum-card
  *
- * Lovelace cards for the Roborock integration (https://www.home-assistant.io/integrations/roborock/), also
- * for robot vacuums set up with Xiaomi Miio (https://www.home-assistant.io/integrations/xiaomi_miio/),
+ * Lovelace cards for robot vacuums, whatever the integration: Roborock
+ * (https://www.home-assistant.io/integrations/roborock/), Xiaomi Miio (https://www.home-assistant.io/integrations/xiaomi_miio/),
  * Xiaomi Home (https://github.com/XiaoMi/ha_xiaomi_home), Dreame Vacuum (https://github.com/Tasshack/dreame-vacuum),
  * Ecovacs (https://www.home-assistant.io/integrations/ecovacs/) or Dyson (https://github.com/libdyson-wg/ha-dyson).
  * Entities are resolved through the entity and device registries (platform, translation_key and
@@ -1999,7 +1999,6 @@ class VacuumCard extends VacuumBase {
 // ---------------------------------------------------------------------------
 
 const MINI_STYLE = `
-  .header { padding: 12px 12px 0; }
   .logo { width: 32px; height: 32px; }
   .name { font-size: 16px; }
   .content { padding: 8px 12px 12px; display: flex; align-items: center; gap: 12px; }
