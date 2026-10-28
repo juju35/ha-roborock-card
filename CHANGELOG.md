@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.1.2
+### Fixes
+- The battery bar width stays between 0 and 100 % on both cards (consumable bars already did).
+- Masonry views re-measure the mini card after its detail button switches to the full card and back.
+- Visual editor: switching device no longer lets the previous device's map size overwrite the new one.
+- No deferred re-render once the card has been removed from the dashboard; device pictures are looked up faster on each render.
+
+### Maintenance
+- Release gated on the tests; screenshot commits guarded against forks and manual runs; the screenshots script fails on page errors and also regenerates the README model galleries.
+- Unused ruff tooling, dead Zeo entity keys and a duplicate mini card style rule removed; brand-neutral file header.
+
 ## 2.1.1
 ### Fixes
 - Only vacuums are listed: Roborock devices that are neither a robot vacuum nor a wet-dry vacuum (Zeo washing machine) are skipped, like the fans, purifiers and air conditioners of the other integrations.
