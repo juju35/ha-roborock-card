@@ -126,3 +126,13 @@ test("the picture animation follows the status, the cleaning mode and the dock d
   assert.match(robotSvg({ activity: "washing" }), /class="bub/);
   assert.match(robotSvg({ activity: "drying" }), /class="heat/);
 });
+
+test("every language has exactly the English keys and placeholders", () => {
+  const en = Object.keys(rr.STRINGS.en).sort();
+  const vars = (s) => (String(s).match(/\{\w+\}/g) || []).sort().join();
+  for (const l of ["fr", "de", "es"]) {
+    assert.ok(rr.STRINGS[l], `missing language ${l}`);
+    assert.deepEqual(Object.keys(rr.STRINGS[l]).sort(), en, `keys of ${l}`);
+    for (const k of en) assert.equal(vars(rr.STRINGS[l][k]), vars(rr.STRINGS.en[k]), `placeholders of ${l}.${k}`);
+  }
+});
