@@ -930,6 +930,8 @@ const resolve = (hass) => {
     if (item.platform === "roborock" && isDock(d)) docks.push({ d, item });
     else {
       const kind = vacuum?.startsWith("vacuum.") ? "robot" : /\.(wdv|wetdryvac)\./.test(d.model || "") ? "wetdry" : "other";
+      // Vacuums only: no washing machine (Roborock Zeo), fan, purifier or air conditioner.
+      if (kind === "other") continue;
       devices.push({
         id,
         name: devName(d),
