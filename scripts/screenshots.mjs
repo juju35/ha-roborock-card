@@ -11,6 +11,10 @@ import { states, entities, devices, cleaning, returning, washing, drying, f25Cle
 const root = fileURLToPath(new URL("..", import.meta.url));
 const cardJs = readFileSync(`${root}dist/vacuum-card.js`, "utf8");
 
+// Every uncaught page error is collected here; the script exits non-zero when any occurred,
+// so a card that throws on load cannot silently produce blank screenshots.
+const pageErrors = [];
+
 const THEMES = {
   light: {
     "--primary-background-color": "#e8eaed",
@@ -51,7 +55,10 @@ const page_html = (theme, width) => `<!doctype html><html><head><meta charset="u
 // and mounts it with the mock hass; `overrides` patch the mock states for this shot only.
 async function openCard(browser, { file, type, config, theme, width, overrides }) {
   const page = await browser.newPage({ deviceScaleFactor: 2, viewport: { width: 1000, height: 2000 } });
-  page.on("pageerror", (err) => console.error(`pageerror (${file}): ${err.message}`));
+  page.on("pageerror", (err) => {
+    console.error(`pageerror (${file}): ${err.message}`);
+    pageErrors.push(`${file}: ${err.message}`);
+  });
   await page.setContent(page_html(theme, width));
   await page.addScriptTag({ content: HA_CARD });
   await page.addScriptTag({ content: cardJs });
@@ -178,3 +185,9 @@ const gifs = [
 ];
 for (const g of gifs) await makeGif(browser, g);
 await browser.close();
+
+if (pageErrors.length) {
+  console.error(`\n${pageErrors.length} page error(s) while rendering:`);
+  for (const e of pageErrors) console.error(`  ${e}`);
+  process.exitCode = 1;
+}
