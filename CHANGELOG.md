@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.3.0
+### Changes
+- Spanish translation, and an "Español" choice in the visual editor's language list.
+
 ## 2.2.0
 ### Changes
 - German translation, and a "Deutsch" choice in the visual editor's language list, contributed by domwu0001.
