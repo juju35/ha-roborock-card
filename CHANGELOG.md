@@ -1,6 +1,11 @@
 # Changelog
 
 ## 2.1.1
+### Changes
+- Added german language option
+- Added german language translations
+
+## 2.1.1
 ### Fixes
 - Only vacuums are listed: Roborock devices that are neither a robot vacuum nor a wet-dry vacuum (Zeo washing machine) are skipped, like the fans, purifiers and air conditioners of the other integrations.
 
