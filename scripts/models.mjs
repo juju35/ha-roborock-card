@@ -33,6 +33,18 @@ const GALLERIES = {
     ["dreame.vacuum.r2205", "D10 Plus"],
     ["dreame.vacuum.r2228o", "L10s Ultra"],
   ],
+  ecovacs: [
+    ["deebot n8", "DEEBOT N8"],
+    ["deebot t8 aivi", "T8 AIVI"],
+    ["deebot t9+", "T9+"],
+    ["deebot x1 omni", "X1 Omni"],
+    ["deebot t30 omni", "T30 Omni"],
+  ],
+  dyson: [
+    ["n223", "360 Eye"],
+    ["276", "360 Heurist"],
+    ["277", "360 Vis Nav"],
+  ],
 };
 
 const CELL = 132;

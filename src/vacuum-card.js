@@ -4,7 +4,8 @@
  *
  * Lovelace cards for the Roborock integration (https://www.home-assistant.io/integrations/roborock/), also
  * for robot vacuums set up with Xiaomi Miio (https://www.home-assistant.io/integrations/xiaomi_miio/),
- * Xiaomi Home (https://github.com/XiaoMi/ha_xiaomi_home) or Dreame Vacuum (https://github.com/Tasshack/dreame-vacuum).
+ * Xiaomi Home (https://github.com/XiaoMi/ha_xiaomi_home), Dreame Vacuum (https://github.com/Tasshack/dreame-vacuum),
+ * Ecovacs (https://www.home-assistant.io/integrations/ecovacs/) or Dyson (https://github.com/libdyson-wg/ha-dyson).
  * Entities are resolved through the entity and device registries (platform, translation_key and
  * device), so they work whatever the Home Assistant language or entity ids.
  */
@@ -14,6 +15,8 @@ const IMG_LOGO = "__IMG_LOGO__";
 const IMG_LOGO_MIHOME = "__IMG_LOGO_MIHOME__";
 const IMG_LOGO_XIAOMI = "__IMG_LOGO_XIAOMI__";
 const IMG_LOGO_DREAME = "__IMG_LOGO_DREAME__";
+const IMG_LOGO_ECOVACS = "__IMG_LOGO_ECOVACS__";
+const IMG_LOGO_DYSON = "__IMG_LOGO_DYSON__";
 // Roborock pictures: drawn illustrations, picked from the device name (robot with or without LiDAR turret,
 // with or without its dock, dark or white) or the wet-dry vacuum kind, and animated by what the device is doing
 // (`activity`): vacuum, mop, vacmop (vacuum and mop), returning, washing (the mops), drying (the mops).
@@ -251,19 +254,44 @@ const MODEL_NAMES = {
   "dreame.vacuum.p2029": "L10 Pro",
   "dreame.vacuum.r2205": "D10 Plus",
   "dreame.vacuum.r2228o": "L10s Ultra",
+  // Ecovacs: the integration reports the commercial name (deviceName) as the model.
+  "deebot n8": "DEEBOT N8",
+  "deebot n8 pro": "DEEBOT N8 Pro",
+  "deebot n8 pro+": "DEEBOT N8 Pro+",
+  "deebot ozmo 920": "DEEBOT OZMO 920",
+  "deebot ozmo 950": "DEEBOT OZMO 950",
+  "deebot ozmo t8": "DEEBOT OZMO T8",
+  "deebot t8 aivi": "DEEBOT T8 AIVI",
+  "deebot t8+": "DEEBOT T8+",
+  "deebot t9": "DEEBOT T9",
+  "deebot t9+": "DEEBOT T9+",
+  "deebot t10 omni": "DEEBOT T10 Omni",
+  "deebot t20 omni": "DEEBOT T20 Omni",
+  "deebot t30 omni": "DEEBOT T30 Omni",
+  "deebot x1 omni": "DEEBOT X1 Omni",
+  "deebot x1 turbo": "DEEBOT X1 Turbo",
+  "deebot x2 omni": "DEEBOT X2 Omni",
+  "deebot x5 pro omni": "DEEBOT X5 Pro Omni",
+  // Dyson: the integration reports the product type as the model.
+  n223: "360 Eye",
+  276: "360 Heurist",
+  277: "360 Vis Nav",
 };
 // Brand of a model id, for the logo: Xiaomi for the Mi / Xiaomi robots (built by Roborock for the first ones),
 // Roborock for the other Roborock models, null when unknown (the logo of the integration is shown).
 const XIAOMI_MODELS = new Set(["rockrobo.vacuum.v1", "roborock.vacuum.m1s"]);
+const DYSON_MODELS = new Set(["n223", "276", "277"]);
 const brandOf = (model) => {
   const m = String(model || "").toLowerCase();
   // Dreame and Viomi build some of the Mi / Xiaomi / Mijia robots: their names in the table tell them apart.
   if (XIAOMI_MODELS.has(m) || /^(xiaomi|mijia|ijai)\./.test(m) || (/^(dreame|viomi)\./.test(m) && /^(mi |mijia|robot vacuum)/i.test(MODEL_NAMES[m] || ""))) return "xiaomi";
   if (/^(roborock|rockrobo)\./.test(m)) return "roborock";
+  if (/^(deebot|ecovacs)\b/.test(m)) return "ecovacs";
+  if (DYSON_MODELS.has(m)) return "dyson";
   return /^dreame\./.test(m) ? "dreame" : null;
 };
 // Label of the brand of a model, for the editor presets.
-const BRAND_LABELS = { roborock: "Roborock", xiaomi: "Xiaomi", dreame: "Dreame" };
+const BRAND_LABELS = { roborock: "Roborock", xiaomi: "Xiaomi", dreame: "Dreame", ecovacs: "Ecovacs", dyson: "Dyson" };
 // Model presets of the `image` option (the model id as value), one per commercial name, by brand then name.
 const MODEL_PRESETS = Object.entries(MODEL_NAMES)
   .filter(([, name], i, all) => all.findIndex(([, n]) => n === name) === i)
@@ -282,7 +310,7 @@ const autoSvg = (dev, activity = null, white = undefined) => {
   if (dev.kind !== "robot") return null;
   return robotSvg({
     turret: !/saros|essential|\b(e\d|c1|1c)\b/i.test(name),
-    white: white ?? (/\bq\s?(revo|\d)|\bmi robot/i.test(name) || ["xiaomi", "dreame"].includes(brandOf(dev.model))),
+    white: white ?? (/\bq\s?(revo|\d)|\bmi robot/i.test(name) || ["xiaomi", "dreame", "ecovacs"].includes(brandOf(dev.model))),
     dock: Object.keys(dev.dock || {}).length > 0 || /ultra|plus|\+|saros|q\s?revo|omni|self-cleaning|\bg\d\d/i.test(name),
     activity,
   });
@@ -311,12 +339,21 @@ const BRANDS = {
   mihome: { logo: IMG_LOGO_MIHOME, name: "Xiaomi Mi Home", site: "https://home.mi.com", accent: ["#2a7f57", "#43b17e"] },
   xiaomi: { logo: IMG_LOGO_XIAOMI, name: "Xiaomi", site: "https://www.mi.com", accent: ["#c24c00", "#ff6900"] },
   dreame: { logo: IMG_LOGO_DREAME, name: "Dreame", site: "https://www.dreametech.com", accent: ["#8a6a3c", "#c9a46e"] },
+  ecovacs: { logo: IMG_LOGO_ECOVACS, name: "Ecovacs", site: "https://www.ecovacs.com", accent: ["#0b6bc4", "#3d9be9"] },
+  dyson: { logo: IMG_LOGO_DYSON, name: "Dyson", site: "https://www.dyson.com", accent: ["#4a4a4a", "#b8b8b8"] },
 };
 const brandFor = (dev) => BRANDS[brandOf(dev.model)] || BRANDS[PLATFORMS[dev.platform]] || BRANDS.roborock;
 // Accent of the device's brand for the current theme, overriding the default red of the shared styles.
 const accentStyle = (dev, hass) => `:host { --rr-accent: ${brandFor(dev).accent[hass?.themes?.darkMode ? 1 : 0]}; }`;
 // Integrations the cards read → their logo.
-const PLATFORMS = { roborock: "roborock", xiaomi_miio: "mihome", xiaomi_home: "xiaomi", dreame_vacuum: "dreame" };
+const PLATFORMS = {
+  roborock: "roborock",
+  xiaomi_miio: "mihome",
+  xiaomi_home: "xiaomi",
+  dreame_vacuum: "dreame",
+  ecovacs: "ecovacs",
+  dyson_local: "dyson",
+};
 // Xiaomi Miio translation_key → the Roborock integration's, so the cards read both the same way.
 // Their last clean "duration" / "area" are left aside: "clean_time" / "clean_area" hold the current
 // clean while the robot works and the last one afterwards, like the Roborock cleaning_time / cleaning_area.
@@ -350,7 +387,27 @@ const DREAME_KEYS = {
   reset_filter: "reset_air_filter_consumable",
   reset_sensor: "reset_sensor_consumable",
 };
-const KEY_MAPS = { xiaomi_miio: MIIO_KEYS, dreame_vacuum: DREAME_KEYS };
+// Ecovacs translation_key → the Roborock integration's. Its consumables are percentages (lifespan_*).
+const ECOVACS_KEYS = {
+  vacuum: "_vacuum",
+  stats_area: "cleaning_area",
+  stats_time: "cleaning_time",
+  total_stats_area: "total_cleaning_area",
+  total_stats_time: "total_cleaning_time",
+  total_stats_cleanings: "total_cleaning_count",
+  lifespan_brush: "main_brush_life",
+  lifespan_side_brush: "side_brush_life",
+  lifespan_filter: "filter_life",
+  lifespan_round_mop: "mop_life",
+  reset_lifespan_brush: "reset_main_brush_consumable",
+  reset_lifespan_side_brush: "reset_side_brush_consumable",
+  reset_lifespan_filter: "reset_air_filter_consumable",
+  reset_lifespan_round_mop: "reset_mop_consumable",
+  error: "ecovacs_error",
+  water_amount: "mop_intensity",
+  work_mode: "cleaning_mode",
+};
+const KEY_MAPS = { xiaomi_miio: MIIO_KEYS, dreame_vacuum: DREAME_KEYS, ecovacs: ECOVACS_KEYS };
 const PENDING_MS = 45000;
 const DEFAULT_COLLAPSED = ["stats", "dock"];
 
@@ -451,7 +508,7 @@ const STRINGS = {
     ok: "OK",
     empty: "Empty",
     full: "Full",
-    no_device: "No robot vacuum found. Is the Roborock, Xiaomi Miio, Xiaomi Home or Dreame Vacuum integration installed?",
+    no_device: "No robot vacuum found. Is a supported integration (Roborock, Xiaomi, Dreame, Ecovacs, Dyson) installed?",
     unknown_device: "Robot vacuum not found",
     no_registry: "This card needs Home Assistant 2024.8 or later.",
     // Editor
@@ -604,7 +661,7 @@ const STRINGS = {
     ok: "OK",
     empty: "Vide",
     full: "Plein",
-    no_device: "Aucun aspirateur trouvé. L'intégration Roborock, Xiaomi Miio, Xiaomi Home ou Dreame Vacuum est-elle installée ?",
+    no_device: "Aucun aspirateur trouvé. Une intégration prise en charge (Roborock, Xiaomi, Dreame, Ecovacs, Dyson) est-elle installée ?",
     unknown_device: "Aspirateur introuvable",
     no_registry: "Cette carte nécessite Home Assistant 2024.8 ou plus récent.",
     device: "Aspirateur",
@@ -711,10 +768,11 @@ const CONSUMABLES = [
   ["sensor_time_left", "sensors", ICONS.sensor, 30, "reset_sensor_consumable"],
   ["mop_life_time_left", "mop", ICONS.water, null],
   ["brush_remaining", "roller", ICONS.brush, null],
-  ["main_brush_life", "main_brush", ICONS.brush, "pct"],
-  ["side_brush_life", "side_brush", ICONS.brush, "pct"],
-  ["filter_life", "filter", ICONS.filter, "pct"],
-  ["sensor_life", "sensors", ICONS.sensor, "pct"],
+  ["main_brush_life", "main_brush", ICONS.brush, "pct", "reset_main_brush_consumable"],
+  ["side_brush_life", "side_brush", ICONS.brush, "pct", "reset_side_brush_consumable"],
+  ["filter_life", "filter", ICONS.filter, "pct", "reset_air_filter_consumable"],
+  ["sensor_life", "sensors", ICONS.sensor, "pct", "reset_sensor_consumable"],
+  ["mop_life", "mop", ICONS.water, "pct", "reset_mop_consumable"],
   ["strainer_time_left", "strainer", ICONS.filter, null, "reset_dock_strainer_consumable"],
   ["cleaning_brush_time_left", "cleaning_brush", ICONS.brush, null, "reset_dock_cleaning_brush_consumable"],
 ];
@@ -1261,13 +1319,18 @@ class VacuumBase extends HTMLElement {
       const s = this._s(id);
       if (s && (id === dev.entities.battery || s.attributes?.device_class === "battery")) return s;
     }
-    return undefined;
+    // No battery sensor (Dyson…): the battery_level attribute of the vacuum.
+    const vac = this._s(dev.vacuum);
+    const level = vac?.attributes?.battery_level;
+    return level === undefined || level === null ? undefined : { entity_id: vac.entity_id, state: String(level), attributes: {} };
   }
 
   _error(dev) {
-    for (const k of ["vacuum_error", "a01_error", "zeo_error", "dreame_error"]) {
+    for (const k of ["vacuum_error", "a01_error", "zeo_error", "dreame_error", "ecovacs_error"]) {
       const s = this._s(dev.entities[k]);
-      if (valid(s) && !["none", "no_error"].includes(s.state)) return { entity: s.entity_id, text: this._fmt(s, "e_") };
+      // Ecovacs: an error code ("0": none) with its description as attribute.
+      if (valid(s) && !["none", "no_error", "0"].includes(s.state))
+        return { entity: s.entity_id, text: s.attributes?.description || this._fmt(s, "e_") };
     }
     const dock = this._s(dev.dock.dock_error);
     if (valid(dock) && dock.state !== "ok") return { entity: dock.entity_id, text: `${this._t("dock_state")} · ${this._fmt(dock, "e_")}` };
@@ -2229,12 +2292,12 @@ for (const card of [
   {
     type: "vacuum-card",
     name: "Vacuum Card",
-    description: "Monitor and control a Roborock, Xiaomi or Dreame robot vacuum or wet-dry vacuum: status, battery, routines, dock, maintenance and statistics.",
+    description: "Monitor and control a Roborock, Xiaomi, Dreame, Ecovacs or Dyson robot vacuum or wet-dry vacuum: status, battery, routines, dock, maintenance and statistics.",
   },
   {
     type: "vacuum-mini-card",
     name: "Vacuum Mini Card",
-    description: "Compact Roborock, Xiaomi or Dreame robot vacuum overview: status, battery, current room and quick controls.",
+    description: "Compact Roborock, Xiaomi, Dreame, Ecovacs or Dyson robot vacuum overview: status, battery, current room and quick controls.",
   },
 ]) {
   if (!window.customCards.some((c) => c.type === card.type))

@@ -86,6 +86,12 @@ const shots = [
   { file: "mini-card-dreame", type: "vacuum-mini-card", theme: "dark", width: 380, config: { device: "Upstairs robot" } },
   { file: "mini-card-dreame-light", type: "vacuum-mini-card", theme: "light", width: 380, config: { device: "Upstairs robot" } },
   { file: "mini-card-xiaomi-dark", type: "vacuum-mini-card", theme: "dark", width: 380, config: { device: "Robot vacuum" } },
+  { file: "card-ecovacs", type: "vacuum-card", theme: "light", width: 460, config: { device: "Studio robot", show_map: "always", collapsed: ["stats"] } },
+  { file: "mini-card-ecovacs", type: "vacuum-mini-card", theme: "light", width: 380, config: { device: "Studio robot" } },
+  { file: "mini-card-ecovacs-dark", type: "vacuum-mini-card", theme: "dark", width: 380, config: { device: "Studio robot" } },
+  { file: "card-dyson", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Toy room robot" } },
+  { file: "mini-card-dyson", type: "vacuum-mini-card", theme: "dark", width: 380, config: { device: "Toy room robot" } },
+  { file: "mini-card-dyson-light", type: "vacuum-mini-card", theme: "light", width: 380, config: { device: "Toy room robot" } },
   { file: "mini-card-zoom", type: "vacuum-mini-card", theme: "light", width: 460, config: {}, clicks: [".zoom"] },
   { file: "mini-card-zoom-dark", type: "vacuum-mini-card", theme: "dark", width: 460, config: {}, overrides: cleaning, clicks: [".zoom"] },
 ];
