@@ -122,6 +122,33 @@ const robotSvg = ({ turret = true, white = false, dock = true, activity = null }
 };
 // Upright wet-dry vacuum: floor head, body with the two water tanks, handle. Cleaning: it rocks back and forth
 // and its roller turns; washing / drying (self-cleaning on its base): bubbles / heat waves at the floor head.
+// Dyson 360 robot (Eye, Heurist, Vis Nav): a tall, narrow drum on two tank tracks with the 360° camera on top
+// (Vis Nav: wider and lower, purple band). Vacuuming: the robot sways, its tracks roll and dust is sucked in;
+// returning: it slides in from the side (it has no dock station to draw).
+const dysonSvg = ({ visnav = false, white = false, activity = null } = {}) => {
+  const cleaning = ["vacuum", "mop", "vacmop"].includes(activity);
+  const [top, side, rim] = white ? ["#ececea", "#c4c5c2", "#d8d9d6"] : ["#55585e", "#33363b", "#6a6e75"];
+  const band = visnav ? "#8a63c4" : "#4f7fd8";
+  const w = visnav ? 44 : 34, cy = visnav ? 44 : 34, h = visnav ? 30 : 40, ry = w * 0.26;
+  let r = `<ellipse cx="80" cy="${cy + h + ry + 4}" rx="${w + 22}" ry="7" opacity=".22"/>`;
+  // Tracks, on both sides of the drum.
+  for (const x of [80 - w - 14, 80 + w - 2]) {
+    r += `<rect x="${x}" y="${cy + h - 18}" width="16" height="${ry * 2 + 20}" rx="7" fill="#1d1f22"/>`;
+    r += `<line class="${cleaning ? "roll" : ""}" x1="${x + 8}" y1="${cy + h - 14}" x2="${x + 8}" y2="${cy + h + ry * 2 - 2}" stroke="#4a4e54" stroke-width="3" stroke-dasharray="3 3"/>`;
+  }
+  r += `<path d="M${80 - w} ${cy} v${h} a${w} ${ry} 0 0 0 ${2 * w} 0 v${-h} z" fill="${side}"/>`;
+  r += `<path d="M${80 - w} ${cy + h * 0.55} v${h * 0.16} a${w} ${ry} 0 0 0 ${2 * w} 0 v${-h * 0.16} a${w} ${ry} 0 0 1 ${-2 * w} 0 z" fill="${band}"/>`;
+  r += `<ellipse cx="80" cy="${cy}" rx="${w}" ry="${ry}" fill="${top}"/>`;
+  r += `<ellipse cx="80" cy="${cy}" rx="${w * 0.96}" ry="${ry * 0.92}" fill="none" stroke="${rim}" stroke-width="1"/>`;
+  // 360° camera: a short glass cylinder with its dark lens ring.
+  const cw = w * 0.36, ch = 9, ct = cy - ry * 0.15;
+  r += `<path d="M${80 - cw} ${ct} v${-ch} a${cw} ${cw * 0.3} 0 0 1 ${2 * cw} 0 v${ch} a${cw} ${cw * 0.3} 0 0 1 ${-2 * cw} 0 z" fill="#0e0f11"/>`;
+  r += `<ellipse cx="80" cy="${ct - ch}" rx="${cw}" ry="${cw * 0.3}" fill="${side}"/>`;
+  r += `<path d="M${80 - cw * 0.7} ${ct - ch * 0.45} h${cw * 1.4}" stroke="#6fa8ff" stroke-width="1.6" opacity=".8"/>`;
+  let s = `<g class="${cleaning ? "sway" : activity === "returning" ? "home" : ""}">${r}</g>`;
+  if (cleaning) s += [62, 74, 86, 98].map((x, i) => `<circle class="dust d${i + 1}" cx="${x}" cy="98" r="2.6" fill="#c9ccd0"/>`).join("");
+  return svgDoc(160, 104, s, "", cleaning || activity === "returning");
+};
 const wetdrySvg = ({ white = true, activity = null } = {}) => {
   const [body, edge, accent] = white ? ["#f2f2f0", "#c9cac7", "#3a3d42"] : ["#4a4e54", "#26282c", "#9aa0a6"];
   const cleaning = ["vacuum", "mop", "vacmop"].includes(activity);
@@ -308,6 +335,7 @@ const autoSvg = (dev, activity = null, white = undefined) => {
   const name = modelName(dev);
   if (dev.kind === "wetdry") return wetdrySvg({ white: white ?? !/dyad/i.test(name), activity });
   if (dev.kind !== "robot") return null;
+  if (brandOf(dev.model) === "dyson" || dev.platform === "dyson_local") return dysonSvg({ visnav: /vis nav/i.test(name), white, activity });
   return robotSvg({
     turret: !/saros|essential|\b(e\d|c1|1c)\b/i.test(name),
     white: white ?? (/\bq\s?(revo|\d)|\bmi robot/i.test(name) || ["xiaomi", "dreame", "ecovacs"].includes(brandOf(dev.model))),

@@ -237,6 +237,19 @@ export const f25Cleaning = {
   "sensor.balai_batterie": { state: "54" },
 };
 
+// The DEEBOT X1 Omni vacuuming and mopping. Picture activity: "vacmop" — out of its station, white.
+export const ecovacsCleaning = {
+  "vacuum.studio": { state: "cleaning" },
+  "sensor.studio_batterie": { state: "61" },
+};
+
+// The Dyson 360 Vis Nav vacuuming. Picture activity: "vacuum" — the drum sways, its tracks roll (roll) and dust
+// is sucked in.
+export const dysonCleaning = { "vacuum.salle_de_jeux": { state: "cleaning" } };
+
+// The Dyson 360 Vis Nav heading home. Picture activity: "returning" — it slides in from the side (home).
+export const dysonReturning = { "vacuum.salle_de_jeux": { state: "returning" } };
+
 // Response of the roborock.get_maps service, used by the room selector.
 export const maps = {
   "vacuum.aspirateur": {
