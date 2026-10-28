@@ -844,7 +844,7 @@ const STRINGS = {
     no_device: "Kein Saugroboter gefunden. Ist eine unterstützte Integration (Roborock, Xiaomi, Dreame, Ecovacs, Dyson) installiert?",
     unknown_device: "Saugroboter nicht gefunden",
     no_registry: "Diese Karte benötigt Home Assistant 2024.8 oder neuer.",
-  
+
     // Editor
     device: "Saugroboter",
     title: "Titel (optional, standardmäßig der Gerätename)",
@@ -880,7 +880,7 @@ const STRINGS = {
     zoom_helper: "Schaltfläche oben rechts, um zwischen kompakter und vollständiger Kartenansicht zu wechseln",
     zoom_in: "Vollständige Karte anzeigen",
     zoom_out: "Zur kompakten Ansicht zurückkehren",
-  
+
     // Zustände und Werte
     s_charging: "Wird geladen",
     s_charging_complete: "Vollständig geladen",
