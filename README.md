@@ -35,12 +35,12 @@ The cards work on top of the integrations you already use — [Roborock](https:/
 
 | Integration | Brands | What the cards show |
 |---|---|---|
-| [Roborock](https://www.home-assistant.io/integrations/roborock/) (core) | Roborock, Mi Robot Vacuum (1S…) | Everything: status, room, progress, modes, controls, **room selector**, **routines**, **dock**, maintenance with reset, statistics, map |
-| [Xiaomi Miio](https://www.home-assistant.io/integrations/xiaomi_miio/) (core) | Roborock and Xiaomi robots paired with Mi Home | Status, errors, fan speed, controls, maintenance with reset, statistics; map with `map_entity` |
-| [Xiaomi Home](https://github.com/XiaoMi/ha_xiaomi_home) (custom) | Xiaomi / Mijia robots | Vacuum (status, fan speed, controls) and battery |
-| [Dreame Vacuum](https://github.com/Tasshack/dreame-vacuum) (custom) | Dreame, Xiaomi / Mijia robots built by Dreame | Status, room, progress, errors, controls, maintenance (mop included) with reset, statistics, map |
-| [Ecovacs](https://www.home-assistant.io/integrations/ecovacs/) (core) | Ecovacs DEEBOT | Status, errors, cleaning mode and water amount, controls, maintenance in % (mop included) with reset, statistics, map |
-| [Dyson](https://github.com/libdyson-wg/ha-dyson) (custom, `dyson_local`) | Dyson 360 Eye, 360 Heurist, 360 Vis Nav | Vacuum (status, power mode, controls) and battery |
+| <img src="images/logo.svg" alt="" width="16"> [Roborock](https://www.home-assistant.io/integrations/roborock/) (core) | Roborock, Mi Robot Vacuum (1S…) | Everything: status, room, progress, modes, controls, **room selector**, **routines**, **dock**, maintenance with reset, statistics, map |
+| <img src="images/mihome.png" alt="" width="16"> [Xiaomi Miio](https://www.home-assistant.io/integrations/xiaomi_miio/) (core) | Roborock and Xiaomi robots paired with Mi Home | Status, errors, fan speed, controls, maintenance with reset, statistics; map with `map_entity` |
+| <img src="images/xiaomi.png" alt="" width="16"> [Xiaomi Home](https://github.com/XiaoMi/ha_xiaomi_home) (custom) | Xiaomi / Mijia robots | Vacuum (status, fan speed, controls) and battery |
+| <img src="images/dreame.png" alt="" width="16"> [Dreame Vacuum](https://github.com/Tasshack/dreame-vacuum) (custom) | Dreame, Xiaomi / Mijia robots built by Dreame | Status, room, progress, errors, controls, maintenance (mop included) with reset, statistics, map |
+| <img src="images/ecovacs.png" alt="" width="16"> [Ecovacs](https://www.home-assistant.io/integrations/ecovacs/) (core) | Ecovacs DEEBOT | Status, errors, cleaning mode and water amount, controls, maintenance in % (mop included) with reset, statistics, map |
+| <img src="images/dyson.png" alt="" width="16"> [Dyson](https://github.com/libdyson-wg/ha-dyson) (custom, `dyson_local`) | Dyson 360 Eye, 360 Heurist, 360 Vis Nav | Vacuum (status, power mode, controls) and battery |
 
 Only the vacuums of these integrations are listed: their other devices (purifiers, lamps, mowers…) are skipped. Details in [Integrations](#integrations).
 
@@ -50,10 +50,10 @@ Only the vacuums of these integrations are listed: their other devices (purifier
 - Robot vacuums and wet-dry vacuums, several devices supported, Roborock dock merged with its robot
 - Drawn device picture that follows the model (about 120 Roborock, Xiaomi / Mijia, Dreame, Ecovacs and Dyson models recognized from their model id, even when the device was renamed), animated by what the robot is doing, white or dark (`color`), or your own picture
 - Brand logo (Roborock, Xiaomi, Mi Home, Dreame, Ecovacs or Dyson) opening the brand's site, and buttons in the brand's color, readable in the light and dark themes
-- Battery, status, current room, cleaning progress and errors
+- Battery (sensor, or the vacuum's attribute when the integration has no sensor), status, current room, cleaning progress and errors
 - Cleaning settings: mode, suction power, mop intensity and route
 - Start / pause, stop, return to dock and locate buttons
-- Maintenance: main brush, side brush, filter, sensors, mop, dock strainer… with remaining time and a reset button (with confirmation) when the integration provides one
+- Maintenance: main brush, side brush, filter, sensors, mop, dock strainer… with remaining time or percentage, and a reset button (with confirmation) when the integration provides one
 - Statistics: last clean, number of cleanings, total area and time
 - Map of the current floor while the robot is cleaning (or always, or never), with optional cropping, enlarged full screen on click; any camera or image entity can be used (`map_entity`)
 - Roborock: room selector on the Start button, routines of the Roborock app as one-tap buttons, dock (water tanks, detergent, auto-empty mode, mop drying, Empty bin / Wash mop / Dry mop buttons)
@@ -356,7 +356,7 @@ The picture is animated by the current activity, from the status, the cleaning m
 - **Dyson** (`dyson_local`): the vacuum entity only — status, power mode, controls — and the battery from its `battery_level` attribute.
 - Xiaomi Miio, Xiaomi Home, Dreame Vacuum, Ecovacs and Dyson have no `roborock.get_maps` service: the Start button starts a full cleaning (no room selector), and there is no routine or dock section.
 
-Each maintenance line has a reset button when the integration exposes the matching reset button, and asks for confirmation before resetting the counter. The remaining time turns orange under 10 % of the part lifetime (or under 10 h when the lifetime is unknown), and red when it reaches 0. Bars use the robot lifetimes: main brush 300 h, side brush 200 h, filter 150 h, sensors 30 h.
+Each maintenance line has a reset button when the integration exposes the matching reset button, and asks for confirmation before resetting the counter. The remaining time turns orange under 10 % of the part lifetime (or under 10 h when the lifetime is unknown), and red when it reaches 0; a percentage (Ecovacs, Roborock wet-dry vacuums) turns orange under 10 % and red at 0 %. Bars use the robot lifetimes: main brush 300 h, side brush 200 h, filter 150 h, sensors 30 h.
 
 ## Development
 
