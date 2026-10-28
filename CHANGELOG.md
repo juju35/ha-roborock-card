@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.1
+### Fixes
+- Only vacuums are listed: Roborock devices that are neither a robot vacuum nor a wet-dry vacuum (Zeo washing machine) are skipped, like the fans, purifiers and air conditioners of the other integrations.
+
 ## 2.1.0
 ### Changes
 - **Ecovacs** (core `ecovacs` integration): DEEBOT vacuums discovered; current / total cleaning, cleaning mode and water amount, maintenance in percent (brushes, filter, mop) with the `reset_lifespan_*` buttons, error code with its description (`0`: no error), map image. About 17 DEEBOT models recognized from their name (N8, OZMO, T8 to T30, X1 / X2 / X5), drawn white, Omni / + models with their station.

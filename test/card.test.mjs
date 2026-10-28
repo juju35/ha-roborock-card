@@ -442,3 +442,11 @@ test("Ecovacs: the station state animates the picture (mops washed / dried)", ()
   assert.match(pic("drying_mop"), /class="heat/);
   assert.doesNotMatch(pic("idle"), /class="(bub|heat)/);
 });
+
+test("only vacuums are listed: a Roborock Zeo washing machine is skipped", () => {
+  const ent = { ...entities, "sensor.zeo_etat": { entity_id: "sensor.zeo_etat", device_id: "zeo", platform: "roborock", translation_key: "zeo_state" } };
+  const dev = { ...devices, zeo: { id: "zeo", name: "Roborock Zeo One", model: "roborock.wm.a102", identifiers: [["roborock", "zeo"]] } };
+  const ids = rr.resolve({ ...makeHass(), entities: ent, devices: dev }).devices.map((d) => d.id);
+  assert.ok(!ids.includes("zeo"));
+  assert.ok(ids.includes("f25") && ids.includes("saros"));
+});
