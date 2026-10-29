@@ -450,3 +450,43 @@ test("only vacuums are listed: a Roborock Zeo washing machine is skipped", () =>
   assert.ok(!ids.includes("zeo"));
   assert.ok(ids.includes("f25") && ids.includes("saros"));
 });
+
+test("a change of the map_entity camera (outside the device) re-renders the card", () => {
+  const hass = makeHass();
+  const card = new rr.VacuumCard();
+  card.setConfig({ device: "saros", show_map: "always", map_entity: "camera.dustbusters_map" });
+  card.hass = hass;
+  let renders = 0;
+  const render = card._render.bind(card);
+  card._render = () => {
+    renders++;
+    return render();
+  };
+  const cam = "camera.dustbusters_map";
+  const st = states[cam];
+  card.hass = { ...hass, states: { ...states, [cam]: { ...st, attributes: { ...st.attributes, entity_picture: "/api/camera_proxy/camera.dustbusters_map?token=new" } } } };
+  assert.equal(renders, 1);
+});
+
+test("a dock section unfolded by hand stays unfolded when a dock problem appears", () => {
+  const card = newCard(makeHass());
+  let problem = false;
+  card._dockProblem = () => problem;
+  assert.equal(card._isCollapsed("dock"), true);
+  click(card, { action: "toggle_section", section: "dock" });
+  assert.equal(card._isCollapsed("dock"), false);
+  problem = true;
+  assert.equal(card._isCollapsed("dock"), false);
+  problem = false;
+  assert.equal(card._isCollapsed("dock"), false);
+  click(card, { action: "toggle_section", section: "dock" });
+  assert.equal(card._isCollapsed("dock"), true);
+});
+
+test("the mini card draws no empty room band when the room list belongs to another vacuum", () => {
+  const card = new rr.VacuumMiniCard();
+  card.setConfig({ device: "saros" });
+  card._rooms = { entity: "vacuum.elsewhere", list: [], selected: [] };
+  card.hass = makeHass();
+  assert.doesNotMatch(card.shadowRoot.innerHTML, /class="rooms-wrap"/);
+});

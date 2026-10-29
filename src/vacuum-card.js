@@ -1420,7 +1420,8 @@ class VacuumBase extends HTMLElement {
     if (!h || !this._config) return null;
     const { dev } = findDevice(h, this._config);
     if (!dev) return null;
-    const ids = [dev.vacuum, ...Object.values(dev.entities), ...Object.values(dev.dock), ...Object.values(dev.extra).flat()];
+    // map_entity (Xiaomi Cloud Map Extractor, Valetudo…) belongs to no device: its new map / rotated token re-renders too.
+    const ids = [dev.vacuum, ...Object.values(dev.entities), ...Object.values(dev.dock), ...Object.values(dev.extra).flat(), this._config.map_entity];
     return [h.entities, h.devices, h.language, h.locale, h.localize, h.formatEntityState, h.themes?.darkMode, this._lastClean(dev), ...ids.map((id) => h.states[id])];
   }
 
@@ -1434,7 +1435,7 @@ class VacuumBase extends HTMLElement {
     // Clicks inside a dialog (the more-info opened from the card) leave the card as it is.
     this._onOutside ??= (ev) => {
       if ((!this._toggled?.size && !this._confirm) || !isOutside(this, ev)) return;
-      this._toggled = new Set();
+      this._toggled = new Map();
       if (this._confirm) this._closeConfirm();
       else this._update();
     };
@@ -1579,9 +1580,9 @@ class VacuumBase extends HTMLElement {
     if (action === "zoom") return this._toggleZoom(ev);
     if (action === "toggle_section") {
       const key = el.dataset.section;
-      this._toggled = new Set(this._toggled);
-      if (this._toggled.has(key)) this._toggled.delete(key);
-      else this._toggled.add(key);
+      // The folded state chosen by hand is stored as is, not as a flip of the default: the dock default
+      // changes with _dockProblem, and a flip would then fold the section as an alert appears.
+      this._toggled = new Map(this._toggled).set(key, !this._isCollapsed(key));
       return this._update();
     }
     if (action === "dock_toggle") {
@@ -2077,7 +2078,7 @@ class VacuumCard extends VacuumBase {
   // Collapsible sections: `collapsed` lists the sections folded by default (stats and dock unless
   // set); a click on a section title folds or unfolds it, and a click elsewhere on the page folds it back.
   _isCollapsed(key) {
-    if (this._toggled?.has(key)) return !this._defaultCollapsed(key);
+    if (this._toggled?.has(key)) return this._toggled.get(key);
     return this._defaultCollapsed(key);
   }
 
@@ -2387,6 +2388,8 @@ class VacuumMiniCard extends VacuumCard {
     const lines = [this._errorLine(dev), this._roomLine(dev)];
     const last = this._lastClean(dev);
     if (last) lines.push(`<div class="line">${svgIcon(ICONS.clock)}<span>${esc(last)}</span></div>`);
+    // Empty when the room list belongs to another device: no padded empty band then.
+    const rooms = this._roomPanel(dev);
     return `<style>${BASE_STYLE}${MINI_STYLE}${accentStyle(dev, this._hass)}</style>
       <ha-card>
         ${this._header(dev, status, "")}
@@ -2405,7 +2408,7 @@ class VacuumMiniCard extends VacuumCard {
           </div>
           ${dev.vacuum && this._config.show_controls !== false ? `<div class="controls">${this._controls(dev, true)}</div>` : ""}
         </div>
-        ${this._rooms ? `<div class="rooms-wrap">${this._roomPanel(dev)}</div>` : ""}
+        ${rooms ? `<div class="rooms-wrap">${rooms}</div>` : ""}
       </ha-card>`;
   }
 }
@@ -2544,7 +2547,15 @@ class VacuumEditorBase extends HTMLElement {
     if (!this.constructor.extraFields(() => "").some((f) => f.name === "crop")) return;
     const { dev } = findDevice(this._hass, { device });
     const id = dev && mapIds(dev, this._config).find((i) => this._hass.states[i]?.attributes?.entity_picture);
-    if (!id || this._mapSizeFor === id) return;
+    if (!id) {
+      // A device without a map: drop the previous device's size from the crop help.
+      if (this._mapSizeImg) this._mapSizeImg.onload = null;
+      if (this._mapSizeFor == null && this._mapSize == null) return;
+      this._mapSizeFor = this._mapSize = null;
+      if (this._form) this._form.schema = this._schema();
+      return;
+    }
+    if (this._mapSizeFor === id) return;
     this._mapSizeFor = id;
     // Drop the previous probe: its late onload would overwrite the size of the newly selected device.
     if (this._mapSizeImg) this._mapSizeImg.onload = null;
