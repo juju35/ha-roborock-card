@@ -369,6 +369,26 @@ test("Dreame Vacuum: vacuum discovered, keys mapped, Dreame logo, map camera; Xi
   assert.match(card2.shadowRoot.innerHTML, /title="Xiaomi"/);
 });
 
+test("Dreame Vacuum: discovers a vacuum with the dreame_vacuum translation key", () => {
+  const vacuum = "vacuum.etage";
+  const hass = {
+    ...makeHass(),
+    entities: { ...entities, [vacuum]: { ...entities[vacuum], translation_key: "dreame_vacuum" } },
+  };
+  const dev = vc.resolve(hass).devices.find((d) => d.id === "l10");
+  assert.ok(dev, "the Dreame device is discovered");
+  assert.equal(dev.vacuum, vacuum);
+  assert.equal(dev.kind, "robot");
+
+  for (const Card of [vc.VacuumCard, vc.VacuumMiniCard]) {
+    const card = new Card();
+    card.setConfig({ device: "l10", show_map: "never" });
+    card.hass = hass;
+    assert.match(card.shadowRoot.innerHTML, /title="Dreame"/);
+    assert.match(card.shadowRoot.innerHTML, /data-action="start"/);
+  }
+});
+
 test("vacuum-card is the card; roborock-card and robot-vacuum-card stay as aliases", () => {
   const get = (t) => vc.window.customElements.get(t);
   assert.ok(get("vacuum-card") === vc.VacuumCard && get("vacuum-mini-card") === vc.VacuumMiniCard);
