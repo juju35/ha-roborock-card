@@ -11,6 +11,8 @@
 
 ### Maintenance
 - Screenshots workflow: fork-safe checkout, and a clear failure when all three apt attempts fail.
+- Screenshots workflow: the Chromium download is time-boxed and retried, and after pushing refreshed screenshots the job re-runs the lint, validate and HACS checks on that commit (a GITHUB_TOKEN push does not trigger them).
+- Internal: CSS custom properties, test and script names left over from the old `roborock-card` name now use the `vc` prefix (no visual change).
 
 ## 2.3.0
 ### Changes
