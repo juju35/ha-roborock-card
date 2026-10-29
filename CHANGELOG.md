@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.3.2
+### Fixes
+- Closing the enlarged map with a click no longer folds the sections you unfolded, and no longer sends the mini card back to its compact view.
+
 ## 2.3.1
 ### Fixes
 - The map set with `map_entity` (Xiaomi Cloud Map Extractor, Valetudo…) now refreshes on its own: a new map or a renewed picture token no longer leaves a frozen, then broken, image.
