@@ -136,3 +136,46 @@ test("every language has exactly the English keys and placeholders", () => {
     for (const k of en) assert.equal(vars(vc.STRINGS[l][k]), vars(vc.STRINGS.en[k]), `placeholders of ${l}.${k}`);
   }
 });
+
+test("iRobot: the SKU gives the model name and the brand, the picture follows the model", () => {
+  const { irobotName, brandOf, autoSvg, roombaSvg } = vc;
+  assert.equal(irobotName("R980020"), "Roomba 980");
+  assert.equal(irobotName("i755840"), "Roomba i7+"); // American SKU
+  assert.equal(irobotName("i715020"), "Roomba i7");
+  assert.equal(irobotName("s955020"), "Roomba s9+");
+  assert.equal(irobotName("j755020"), "Roomba j7+");
+  assert.equal(irobotName("c975020"), "Roomba Combo j9+");
+  assert.equal(irobotName("e515020"), "Roomba e5");
+  assert.equal(irobotName("m613820"), "Braava jet m6");
+  assert.equal(irobotName("roborock.vacuum.a72"), null);
+  assert.equal(irobotName("n223"), null);
+  assert.equal(brandOf("j755020"), "irobot");
+  assert.equal(brandOf("277"), "dyson");
+  const byModel = (model, platform) => autoSvg({ kind: "robot", rawName: "Robot", model, platform, dock: {} });
+  assert.equal(byModel("r980020"), roombaSvg());
+  assert.equal(byModel("i755020"), roombaSvg({ base: true }));
+  assert.equal(byModel("s955840"), roombaSvg({ shape: "d", base: true }));
+  assert.equal(byModel("j715020"), roombaSvg({ camera: true }));
+  assert.equal(byModel("c755020"), roombaSvg({ camera: true, base: true, combo: true }));
+  assert.equal(byModel("m611020"), roombaSvg({ shape: "square", white: true }));
+  assert.equal(byModel(null, "roomba"), roombaSvg()); // no SKU reported: the integration still gives a Roomba
+  assert.equal(autoSvg({ kind: "robot", rawName: "Robot", model: "m611020", dock: {} }, null, false), roombaSvg({ shape: "square" }));
+  // Animations: side brush and dust, Braava mopping, Combo both, returning to and emptying at the Clean Base.
+  assert.doesNotMatch(roombaSvg({ base: true }), /<style>/);
+  assert.match(roombaSvg({ activity: "vacuum" }), /class="spin"/);
+  assert.doesNotMatch(roombaSvg({ shape: "square", activity: "vacuum" }), /class="(spin|dust)/);
+  assert.match(roombaSvg({ shape: "square", activity: "vacuum" }), /class="drop/);
+  assert.match(roombaSvg({ combo: true, activity: "vacuum" }), /class="drop[\s\S]*|class="dust/);
+  assert.match(roombaSvg({ base: true, activity: "returning" }), /class="home"/);
+  assert.match(roombaSvg({ base: true, activity: "emptying" }), /class="evac/);
+  // Every recognized SKU is an editor preset labelled iRobot.
+  const labels = vc.MODEL_PRESETS.map((p) => p.label);
+  assert.ok(labels.includes("iRobot Roomba j7+") && labels.includes("iRobot Braava jet m6") && labels.includes("iRobot Roomba Combo j9+"));
+});
+
+test("the README lists every recognized model (node scripts/models.mjs keeps it in sync)", async () => {
+  const { readFileSync } = await import("node:fs");
+  const readme = readFileSync(new URL("../README.md", import.meta.url), "utf8");
+  const list = readme.slice(readme.indexOf("<!-- models:start -->"), readme.indexOf("<!-- models:end -->"));
+  for (const id of Object.keys(vc.MODEL_NAMES)) assert.ok(list.includes(`\`${id}\``), `${id} missing from the README model list`);
+});

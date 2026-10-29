@@ -1,6 +1,6 @@
 // Mock Home Assistant registries and states shaped like the Roborock integration (a Saros 20 with
 // its dock and an F25 Ultra) the Xiaomi Miio integration (a Mi Robot Vacuum 1S, and a purifier the cards must skip) and the Dreame Vacuum
-// integration (an L10s Ultra), used to render screenshots. Entity ids are in French on purpose
+// integration (an L10s Ultra), Ecovacs, Dyson and iRobot (a Roomba j7+ and a Braava jet m6), used to render screenshots. Entity ids are in French on purpose
 // (the cards never rely on them); the names shown are in English.
 export const states = {};
 export const entities = {};
@@ -188,6 +188,37 @@ entity("vacuum.salle_de_jeux", "visnav", null, "docked", {
   friendly_name: "Toy room robot",
 }, "dyson_local");
 
+// Roomba j7+ (SKU j755020) renamed « Workshop robot » and Braava jet m6 (m611020) renamed « Washroom robot », set up
+// with the iRobot integration (roomba): battery sensor without translation_key, mission statistics, bin full sensor,
+// status and current clean as attributes of the vacuum.
+const roomba = (entity_id, device_id, translation_key, state, attributes = {}) => entity(entity_id, device_id, translation_key, state, attributes, "roomba");
+device("j7", "Workshop robot", "j755020", "roomba_j7", "roomba");
+roomba("vacuum.couloir", "j7", null, "docked", { status: "Charging", software_version: "lewis+22.52.10", friendly_name: "Workshop robot" });
+roomba("sensor.couloir_batterie", "j7", null, "100", { device_class: "battery", unit_of_measurement: "%" });
+roomba("sensor.couloir_duree_totale", "j7", "total_cleaning_time", "86", { unit_of_measurement: "h", device_class: "duration" });
+roomba("sensor.couloir_duree_moyenne", "j7", "average_mission_time", "41", { unit_of_measurement: "min", device_class: "duration" });
+roomba("sensor.couloir_missions", "j7", "total_missions", "164", { unit_of_measurement: "Missions" });
+roomba("sensor.couloir_missions_reussies", "j7", "successful_missions", "152", { unit_of_measurement: "Missions" });
+roomba("sensor.couloir_surface_totale", "j7", "total_cleaned_area", "5310", { unit_of_measurement: "m²" });
+roomba("sensor.couloir_derniere_mission", "j7", "last_mission", hoursAgo(9), { device_class: "timestamp" });
+roomba("sensor.couloir_cycles_batterie", "j7", "battery_cycles", "212");
+roomba("binary_sensor.couloir_bac_plein", "j7", "bin_full", "off");
+roomba("binary_sensor.couloir_en_charge", "j7", null, "on", { device_class: "battery_charging" });
+device("m6", "Washroom robot", "m611020", "roomba_m6", "roomba");
+roomba("vacuum.salle_de_bain", "m6", null, "docked", {
+  status: "Charging",
+  fan_speed: "Standard",
+  fan_speed_list: ["Standard", "Deep", "Extended"],
+  detected_pad: "reusableWet",
+  tank_level: 80,
+  friendly_name: "Washroom robot",
+});
+roomba("sensor.salle_de_bain_batterie", "m6", null, "92", { device_class: "battery", unit_of_measurement: "%" });
+roomba("sensor.salle_de_bain_reservoir", "m6", "tank_level", "80", { unit_of_measurement: "%" });
+roomba("sensor.salle_de_bain_duree_totale", "m6", "total_cleaning_time", "31", { unit_of_measurement: "h", device_class: "duration" });
+roomba("sensor.salle_de_bain_missions", "m6", "total_missions", "58", { unit_of_measurement: "Missions" });
+roomba("sensor.salle_de_bain_derniere_mission", "m6", "last_mission", hoursAgo(30), { device_class: "timestamp" });
+
 // Same robot while it is cleaning (vacuum + mop), with the mop drying in the dock and the dirty water tank
 // full. Picture activity: "vacmop" — the robot sways, its side brushes spin and dust and water trail behind.
 export const cleaning = {
@@ -257,6 +288,35 @@ export const dysonCleaning = { "vacuum.salle_de_jeux": { state: "cleaning" } };
 
 // The Dyson 360 Vis Nav heading home. Picture activity: "returning" — it slides in from the side (home).
 export const dysonReturning = { "vacuum.salle_de_jeux": { state: "returning" } };
+
+// The Roomba j7+ vacuuming: the current clean comes from the vacuum's attributes. Picture activity: "vacuum" —
+// out on the floor, its single side brush spinning, dust trailing behind.
+export const irobotCleaning = {
+  "vacuum.couloir": { state: "cleaning", attributes: { status: "Running", cleaning_time: 23, cleaned_area: 19, friendly_name: "Workshop robot" } },
+  "sensor.couloir_batterie": { state: "71" },
+  "binary_sensor.couloir_en_charge": { state: "off" },
+};
+
+// The Roomba j7+ heading back to its Clean Base. Picture activity: "returning" (home).
+export const irobotReturning = {
+  "vacuum.couloir": { state: "returning", attributes: { status: "Docking - End Mission", friendly_name: "Workshop robot" } },
+  "sensor.couloir_batterie": { state: "38" },
+  "binary_sensor.couloir_en_charge": { state: "off" },
+};
+
+// The Clean Base emptying the j7+'s bin (status "Emptying", the vacuum "returning"). Picture activity: "emptying" —
+// dust rises up the base's duct (evac).
+export const irobotEmptying = {
+  "vacuum.couloir": { state: "returning", attributes: { status: "Emptying", friendly_name: "Workshop robot" } },
+  "sensor.couloir_batterie": { state: "39" },
+};
+
+// The Braava jet m6 mopping. Picture activity: "mop" — a wet trail and spray drops in front of it.
+export const braavaMopping = {
+  "vacuum.salle_de_bain": { state: "cleaning", attributes: { ...states["vacuum.salle_de_bain"].attributes, status: "Running", cleaning_time: 14, cleaned_area: 9 } },
+  "sensor.salle_de_bain_batterie": { state: "64" },
+  "sensor.salle_de_bain_reservoir": { state: "45" },
+};
 
 // Response of the roborock.get_maps service, used by the room selector.
 export const maps = {

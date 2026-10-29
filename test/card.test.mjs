@@ -548,3 +548,54 @@ test("a map closed with Escape or detached with the card no longer counts as par
   assert.equal(vc.document.body.children.length, 0);
   assert.equal(mini._zoomOverlay ?? null, null);
 });
+
+test("iRobot: keys mapped, battery by device class, iRobot logo and green buttons, statistics", () => {
+  const hass = makeHass();
+  const dev = vc.resolve(hass).devices.find((d) => d.id === "j7");
+  assert.equal(dev.vacuum, "vacuum.couloir");
+  assert.equal(dev.platform, "roomba");
+  assert.equal(dev.entities.total_cleaning_count, "sensor.couloir_missions");
+  assert.equal(dev.entities.total_cleaning_area, "sensor.couloir_surface_totale");
+  assert.equal(dev.entities.last_clean_start, "sensor.couloir_derniere_mission");
+  const card = new vc.VacuumCard();
+  card.setConfig({ device: "Workshop robot", collapsed: [] });
+  card.hass = { ...hass, themes: { darkMode: false } };
+  const html = card.shadowRoot.innerHTML;
+  assert.match(html, /title="iRobot"/);
+  assert.match(html, /--vc-accent: #4a8209/);
+  assert.match(html, />100<small>/);
+  assert.match(html, /5,310 m²/);
+  assert.match(html, /Last clean 9 hours ago/);
+  assert.match(html, /Charging/);
+  assert.doesNotMatch(html, /class="alert-line/);
+  assert.doesNotMatch(html, /data-action="open_rooms"/); // no room selector: Start cleans right away
+});
+
+test("iRobot: emptying status, current clean from the attributes, bin full and errors", () => {
+  const card = new vc.VacuumCard();
+  card.setConfig({ device: "j7" });
+  const with_ = (vac, extra = {}) => {
+    card.hass = makeHass({ ...states, "vacuum.couloir": { ...states["vacuum.couloir"], ...vac }, ...extra });
+    const dev = vc.resolve(card._hass).devices.find((d) => d.id === "j7");
+    return { html: card.shadowRoot.innerHTML, pic: decodeURIComponent(card._picture(dev, card._status(dev))) };
+  };
+  const emptying = with_({ state: "returning", attributes: { status: "Emptying" } });
+  assert.match(emptying.html, /Emptying the bin/);
+  assert.match(emptying.pic, /class="evac/);
+  const cleaning = with_({ state: "cleaning", attributes: { status: "Running", cleaning_time: 23, cleaned_area: 19 } });
+  assert.match(cleaning.html, /19 m² · 23 min/);
+  assert.match(cleaning.pic, /class="spin"/);
+  const bin = with_({}, { "binary_sensor.couloir_bac_plein": { ...states["binary_sensor.couloir_bac_plein"], state: "on" } });
+  assert.match(bin.html, /class="alert-line[^>]*>[\s\S]*Bin full/);
+  const err = with_({ state: "docked", attributes: { status: "Charging", error: "Bin missing", error_code: 16 } });
+  assert.match(err.html, /Bin missing/);
+});
+
+test("iRobot Braava: mopping picture, robot tank in percent", () => {
+  const card = new vc.VacuumCard();
+  card.setConfig({ device: "m6" });
+  card.hass = makeHass({ ...states, "vacuum.salle_de_bain": { ...states["vacuum.salle_de_bain"], state: "cleaning", attributes: { ...states["vacuum.salle_de_bain"].attributes, status: "Running" } } });
+  const dev = vc.resolve(card._hass).devices.find((d) => d.id === "m6");
+  assert.match(card.shadowRoot.innerHTML, /Robot tank · 80 %/);
+  assert.match(decodeURIComponent(card._picture(dev, card._status(dev))), /class="wet"/);
+});

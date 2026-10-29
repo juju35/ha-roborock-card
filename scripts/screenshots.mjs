@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
-import { states, entities, devices, cleaning, returning, washing, drying, f25Cleaning, ecovacsCleaning, ecovacsReturning, ecovacsWashing, ecovacsDrying, dysonCleaning, dysonReturning, maps } from "./mock-states.mjs";
+import { states, entities, devices, cleaning, returning, washing, drying, f25Cleaning, ecovacsCleaning, ecovacsReturning, ecovacsWashing, ecovacsDrying, dysonCleaning, dysonReturning, irobotCleaning, irobotReturning, irobotEmptying, braavaMopping, maps } from "./mock-states.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const cardJs = readFileSync(`${root}dist/vacuum-card.js`, "utf8");
@@ -99,6 +99,11 @@ const shots = [
   { file: "card-dyson", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Toy room robot" } },
   { file: "mini-card-dyson", type: "vacuum-mini-card", theme: "dark", width: 380, config: { device: "Toy room robot" } },
   { file: "mini-card-dyson-light", type: "vacuum-mini-card", theme: "light", width: 380, config: { device: "Toy room robot" } },
+  { file: "card-irobot", type: "vacuum-card", theme: "light", width: 460, config: { device: "Workshop robot", collapsed: [] } },
+  { file: "mini-card-irobot", type: "vacuum-mini-card", theme: "light", width: 380, config: { device: "Workshop robot" } },
+  { file: "mini-card-irobot-dark", type: "vacuum-mini-card", theme: "dark", width: 380, config: { device: "Workshop robot" } },
+  { file: "card-braava", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Washroom robot", collapsed: [] } },
+  { file: "mini-card-braava", type: "vacuum-mini-card", theme: "dark", width: 380, config: { device: "Washroom robot" } },
   { file: "mini-card-zoom", type: "vacuum-mini-card", theme: "light", width: 460, config: {}, clicks: [".zoom"] },
   { file: "mini-card-zoom-dark", type: "vacuum-mini-card", theme: "dark", width: 460, config: {}, overrides: cleaning, clicks: [".zoom"] },
 ];
@@ -170,6 +175,8 @@ async function makeGif(browser, gif, { fps = 20, seconds = 3 } = {}) {
 //   ecovacs-cleaning / -returning / -mop-washing / -mop-drying — DEEBOT X1 Omni: out cleaning, heading home,
 //                      its station washing then drying the mops (station_state sensor)
 //   dyson-cleaning / dyson-returning — Dyson 360 Vis Nav: tracks rolling and dust / sliding home
+//   irobot-cleaning / -returning / -emptying — Roomba j7+: single side brush and dust / sliding in front of its
+//                      Clean Base / the base emptying the bin (evac); braava-mopping — Braava jet m6: wet trail and spray
 const gifs = [
   { file: "cleaning", type: "vacuum-card", theme: "light", width: 460, config: {}, overrides: cleaning },
   { file: "returning", type: "vacuum-card", theme: "light", width: 460, config: {}, overrides: returning },
@@ -182,6 +189,10 @@ const gifs = [
   { file: "ecovacs-mop-drying", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Studio robot", show_map: "never" }, overrides: ecovacsDrying },
   { file: "dyson-cleaning", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Toy room robot" }, overrides: dysonCleaning },
   { file: "dyson-returning", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Toy room robot" }, overrides: dysonReturning },
+  { file: "irobot-cleaning", type: "vacuum-card", theme: "light", width: 460, config: { device: "Workshop robot" }, overrides: irobotCleaning },
+  { file: "irobot-returning", type: "vacuum-card", theme: "light", width: 460, config: { device: "Workshop robot" }, overrides: irobotReturning },
+  { file: "irobot-emptying", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Workshop robot" }, overrides: irobotEmptying },
+  { file: "braava-mopping", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Washroom robot" }, overrides: braavaMopping },
 ];
 for (const g of gifs) await makeGif(browser, g);
 await browser.close();

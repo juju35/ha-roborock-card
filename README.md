@@ -12,12 +12,13 @@
   <img src="images/mihome.png" alt="Xiaomi Mi Home" width="64">&nbsp;&nbsp;
   <img src="images/dreame.png" alt="Dreame" width="64">&nbsp;&nbsp;
   <img src="images/ecovacs.png" alt="Ecovacs" width="64">&nbsp;&nbsp;
-  <img src="images/dyson.png" alt="Dyson" width="64">
+  <img src="images/dyson.png" alt="Dyson" width="64">&nbsp;&nbsp;
+  <img src="images/irobot.png" alt="iRobot" width="64">
 </p>
 
-Lovelace cards for Home Assistant to monitor and control robot vacuums and wet-dry vacuums from **[Roborock](https://www.roborock.com)**, **Xiaomi / Mijia**, **[Dreame](https://www.dreametech.com)**, **[Ecovacs](https://www.ecovacs.com)** and **[Dyson](https://www.dyson.com)**: status, battery, room, maintenance, statistics and map at a glance, plus rooms, routines and dock for Roborock.
+Lovelace cards for Home Assistant to monitor and control robot vacuums and wet-dry vacuums from **[Roborock](https://www.roborock.com)**, **Xiaomi / Mijia**, **[Dreame](https://www.dreametech.com)**, **[Ecovacs](https://www.ecovacs.com)**, **[Dyson](https://www.dyson.com)** and **[iRobot](https://www.irobot.com)** (Roomba, Braava): status, battery, room, maintenance, statistics and map at a glance, plus rooms, routines and dock for Roborock.
 
-The cards work on top of the integrations you already use — [Roborock](https://www.home-assistant.io/integrations/roborock/), [Xiaomi Miio](https://www.home-assistant.io/integrations/xiaomi_miio/), [Xiaomi Home](https://github.com/XiaoMi/ha_xiaomi_home), [Dreame Vacuum](https://github.com/Tasshack/dreame-vacuum), [Ecovacs](https://www.home-assistant.io/integrations/ecovacs/) and [Dyson](https://github.com/libdyson-wg/ha-dyson). Entities are **discovered automatically** from the Home Assistant registries: you don't pick them one by one, and it works whatever your Home Assistant language or entity ids. The logo, the button color and the drawn picture follow the brand and the model of each robot.
+The cards work on top of the integrations you already use — [Roborock](https://www.home-assistant.io/integrations/roborock/), [Xiaomi Miio](https://www.home-assistant.io/integrations/xiaomi_miio/), [Xiaomi Home](https://github.com/XiaoMi/ha_xiaomi_home), [Dreame Vacuum](https://github.com/Tasshack/dreame-vacuum), [Ecovacs](https://www.home-assistant.io/integrations/ecovacs/), [Dyson](https://github.com/libdyson-wg/ha-dyson) and [iRobot Roomba and Braava](https://www.home-assistant.io/integrations/roomba/). Entities are **discovered automatically** from the Home Assistant registries: you don't pick them one by one, and it works whatever your Home Assistant language or entity ids. The logo, the button color and the drawn picture follow the brand and the model of each robot.
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=juju35&repository=ha-vacuum-card&category=plugin)
 
@@ -26,10 +27,10 @@ The cards work on top of the integrations you already use — [Roborock](https:/
 | ![roborock card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/card.png) | ![xiaomi card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/card-xiaomi.png) | ![dreame card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/card-dreame.png) |
 | ![roborock mini card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/mini-card.png) | ![xiaomi mini card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/mini-card-xiaomi.png) | ![dreame mini card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/mini-card-dreame.png) |
 
-| <img src="images/ecovacs.png" alt="" width="20"> Ecovacs | <img src="images/dyson.png" alt="" width="20"> Dyson |
-|---|---|
-| ![ecovacs card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/card-ecovacs.png) | ![dyson card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/card-dyson.png) |
-| ![ecovacs mini card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/mini-card-ecovacs.png) | ![dyson mini card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/mini-card-dyson.png) |
+| <img src="images/ecovacs.png" alt="" width="20"> Ecovacs | <img src="images/dyson.png" alt="" width="20"> Dyson | <img src="images/irobot.png" alt="" width="20"> iRobot |
+|---|---|---|
+| ![ecovacs card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/card-ecovacs.png) | ![dyson card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/card-dyson.png) | ![irobot card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/card-irobot.png) |
+| ![ecovacs mini card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/mini-card-ecovacs.png) | ![dyson mini card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/mini-card-dyson.png) | ![irobot mini card](https://raw.githubusercontent.com/juju35/ha-vacuum-card/main/screenshots/mini-card-irobot.png) |
 
 ## Supported integrations
 
@@ -41,6 +42,7 @@ The cards work on top of the integrations you already use — [Roborock](https:/
 | <img src="images/dreame.png" alt="" width="16"> [Dreame Vacuum](https://github.com/Tasshack/dreame-vacuum) (custom) | Dreame, Xiaomi / Mijia robots built by Dreame | Status, room, progress, errors, controls, maintenance (mop included) with reset, statistics, map |
 | <img src="images/ecovacs.png" alt="" width="16"> [Ecovacs](https://www.home-assistant.io/integrations/ecovacs/) (core) | Ecovacs DEEBOT | Status, errors, cleaning mode and water amount, controls, maintenance in % (mop included) with reset, statistics, map |
 | <img src="images/dyson.png" alt="" width="16"> [Dyson](https://github.com/libdyson-wg/ha-dyson) (custom, `dyson_local`) | Dyson 360 Eye, 360 Heurist, 360 Vis Nav | Vacuum (status, power mode, controls) and battery |
+| <img src="images/irobot.png" alt="" width="16"> [iRobot Roomba and Braava](https://www.home-assistant.io/integrations/roomba/) (core, `roomba`) | iRobot Roomba (600, 900, e, i, s, j, Combo) and Braava jet m6 | Status (Clean Base emptying the bin included), battery, current clean, errors and bin full, fan speed or mopping behavior, water tanks, controls, statistics |
 
 Only robot vacuums and wet-dry vacuums are listed: the other devices of these integrations (fans, purifiers, air conditioners, lamps, mowers, the Roborock Zeo washing machine…) are skipped. Details in [Integrations](#integrations).
 
@@ -48,8 +50,8 @@ Only robot vacuums and wet-dry vacuums are listed: the other devices of these in
 
 - Two cards: a full **Vacuum Card** (`custom:vacuum-card`) and a compact **Vacuum Mini Card** (`custom:vacuum-mini-card`)
 - Robot vacuums and wet-dry vacuums, several devices supported, Roborock dock merged with its robot
-- Drawn device picture that follows the model (about 120 Roborock, Xiaomi / Mijia, Dreame, Ecovacs and Dyson models recognized from their model id, even when the device was renamed), animated by what the robot is doing, white or dark (`color`), or your own picture
-- Brand logo (Roborock, Xiaomi, Mi Home, Dreame, Ecovacs or Dyson) opening the brand's site, and buttons in the brand's color, readable in the light and dark themes
+- Drawn device picture that follows the model (about 130 Roborock, Xiaomi / Mijia, Dreame, Ecovacs, Dyson and iRobot models recognized, see [Recognized models](#recognized-models) from their model id, even when the device was renamed), animated by what the robot is doing, white or dark (`color`), or your own picture
+- Brand logo (Roborock, Xiaomi, Mi Home, Dreame, Ecovacs, Dyson or iRobot) opening the brand's site, and buttons in the brand's color, readable in the light and dark themes
 - Battery (sensor, or the vacuum's attribute when the integration has no sensor), status, current room, cleaning progress and errors
 - Cleaning settings: mode, suction power, mop intensity and route
 - Start / pause, stop, return to dock and locate buttons
@@ -182,7 +184,7 @@ language: fr
 | `zoom` | mini | `true` | Detail button at the top right of the mini card: it shows the full card's content (with the same options, so `show_dock`, `show_map`, `collapsed`… can be set on the mini card too) and switches back to the compact view; a click outside the card also brings the compact view back. `false` removes the button |
 | `show_modes` | full | `true` | Cleaning mode, suction power, mop intensity and route |
 | `show_routines` | full | `true` | Routines buttons (Roborock integration) |
-| `show_dock` | full | `true` | Dock status (Roborock integration) |
+| `show_dock` | full | `true` | Dock status (Roborock integration; the Clean Base water tank of the iRobot Combo j9+) |
 | `show_consumables` | full | `true` | Maintenance (remaining time of brushes, filter, sensors…) |
 | `show_stats` | full | `true` | Cleaning statistics |
 | `show_map` | full | `cleaning` | Map of the current floor: `cleaning` (only while the robot is cleaning), `always` (or `true`) or `never` (or `false`) |
@@ -212,7 +214,7 @@ Click the map to open it full screen; click anywhere or press Escape to close it
 
 ### Animations
 
-The picture animates to match what the device is doing and settles back to a still card once it is idle, for every brand (Ecovacs and Dyson animations in their sections below). Each state plays its own animation, and every one of them honours `prefers-reduced-motion`.
+The picture animates to match what the device is doing and settles back to a still card once it is idle, for every brand (Ecovacs, Dyson and iRobot animations in their sections below). Each state plays its own animation, and every one of them honours `prefers-reduced-motion`.
 
 While the robot is out vacuuming and mopping, it sways across the floor, its side brushes spin, and dust and water trail behind it:
 
@@ -333,15 +335,48 @@ The Dyson 360 robots have their own drawing — a tall drum on two tank tracks w
 |---|---|
 | ![dyson cleaning animation](screenshots/dyson-cleaning.gif) | ![dyson returning animation](screenshots/dyson-returning.gif) |
 
+### <img src="images/irobot.png" alt="" width="24"> iRobot
+
+<p><img src="images/irobot-logo.png" alt="iRobot" height="32"></p>
+
+Roomba j7+ renamed « Workshop robot », set up with the iRobot integration (`roomba`): status, battery, mission statistics and the last mission:
+
+| Card | Mini card |
+|---|---|
+| ![card irobot](screenshots/card-irobot.png) | ![mini card irobot](screenshots/mini-card-irobot.png) |
+| | ![mini card irobot dark](screenshots/mini-card-irobot-dark.png) |
+
+Braava jet m6 renamed « Washroom robot »: mopping behavior and the robot's water tank (dark theme):
+
+| Card | Mini card |
+|---|---|
+| ![card braava](screenshots/card-braava.png) | ![mini card braava](screenshots/mini-card-braava.png) |
+
+Drawn iRobot models — Roomba round with its CLEAN button and light ring (the s9 D-shaped, the j series with its front camera), the "+" models in front of their slim Clean Base (wider for the Combo j9+, with its water tank), the Braava jet m6 a white rounded square:
+
+<p align="center"><img src="images/models-irobot.svg" alt="iRobot device pictures" width="980"></p>
+
+Animations of the Roomba j7+: vacuuming (it sways, its single side brush spins and dust trails behind), heading back to its Clean Base, then the base emptying the bin — dust rises up its duct, read from the vacuum's `status` attribute (`Emptying`):
+
+| Cleaning | Returning |
+|---|---|
+| ![irobot cleaning animation](screenshots/irobot-cleaning.gif) | ![irobot returning animation](screenshots/irobot-returning.gif) |
+
+| Emptying the bin (dark) | Braava jet m6 mopping (dark) |
+|---|---|
+| ![irobot emptying animation](screenshots/irobot-emptying.gif) | ![braava mopping animation](screenshots/braava-mopping.gif) |
+
+The Braava mops (wet trail and spray drops), the Combo models vacuum and mop at once, the other Roombas vacuum.
+
 ## How it works
 
-The cards read the Home Assistant entity and device registries instead of entity ids: every entity of a supported integration is matched by its `translation_key` (`status`, `current_room`, `main_brush_time_left`…) and by the device it belongs to. The keys of Xiaomi Miio, Dreame Vacuum and Ecovacs are mapped onto the Roborock ones, so the same card reads all of them. Entity ids can therefore be in any language or renamed without breaking the cards.
+The cards read the Home Assistant entity and device registries instead of entity ids: every entity of a supported integration is matched by its `translation_key` (`status`, `current_room`, `main_brush_time_left`…) and by the device it belongs to. The keys of Xiaomi Miio, Dreame Vacuum, Ecovacs and iRobot are mapped onto the Roborock ones, so the same card reads all of them. Entity ids can therefore be in any language or renamed without breaking the cards.
 
 States and errors are shown with the card's own translations when available, otherwise with Home Assistant's translation of the integration.
 
 ### Brands
 
-The brand comes from the model id of the device: `roborock.*` → Roborock, the Mi / Xiaomi / Mijia robots (`rockrobo.vacuum.v1`, `roborock.vacuum.m1s`, `xiaomi.*`, `mijia.*`, `ijai.*` and the Mi models built by Dreame or Viomi) → Xiaomi, other `dreame.*` → Dreame, `DEEBOT …` → Ecovacs, Dyson product types (`N223`, `276`, `277`) → Dyson. A model of another brand gets the brand of its integration: Mi Home for Xiaomi Miio, Xiaomi for Xiaomi Home, Dreame for Dreame Vacuum, Ecovacs for Ecovacs, Dyson for Dyson. A Q5 Pro set up with Xiaomi Miio therefore shows the Roborock logo, an X10+ (built by Dreame, sold by Xiaomi) the Xiaomi one.
+The brand comes from the model id of the device: `roborock.*` → Roborock, the Mi / Xiaomi / Mijia robots (`rockrobo.vacuum.v1`, `roborock.vacuum.m1s`, `xiaomi.*`, `mijia.*`, `ijai.*` and the Mi models built by Dreame or Viomi) → Xiaomi, other `dreame.*` → Dreame, `DEEBOT …` → Ecovacs, Dyson product types (`N223`, `276`, `277`) → Dyson, iRobot SKUs (`R980020`, `i755020`, `j755840`, `m611020`…) → iRobot. A model of another brand gets the brand of its integration: Mi Home for Xiaomi Miio, Xiaomi for Xiaomi Home, Dreame for Dreame Vacuum, Ecovacs for Ecovacs, Dyson for Dyson, iRobot for iRobot. A Q5 Pro set up with Xiaomi Miio therefore shows the Roborock logo, an X10+ (built by Dreame, sold by Xiaomi) the Xiaomi one.
 
 The brand gives the logo and the color of the buttons, taken from the logo, with a darker shade in the light theme so that they stay readable on a white card:
 
@@ -353,16 +388,17 @@ The brand gives the logo and the color of the buttons, taken from the logo, with
 | <img src="images/dreame.png" alt="" width="16"> Dreame | `#8a6a3c` | `#c9a46e` |
 | <img src="images/ecovacs.png" alt="" width="16"> Ecovacs | `#0b6bc4` | `#3d9be9` |
 | <img src="images/dyson.png" alt="" width="16"> Dyson | `#4a4a4a` | `#b8b8b8` |
+| <img src="images/irobot.png" alt="" width="16"> iRobot | `#4a8209` | `#64a70b` |
 
-The Ecovacs and Dyson logos are drawn on a white rounded tile, so that they stay visible on a dark card.
+The Ecovacs and Dyson logos are drawn on a white rounded tile, so that they stay visible on a dark card; the iRobot logo is its green rounded tile.
 
 ### Device pictures
 
-The picture is drawn from the device name and the commercial name of its model id (`roborock.vacuum.a72` → Q5 Pro…), for about 120 models compatible with the integrations: Roborock E2 / S4 to S8, Q5 to Q10, the Qrevo range (Edge, Curv 2, S Pro…), Saros 10 / 20, G10 / G30, Dyad and F25; Xiaomi / Mijia Mi Robot Vacuum, 1S, Vacuum-Mop Essential / 1C / P / 2 / 2 Pro+ / 2 Ultra, X10 / X10+ / X20+, S10+, Omni 2, M40…; Dreame F9, D9, Z10 Pro, L10 Pro, D10 Plus, L10s Ultra; Ecovacs DEEBOT N8, OZMO, T8 to T30, X1 / X2 / X5 (Omni, Turbo); Dyson 360 Eye, 360 Heurist, 360 Vis Nav. A renamed device keeps the right picture.
+The picture is drawn from the device name and the commercial name of its model id (`roborock.vacuum.a72` → Q5 Pro…), for about 130 models compatible with the integrations: Roborock E2 / S4 to S8, Q5 to Q10, the Qrevo range (Edge, Curv 2, S Pro…), Saros 10 / 20, G10 / G30, Dyad and F25; Xiaomi / Mijia Mi Robot Vacuum, 1S, Vacuum-Mop Essential / 1C / P / 2 / 2 Pro+ / 2 Ultra, X10 / X10+ / X20+, S10+, Omni 2, M40…; Dreame F9, D9, Z10 Pro, L10 Pro, D10 Plus, L10s Ultra; Ecovacs DEEBOT N8, OZMO, T8 to T30, X1 / X2 / X5 (Omni, Turbo); Dyson 360 Eye, 360 Heurist, 360 Vis Nav; iRobot Roomba 600 / 900, e5, i3 / i5 / i7, s9, j7 / j9, Combo j7+ / j9+ (with or without Clean Base) and Braava jet m6 — from their SKU, whatever the region (`…020` Europe, `…840` America…). A renamed device keeps the right picture. The full list is in [Recognized models](#recognized-models).
 
-Saros robots, the E / C1 series and the Mi Vacuum-Mop Essential / 1C have no LiDAR turret; the Q series (Q5…Q10, Qrevo), the Xiaomi, Dreame and Ecovacs robots are white, the other robots (S series…) are dark; the dock is drawn when the integration reports one or the name implies it (Ultra, Plus / +, Qrevo, Saros, Omni, Self-Cleaning, G10 / G30). Wet-dry vacuums (`roborock.wdv.*`, `roborock.wetdryvac.*`) show an upright vacuum, dark for the Dyad series.
+Saros robots, the E / C1 series and the Mi Vacuum-Mop Essential / 1C have no LiDAR turret; the Q series (Q5…Q10, Qrevo), the Xiaomi, Dreame and Ecovacs robots are white, the other robots (S series…) are dark; the dock is drawn when the integration reports one or the name implies it (Ultra, Plus / +, Qrevo, Saros, Omni, Self-Cleaning, G10 / G30). Wet-dry vacuums (`roborock.wdv.*`, `roborock.wetdryvac.*`) show an upright vacuum, dark for the Dyad series. iRobot robots have their own drawing: Roombas dark (the s9 D-shaped, the j series with its front camera) and in front of their Clean Base for the "+" models, the Braava jet white.
 
-The picture is animated by the current activity, from the status, the cleaning mode and the dock drying: vacuuming (side brushes and dust), mopping (wet trail and drops), both, returning to the dock, washing the mops (bubbles) and drying them (heat waves); it stays still otherwise and with the reduced-motion setting. Use the `image` option to pick another model or your own picture, and `color` (`white` / `dark`) when your model exists in both colors.
+The picture is animated by the current activity, from the status, the cleaning mode and the dock drying: vacuuming (side brushes and dust), mopping (wet trail and drops), both, returning to the dock, washing the mops (bubbles) and drying them (heat waves), emptying the bin into an iRobot Clean Base (dust rising up the base); it stays still otherwise and with the reduced-motion setting. Use the `image` option to pick another model or your own picture, and `color` (`white` / `dark`) when your model exists in both colors.
 
 ### Integrations
 
@@ -372,9 +408,189 @@ The picture is animated by the current activity, from the status, the cleaning m
 - **Dreame Vacuum**: status, battery, current room, cleaning progress, error, current and total cleaning, maintenance (`main_brush_time_left`, `side_brush_time_left`, `filter_time_left`, `sensor_dirty_time_left`, `mop_pad_time_left`) with the **Reset** buttons of the integration, and its map camera.
 - **Ecovacs**: current and total cleaning (`stats_area`, `stats_time`, `total_stats_*`), cleaning mode (`work_mode`) and water amount (`water_amount`), maintenance in percent (`lifespan_brush`, `lifespan_side_brush`, `lifespan_filter`, `lifespan_round_mop`) with the `reset_lifespan_*` buttons, error code (`0`: no error) with its description, the station state (`station_state`: mops washed / dried, animated on the picture), and the map image. The error sensor is disabled by default in the integration: enable it to see the errors.
 - **Dyson** (`dyson_local`): the vacuum entity only — status, power mode, controls — and the battery from its `battery_level` attribute. The picture is a dedicated Dyson 360 drawing.
-- Xiaomi Miio, Xiaomi Home, Dreame Vacuum, Ecovacs and Dyson have no `roborock.get_maps` service: the Start button starts a full cleaning (no room selector), and there is no routine or dock section.
+- **iRobot** (`roomba`): the vacuum (status, fan speed — Automatic / Eco / Performance on the Roombas with Carpet Boost — or mopping behavior of the Braava, controls), the battery sensor, the current clean (time and area, attributes of the vacuum while it cleans), the error (`error` attribute) and the **Bin full** sensor as alerts, the statistics (`total_missions`, `total_cleaned_area`, `total_cleaning_time`, `last_mission`), the robot's water tank (`tank_level`, Braava and Combo) and the Clean Base's (`dock_tank_level`, Combo j9+). The vacuum's `status` attribute tells the Clean Base emptying the bin (`Emptying`, shown and animated) and the robot charging. No map and no maintenance counters (the integration has none).
+- Xiaomi Miio, Xiaomi Home, Dreame Vacuum, Ecovacs, Dyson and iRobot have no `roborock.get_maps` service: the Start button starts a full cleaning (no room selector), and there is no routine or dock section.
 
 Each maintenance line has a reset button when the integration exposes the matching reset button, and asks for confirmation before resetting the counter. The remaining time turns orange under 10 % of the part lifetime (or under 10 h when the lifetime is unknown), and red when it reaches 0; a percentage (Ecovacs, Roborock wet-dry vacuums) turns orange under 10 % and red at 0 %. Bars use the robot lifetimes: main brush 300 h, side brush 200 h, filter 150 h, sensors 30 h.
+
+### Recognized models
+
+Models the cards recognize from the model id the integration reports (drawn picture, logo and buttons of their brand). Any of these model ids can also be set as the `image` option to draw that model; the visual editor lists them by brand and name. iRobot SKUs of other regions are recognized all the same.
+
+<!-- models:start -->
+<details><summary>Roborock (58)</summary>
+
+| Model | Model id |
+|---|---|
+| C1 | `roborock.vacuum.c1` |
+| Dyad | `roborock.wetdryvac.a01` |
+| Dyad Air | `roborock.wetdryvac.a107` |
+| Dyad Pro | `roborock.wetdryvac.a56` |
+| Dyad Pro Combo | `roborock.wetdryvac.a83` |
+| E2 | `roborock.vacuum.e2` |
+| E4 | `roborock.vacuum.a01` |
+| F25 Ultra | `roborock.wdv.a194` |
+| G10 | `roborock.vacuum.a29`, `roborock.vacuum.a30` |
+| G10S | `roborock.vacuum.a46` |
+| G10S Pro | `roborock.vacuum.a26` |
+| G30 | `roborock.vacuum.a146` |
+| P30 Pro | `roborock.vacuum.a306` |
+| Q5 | `roborock.vacuum.a34` |
+| Q5 Max+ | `roborock.vacuum.a125` |
+| Q5 Pro | `roborock.vacuum.a72` |
+| Q7 | `roborock.vacuum.a40` |
+| Q7 Max | `roborock.vacuum.a38` |
+| Q7 Series | `roborock.vacuum.sc01`, `roborock.vacuum.sc05` |
+| Q8 Max | `roborock.vacuum.a73` |
+| Q10 | `roborock.vacuum.ss07` |
+| Qrevo | `roborock.vacuum.a75` |
+| Qrevo 2 Pro | `roborock.vacuum.a294` |
+| Qrevo C | `roborock.vacuum.a170` |
+| Qrevo Curv | `roborock.vacuum.a135` |
+| Qrevo Curv 2 Flow | `roborock.vacuum.a245` |
+| Qrevo Edge | `roborock.vacuum.a187` |
+| Qrevo Edge 2 | `roborock.vacuum.a298` |
+| Qrevo Master | `roborock.vacuum.a117` |
+| Qrevo MaxV | `roborock.vacuum.a87` |
+| Qrevo Plus | `roborock.vacuum.a123` |
+| Qrevo Pro | `roborock.vacuum.a101` |
+| Qrevo S | `roborock.vacuum.a104` |
+| Qrevo S Pro | `roborock.vacuum.a326` |
+| QV 35A | `roborock.vacuum.a168` |
+| S4 | `roborock.vacuum.s4` |
+| S4 Max | `roborock.vacuum.a19` |
+| S5 | `roborock.vacuum.s5` |
+| S5 Max | `roborock.vacuum.s5e` |
+| S6 | `roborock.vacuum.s6` |
+| S6 MaxV | `roborock.vacuum.a10` |
+| S6 Pure | `roborock.vacuum.a08` |
+| S7 | `roborock.vacuum.a15` |
+| S7 MaxV | `roborock.vacuum.a27` |
+| S7 MaxV Ultra | `roborock.vacuum.a65` |
+| S7 Pro Ultra | `roborock.vacuum.a62` |
+| S8 | `roborock.vacuum.a51` |
+| S8 MaxV Ultra | `roborock.vacuum.a97` |
+| S8 Pro Ultra | `roborock.vacuum.a70` |
+| Saros 10 | `roborock.vacuum.a147` |
+| Saros 10R | `roborock.vacuum.a143`, `roborock.vacuum.a144` |
+| Saros 20 | `roborock.vacuum.a288` |
+| Saros 20 Flow | `roborock.vacuum.a307` |
+| Saros 20 Sonic | `roborock.vacuum.a279` |
+| T6 | `roborock.vacuum.t6` |
+| T7 | `roborock.vacuum.a11` |
+| T7S | `roborock.vacuum.a14` |
+| T7S Plus | `roborock.vacuum.a23` |
+
+</details>
+
+<details><summary>Xiaomi (26)</summary>
+
+| Model | Model id |
+|---|---|
+| Mi Robot Vacuum | `rockrobo.vacuum.v1` |
+| Mi Robot Vacuum 1S | `roborock.vacuum.m1s` |
+| Mi Robot Vacuum X10 | `dreame.vacuum.r2209` |
+| Mi Robot Vacuum X10+ | `dreame.vacuum.p2114a` |
+| Mi Robot Vacuum X20+ | `xiaomi.vacuum.c102gl` |
+| Mi Robot Vacuum-Mop | `dreame.vacuum.p2150o` |
+| Mi Robot Vacuum-Mop 1C | `dreame.vacuum.mc1808` |
+| Mi Robot Vacuum-Mop 2 | `dreame.vacuum.p2140o`, `dreame.vacuum.p2140p`, `dreame.vacuum.p2140q` |
+| Mi Robot Vacuum-Mop 2 Pro | `ijai.vacuum.v3` |
+| Mi Robot Vacuum-Mop 2 Pro+ | `dreame.vacuum.p2041o` |
+| Mi Robot Vacuum-Mop 2 Ultra | `dreame.vacuum.p2150a` |
+| Mi Robot Vacuum-Mop 2 Ultra Set | `dreame.vacuum.p2150b` |
+| Mi Robot Vacuum-Mop Essential | `mijia.vacuum.v1` |
+| Mi Robot Vacuum-Mop Essential G1 | `mijia.vacuum.v2` |
+| Mi Robot Vacuum-Mop P | `viomi.vacuum.v7`, `viomi.vacuum.v8` |
+| Mi Robot Vacuum-Mop Ultra Slim | `dreame.vacuum.p2148o` |
+| Mijia 1S | `dreame.vacuum.r2254` |
+| Mijia 1T | `dreame.vacuum.p2041` |
+| Mijia 2C | `dreame.vacuum.p2140`, `dreame.vacuum.p2140a` |
+| Mijia Cleaning and Mopping Robot 2 Pro | `dreame.vacuum.r2210` |
+| Mijia M40 | `xiaomi.vacuum.d110ch` |
+| Mijia Omni 2 | `xiaomi.vacuum.c102cn` |
+| Mijia Omni M30S | `xiaomi.vacuum.d103cn` |
+| Mijia Self-Cleaning Robot Vacuum-Mop | `dreame.vacuum.p2114o` |
+| Mijia Self-Cleaning Robot Vacuum-Mop Pro | `dreame.vacuum.p2149o` |
+| Robot Vacuum S10+ | `dreame.vacuum.r2211o` |
+
+</details>
+
+<details><summary>Dreame (6)</summary>
+
+| Model | Model id |
+|---|---|
+| D9 | `dreame.vacuum.p2009` |
+| D10 Plus | `dreame.vacuum.r2205` |
+| F9 | `dreame.vacuum.p2008` |
+| L10 Pro | `dreame.vacuum.p2029` |
+| L10s Ultra | `dreame.vacuum.r2228o` |
+| Z10 Pro | `dreame.vacuum.p2028` |
+
+</details>
+
+<details><summary>Ecovacs (17)</summary>
+
+| Model | Model id |
+|---|---|
+| DEEBOT N8 | `deebot n8` |
+| DEEBOT N8 Pro | `deebot n8 pro` |
+| DEEBOT N8 Pro+ | `deebot n8 pro+` |
+| DEEBOT OZMO 920 | `deebot ozmo 920` |
+| DEEBOT OZMO 950 | `deebot ozmo 950` |
+| DEEBOT OZMO T8 | `deebot ozmo t8` |
+| DEEBOT T8 AIVI | `deebot t8 aivi` |
+| DEEBOT T8+ | `deebot t8+` |
+| DEEBOT T9 | `deebot t9` |
+| DEEBOT T9+ | `deebot t9+` |
+| DEEBOT T10 Omni | `deebot t10 omni` |
+| DEEBOT T20 Omni | `deebot t20 omni` |
+| DEEBOT T30 Omni | `deebot t30 omni` |
+| DEEBOT X1 Omni | `deebot x1 omni` |
+| DEEBOT X1 Turbo | `deebot x1 turbo` |
+| DEEBOT X2 Omni | `deebot x2 omni` |
+| DEEBOT X5 Pro Omni | `deebot x5 pro omni` |
+
+</details>
+
+<details><summary>Dyson (3)</summary>
+
+| Model | Model id |
+|---|---|
+| 360 Eye | `n223` |
+| 360 Heurist | `276` |
+| 360 Vis Nav | `277` |
+
+</details>
+
+<details><summary>iRobot (21)</summary>
+
+| Model | Model id |
+|---|---|
+| Braava jet m6 | `m611020` |
+| Roomba 675 | `r675020` |
+| Roomba 694 | `r694020` |
+| Roomba 696 | `r696020` |
+| Roomba 960 | `r960020` |
+| Roomba 974 | `r974020` |
+| Roomba 980 | `r980020` |
+| Roomba Combo j7+ | `c755020` |
+| Roomba Combo j9+ | `c975020` |
+| Roomba e5 | `e515020` |
+| Roomba i3 | `i315020` |
+| Roomba i3+ | `i355020` |
+| Roomba i5 | `i515020` |
+| Roomba i5+ | `i555020` |
+| Roomba i7 | `i715020` |
+| Roomba i7+ | `i755020` |
+| Roomba j7 | `j715020` |
+| Roomba j7+ | `j755020` |
+| Roomba j9+ | `j955020` |
+| Roomba s9 | `s915020` |
+| Roomba s9+ | `s955020` |
+
+</details>
+<!-- models:end -->
 
 ## Development
 
@@ -382,7 +598,7 @@ Each maintenance line has a reset button when the integration exposes the matchi
 npm install
 npm run build        # bundles src/vacuum-card.js + the logos of images/ into dist/vacuum-card.js (and a dist/roborock-card.js copy)
 npm run check        # builds and checks the card (run in CI)
-node scripts/models.mjs  # renders the drawn model galleries of the README into images/models-*.svg
+node scripts/models.mjs  # renders the drawn model galleries (images/models-*.svg) and the recognized models list of the README
 npm run screenshots  # renders the cards (and one GIF per animated state, needs ffmpeg) with mock data into screenshots/
 ```
 
@@ -409,7 +625,7 @@ Contributions for additional languages are welcome!
 
 ## Credits
 
-Roborock, the Roborock logo and the product pictures are trademarks and property of Roborock; Xiaomi, Mi Home and their logos are trademarks of Xiaomi; Dreame and its logo are trademarks of Dreame Technology (logos from the [Home Assistant brands](https://github.com/home-assistant/brands) repository). Ecovacs, its logo and DEEBOT are trademarks of Ecovacs Robotics; Dyson and its logo are trademarks of Dyson. This project is not affiliated with Roborock, Xiaomi, Dreame, Ecovacs or Dyson.
+Roborock, the Roborock logo and the product pictures are trademarks and property of Roborock; Xiaomi, Mi Home and their logos are trademarks of Xiaomi; Dreame and its logo are trademarks of Dreame Technology (logos from the [Home Assistant brands](https://github.com/home-assistant/brands) repository). Ecovacs, its logo and DEEBOT are trademarks of Ecovacs Robotics; Dyson and its logo are trademarks of Dyson (logos from the Home Assistant brands repository too). iRobot, Roomba, Braava and their logos are trademarks of iRobot Corporation. This project is not affiliated with Roborock, Xiaomi, Dreame, Ecovacs, Dyson or iRobot.
 
 ## License
 

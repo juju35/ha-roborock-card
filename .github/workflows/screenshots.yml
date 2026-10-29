@@ -74,20 +74,20 @@ jobs:
             echo "::error::screenshots failed: $(tail -c 1200 /tmp/screenshots.log | tr -d '\r' | tr '\n' ' ')"
             exit 1
           }
-      # The README model galleries are drawn by the card's own code: re-render them so they never drift from it.
+      # The README model galleries and model list come from the card's own code: re-render them so they never drift from it.
       - name: Render model galleries
         run: node scripts/models.mjs
       - name: Commit refreshed screenshots
         id: commit
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         run: |
-          if [ -z "$(git status --porcelain screenshots images)" ]; then
+          if [ -z "$(git status --porcelain screenshots images README.md)" ]; then
             echo "No screenshot changes."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add screenshots images
+          git add screenshots images README.md
           git commit -m "chore: refresh screenshots"
           git push
           echo "pushed=true" >> "$GITHUB_OUTPUT"
