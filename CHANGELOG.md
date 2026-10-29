@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.4.1
+### Fixes
+- iRobot: the Clean Base emptying the bin is now detected (the integration reports it as "Emptying Bin"): the card shows "Emptying the bin" and its animation instead of "Returning to dock".
+- iRobot: the area of the current clean is shown in ft² when Home Assistant uses the US customary unit system (it was always labeled m²).
+
 ## 2.4.0
 ### Changes
 - **iRobot** (core `roomba` integration): Roomba and Braava jet vacuums discovered; status from the vacuum, with its `status` attribute telling the Clean Base emptying the bin ("Emptying the bin") and the robot charging; battery sensor, current clean (time and area from the vacuum's attributes), errors from the `error` attribute and the **Bin full** sensor as alerts, statistics (`total_missions`, `total_cleaned_area`, `total_cleaning_time`, last mission), robot water tank (Braava, Combo) and Clean Base water tank (Combo j9+). Start cleans right away (no room selector).
