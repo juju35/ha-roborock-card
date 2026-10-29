@@ -637,3 +637,27 @@ test("iRobot Braava: mopping picture, robot tank in percent", () => {
   assert.match(card.shadowRoot.innerHTML, /Robot tank · 80 %/);
   assert.match(decodeURIComponent(card._picture(dev, card._status(dev))), /class="wet"/);
 });
+
+test("area sensors keep their own unit (ft² set in the entity settings), m² when they have none", () => {
+  const ft = (id, state) => ({ ...states[id], state, attributes: { ...states[id].attributes, unit_of_measurement: "ft²" } });
+  const card = new vc.VacuumCard();
+  card.setConfig({ device: "x1", collapsed: [] });
+  card.hass = makeHass({ ...states, "sensor.studio_surface": ft("sensor.studio_surface", "516.7"), "sensor.studio_surface_totale": ft("sensor.studio_surface_totale", "67167") });
+  let html = card.shadowRoot.innerHTML;
+  assert.match(html, /516\.7 ft²/);
+  assert.match(html, /67,167 ft²/);
+  assert.doesNotMatch(html, /516\.7 m²|67,167 m²/);
+  // Current clean, read from the area sensor while the robot cleans.
+  card.hass = makeHass({
+    ...states,
+    "vacuum.studio": { ...states["vacuum.studio"], state: "cleaning" },
+    "sensor.studio_surface": ft("sensor.studio_surface", "12.5"),
+  });
+  assert.match(card.shadowRoot.innerHTML, /12\.5 ft²/);
+  // A sensor without a unit (or a minimal state object) still reads m².
+  const bare = (id, state) => ({ ...states[id], state, attributes: {} });
+  card.hass = makeHass({ ...states, "sensor.studio_surface": bare("sensor.studio_surface", "48"), "sensor.studio_surface_totale": bare("sensor.studio_surface_totale", "6240") });
+  html = card.shadowRoot.innerHTML;
+  assert.match(html, /48 m²/);
+  assert.match(html, /6,240 m²/);
+});
