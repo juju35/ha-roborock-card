@@ -579,7 +579,7 @@ test("iRobot: emptying status, current clean from the attributes, bin full and e
     const dev = vc.resolve(card._hass).devices.find((d) => d.id === "j7");
     return { html: card.shadowRoot.innerHTML, pic: decodeURIComponent(card._picture(dev, card._status(dev))) };
   };
-  const emptying = with_({ state: "returning", attributes: { status: "Emptying" } });
+  const emptying = with_({ state: "returning", attributes: { status: "Emptying Bin" } });
   assert.match(emptying.html, /Emptying the bin/);
   assert.match(emptying.pic, /class="evac/);
   const cleaning = with_({ state: "cleaning", attributes: { status: "Running", cleaning_time: 23, cleaned_area: 19 } });
@@ -589,6 +589,44 @@ test("iRobot: emptying status, current clean from the attributes, bin full and e
   assert.match(bin.html, /class="alert-line[^>]*>[\s\S]*Bin full/);
   const err = with_({ state: "docked", attributes: { status: "Charging", error: "Bin missing", error_code: 16 } });
   assert.match(err.html, /Bin missing/);
+});
+
+test("iRobot: the Clean Base emptying the bin as roombapy reports it (status \"Emptying Bin\")", () => {
+  const card = new vc.VacuumCard();
+  card.setConfig({ device: "j7" });
+  const with_ = (attributes) => {
+    card.hass = makeHass({ ...states, "vacuum.couloir": { ...states["vacuum.couloir"], state: "returning", attributes } });
+    const dev = vc.resolve(card._hass).devices.find((d) => d.id === "j7");
+    return { status: card._status(dev), html: card.shadowRoot.innerHTML, pic: decodeURIComponent(card._picture(dev, card._status(dev))) };
+  };
+  const evac = with_({ status: "Emptying Bin" });
+  assert.equal(evac.status.state, "emptying_the_bin");
+  assert.match(evac.html, /Emptying the bin/);
+  assert.doesNotMatch(evac.html, /Returning to dock/);
+  assert.match(evac.pic, /class="evac/);
+  // The short form is still accepted; any other status while returning stays "Returning to dock".
+  assert.match(with_({ status: "Emptying" }).html, /Emptying the bin/);
+  const back = with_({ status: "Returning" });
+  assert.match(back.html, /Returning to dock/);
+  assert.doesNotMatch(back.pic, /class="evac/);
+  // Unavailable vacuum: the stale status attribute is ignored.
+  card.hass = makeHass({ ...states, "vacuum.couloir": { ...states["vacuum.couloir"], state: "unavailable", attributes: { status: "Emptying Bin" } } });
+  const dev = vc.resolve(card._hass).devices.find((d) => d.id === "j7");
+  assert.equal(card._status(dev).state, "unavailable");
+});
+
+test("iRobot: current clean area in ft² with the US customary unit system", () => {
+  const card = new vc.VacuumCard();
+  card.setConfig({ device: "j7" });
+  const vac = { ...states["vacuum.couloir"], state: "cleaning", attributes: { status: "Running", cleaning_time: 23, cleaned_area: 205 } };
+  card.hass = { ...makeHass({ ...states, "vacuum.couloir": vac }), config: { unit_system: { length: "mi", area: "ft²" } } };
+  assert.match(card.shadowRoot.innerHTML, /205 ft² · 23 min/);
+  assert.doesNotMatch(card.shadowRoot.innerHTML, /205 m²/);
+  // Metric unit system, or no unit system known (older or minimal hass object): m².
+  card.hass = { ...makeHass({ ...states, "vacuum.couloir": vac }), config: { unit_system: { length: "km", area: "m²" } } };
+  assert.match(card.shadowRoot.innerHTML, /205 m² · 23 min/);
+  card.hass = makeHass({ ...states, "vacuum.couloir": vac });
+  assert.match(card.shadowRoot.innerHTML, /205 m² · 23 min/);
 });
 
 test("iRobot Braava: mopping picture, robot tank in percent", () => {
