@@ -613,7 +613,6 @@ const STRINGS = {
     locate: "Locate",
     battery: "Battery",
     charging: "Charging",
-    room: "Room",
     progress: "Progress",
     routines: "Routines",
     run_routine: "Run routine {name}?",
@@ -768,7 +767,6 @@ const STRINGS = {
     locate: "Localiser",
     battery: "Batterie",
     charging: "En charge",
-    room: "Pièce",
     progress: "Progression",
     routines: "Routines",
     run_routine: "Lancer la routine {name} ?",
@@ -921,7 +919,6 @@ const STRINGS = {
     locate: "Roboter suchen",
     battery: "Akku",
     charging: "Wird geladen",
-    room: "Raum",
     progress: "Fortschritt",
     routines: "Routinen",
     run_routine: "Routine {name} ausführen?",
@@ -1078,7 +1075,6 @@ const STRINGS = {
     locate: "Localizar",
     battery: "Batería",
     charging: "Cargando",
-    room: "Habitación",
     progress: "Progreso",
     routines: "Rutinas",
     run_routine: "¿Ejecutar la rutina {name}?",
@@ -1279,6 +1275,12 @@ const hours = (s) => {
   if (v === null) return null;
   const u = s.attributes?.unit_of_measurement;
   return u === "min" ? v / 60 : u === "s" ? v / 3600 : u === "d" ? v * 24 : v;
+};
+
+// Unit of an area sensor as Home Assistant sends it (ft² when chosen in the entity settings), m² by default.
+const areaUnitOf = (s) => {
+  const u = s?.attributes?.unit_of_measurement;
+  return typeof u === "string" && u.trim() ? u : "m²";
 };
 
 // Rounded to the minute first, so that 1.995 h reads "2 h" (not "1 h 60") and 0.999 h "1 h" (not "60 min").
@@ -2158,10 +2160,12 @@ class VacuumCard extends VacuumBase {
       // iRobot: the current clean is in the vacuum's attributes (minutes, and m² with the metric unit system, ft²
       // with the US customary one).
       const va = this._s(dev.vacuum)?.attributes || {};
-      const sensorArea = num(this._s(e.cleaning_area));
+      const areaSensor = this._s(e.cleaning_area);
+      const sensorArea = num(areaSensor);
       const attrArea = sensorArea === null && Number.isFinite(va.cleaned_area) && va.cleaned_area > 0 ? va.cleaned_area : null;
       const area = sensorArea ?? attrArea;
-      const areaUnit = attrArea !== null && this._hass.config?.unit_system?.length === "mi" ? "ft²" : "m²";
+      const areaUnit =
+        sensorArea !== null ? areaUnitOf(areaSensor) : this._hass.config?.unit_system?.length === "mi" ? "ft²" : "m²";
       const time = hours(this._s(e.cleaning_time)) ?? (Number.isFinite(va.cleaning_time) && va.cleaning_time > 0 ? va.cleaning_time / 60 : null);
       const bits = [pct ? `${this._t("progress")} ${Math.round(pct)} %` : null, area !== null ? `${fmtNum(area, 1, this._locale())} ${areaUnit}` : null, time !== null ? fmtHours(time) : null];
       if (bits.some(Boolean))
@@ -2372,13 +2376,13 @@ class VacuumCard extends VacuumBase {
     const area = this._s(e.cleaning_area);
     const time = this._s(e.cleaning_time);
     if ((valid(area) && num(area)) || (valid(time) && num(time))) {
-      const bits = [valid(area) ? `${fmtNum(num(area), 1, this._locale())} m²` : null, valid(time) ? fmtHours(hours(time)) : null].filter(Boolean);
+      const bits = [valid(area) ? `${fmtNum(num(area), 1, this._locale())} ${areaUnitOf(area)}` : null, valid(time) ? fmtHours(hours(time)) : null].filter(Boolean);
       tiles.push(this._tile((area || time).entity_id, ICONS.clock, this._t("last_clean"), bits.join(" · ")));
     }
     const count = this._s(e.total_cleaning_count);
     if (valid(count) && num(count)) tiles.push(this._tile(count.entity_id, ICONS.count, this._t("total_count"), fmtNum(num(count), 0, this._locale())));
     const tArea = this._s(e.total_cleaning_area);
-    if (valid(tArea) && num(tArea)) tiles.push(this._tile(tArea.entity_id, ICONS.area, this._t("total_area"), `${fmtNum(num(tArea), 0, this._locale())} m²`));
+    if (valid(tArea) && num(tArea)) tiles.push(this._tile(tArea.entity_id, ICONS.area, this._t("total_area"), `${fmtNum(num(tArea), 0, this._locale())} ${areaUnitOf(tArea)}`));
     const tTime = this._s(e.total_cleaning_time);
     if (valid(tTime) && num(tTime)) tiles.push(this._tile(tTime.entity_id, ICONS.clock, this._t("total_time"), fmtHours(hours(tTime))));
     if (!tiles.length) return "";

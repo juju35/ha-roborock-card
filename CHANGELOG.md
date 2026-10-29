@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.4.2
+### Fixes
+- The area of the last clean, of the current clean and the total area now show the unit of their sensor: an area sensor switched to ft² in its entity settings (Ecovacs, Roborock…) was still labeled m².
+- Removed an unused translation string.
+
 ## 2.4.1
 ### Fixes
 - iRobot: the Clean Base emptying the bin is now detected (the integration reports it as "Emptying Bin"): the card shows "Emptying the bin" and its animation instead of "Returning to dock".
