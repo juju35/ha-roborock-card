@@ -304,10 +304,10 @@ export const irobotReturning = {
   "binary_sensor.couloir_en_charge": { state: "off" },
 };
 
-// The Clean Base emptying the j7+'s bin (status "Emptying", the vacuum "returning"). Picture activity: "emptying" —
+// The Clean Base emptying the j7+'s bin (status "Emptying Bin", the vacuum "returning"). Picture activity: "emptying" —
 // dust rises up the base's duct (evac).
 export const irobotEmptying = {
-  "vacuum.couloir": { state: "returning", attributes: { status: "Emptying", friendly_name: "Workshop robot" } },
+  "vacuum.couloir": { state: "returning", attributes: { status: "Emptying Bin", friendly_name: "Workshop robot" } },
   "sensor.couloir_batterie": { state: "39" },
 };
 
