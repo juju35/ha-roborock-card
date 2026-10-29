@@ -1360,10 +1360,11 @@ const DIALOG_STYLE = `
 // Element names of Home Assistant dialogs (more-info opened from the card, among others).
 const DIALOG_TAGS = new Set(["HA-MORE-INFO-DIALOG", "HA-DIALOG", "DIALOG"]);
 
-// True for a click outside `card` that is not in a dialog opened from it (more-info, say).
+// True for a click outside `card` that is not in a dialog opened from it (more-info, say) nor on its enlarged map
+// (appended to the document body, see _zoomMap: the click that closes it is not a click elsewhere on the page).
 const isOutside = (card, ev) => {
   const path = ev.composedPath();
-  return !path.includes(card) && !path.some((n) => DIALOG_TAGS.has(n.tagName));
+  return !path.includes(card) && !(card._zoomOverlay && path.includes(card._zoomOverlay)) && !path.some((n) => DIALOG_TAGS.has(n.tagName));
 };
 
 // After the confirmation popup closes, clicks on the card are ignored for this long: the second click of a double
@@ -2293,9 +2294,13 @@ class VacuumCard extends VacuumBase {
     const close = () => {
       overlay.remove();
       window.removeEventListener("keydown", onKey);
-      if (this._closeZoom === close) this._closeZoom = null;
+      if (this._closeZoom === close) {
+        this._closeZoom = null;
+        this._zoomOverlay = null;
+      }
     };
     this._closeZoom = close;
+    this._zoomOverlay = overlay;
     const onKey = (ev) => ev.key === "Escape" && close();
     overlay.addEventListener("click", close);
     window.addEventListener("keydown", onKey);
