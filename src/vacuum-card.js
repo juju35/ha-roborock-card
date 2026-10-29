@@ -1544,7 +1544,7 @@ class VacuumBase extends HTMLElement {
     this._update();
   }
 
-  // What a render reads from hass: the registries, the language, the state objects of the device's
+  // What a render reads from hass: the registries, the language, the unit system, the state objects of the device's
   // entities (HA replaces a state object whenever its state or attributes change) and the relative
   // "last clean" time, which moves on its own. null (no device found): always render.
   _deps() {
@@ -1554,7 +1554,7 @@ class VacuumBase extends HTMLElement {
     if (!dev) return null;
     // map_entity (Xiaomi Cloud Map Extractor, Valetudo…) belongs to no device: its new map / rotated token re-renders too.
     const ids = [dev.vacuum, ...Object.values(dev.entities), ...Object.values(dev.dock), ...Object.values(dev.extra).flat(), this._config.map_entity];
-    return [h.entities, h.devices, h.language, h.locale, h.localize, h.formatEntityState, h.themes?.darkMode, this._lastClean(dev), ...ids.map((id) => h.states[id])];
+    return [h.entities, h.devices, h.language, h.locale, h.localize, h.formatEntityState, h.themes?.darkMode, h.config?.unit_system?.length, this._lastClean(dev), ...ids.map((id) => h.states[id])];
   }
 
   get hass() {
@@ -1789,8 +1789,9 @@ class VacuumBase extends HTMLElement {
     const s = this._s(e.status) || this._s(e.a01_status) || this._s(e.q7_status);
     const vac = this._s(dev.vacuum);
     // iRobot: the vacuum's status attribute tells the Clean Base emptying the bin (the vacuum is then "returning")
-    // and the robot charging on its base.
-    const irobot = dev.platform === "roomba" && vac && { Emptying: "emptying_the_bin", Charging: "charging", Recharging: "charging" }[vac.attributes?.status];
+    // and the robot charging on its base. roombapy reports the evac phase as "Emptying Bin" ("Emptying" kept as well).
+    const irobot =
+      dev.platform === "roomba" && vac && { "Emptying Bin": "emptying_the_bin", Emptying: "emptying_the_bin", Charging: "charging", Recharging: "charging" }[vac.attributes?.status];
     if (irobot && vac.state !== "unavailable") return { state: irobot, text: this._fmt(null, "s_", irobot), entity: vac.entity_id };
     if (vac && (vac.state === "unavailable" || !valid(s))) return { state: vac.state, text: this._fmt(vac, "s_"), entity: vac.entity_id };
     if (s) return { state: s.state, text: this._fmt(s, "s_"), entity: s.entity_id };
@@ -2154,11 +2155,15 @@ class VacuumCard extends VacuumBase {
 
     if (statusClass(status?.state) === "active") {
       const pct = num(this._s(e.clean_percent));
-      // iRobot: the current clean is in the vacuum's attributes (minutes, and m² with the metric unit system).
+      // iRobot: the current clean is in the vacuum's attributes (minutes, and m² with the metric unit system, ft²
+      // with the US customary one).
       const va = this._s(dev.vacuum)?.attributes || {};
-      const area = num(this._s(e.cleaning_area)) ?? (Number.isFinite(va.cleaned_area) && va.cleaned_area > 0 ? va.cleaned_area : null);
+      const sensorArea = num(this._s(e.cleaning_area));
+      const attrArea = sensorArea === null && Number.isFinite(va.cleaned_area) && va.cleaned_area > 0 ? va.cleaned_area : null;
+      const area = sensorArea ?? attrArea;
+      const areaUnit = attrArea !== null && this._hass.config?.unit_system?.length === "mi" ? "ft²" : "m²";
       const time = hours(this._s(e.cleaning_time)) ?? (Number.isFinite(va.cleaning_time) && va.cleaning_time > 0 ? va.cleaning_time / 60 : null);
-      const bits = [pct ? `${this._t("progress")} ${Math.round(pct)} %` : null, area !== null ? `${fmtNum(area, 1, this._locale())} m²` : null, time !== null ? fmtHours(time) : null];
+      const bits = [pct ? `${this._t("progress")} ${Math.round(pct)} %` : null, area !== null ? `${fmtNum(area, 1, this._locale())} ${areaUnit}` : null, time !== null ? fmtHours(time) : null];
       if (bits.some(Boolean))
         lines.push(`<div class="line clickable" data-entity="${esc(e.clean_percent || e.cleaning_area || dev.vacuum || "")}">${svgIcon(ICONS.clock)}<span>${esc(bits.filter(Boolean).join(" · "))}</span></div>`);
     }
