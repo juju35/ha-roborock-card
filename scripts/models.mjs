@@ -1,12 +1,13 @@
 // Renders the galleries of drawn device pictures shown in the README, one per brand, from the card's own
-// drawing code: images/models-roborock.svg, images/models-xiaomi.svg, images/models-dreame.svg.
+// drawing code (images/models-<brand>.svg), and the README list of recognized models, from the card's model table
+// (between the <!-- models:start --> and <!-- models:end --> markers).
 // Usage: node scripts/models.mjs
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { load } from "../test/load.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const { autoSvg } = load();
+const { autoSvg, brandOf, BRAND_LABELS, MODEL_NAMES } = load();
 
 // [model id, label] per brand: a robot of each look (turret or not, dock or not, white or dark) and the wet-dry vacuums.
 const GALLERIES = {
@@ -45,6 +46,15 @@ const GALLERIES = {
     ["276", "360 Heurist"],
     ["277", "360 Vis Nav"],
   ],
+  irobot: [
+    ["r980020", "Roomba 980"],
+    ["e515020", "Roomba e5"],
+    ["i755020", "Roomba i7+"],
+    ["s955020", "Roomba s9+"],
+    ["j755020", "Roomba j7+"],
+    ["c975020", "Combo j9+"],
+    ["m611020", "Braava jet m6"],
+  ],
 };
 
 const CELL = 140;
@@ -63,3 +73,22 @@ for (const [brand, models] of Object.entries(GALLERIES)) {
   writeFileSync(`${root}images/models-${brand}.svg`, out);
   console.log(`images/models-${brand}.svg`);
 }
+
+// README list: one row per commercial name with every model id it is reported as, by brand (the brand order of the
+// galleries), then by name.
+const rows = {};
+for (const [id, name] of Object.entries(MODEL_NAMES)) {
+  const brand = brandOf(id) || "roborock";
+  const list = (rows[brand] ||= new Map());
+  list.set(name, [...(list.get(name) || []), id]);
+}
+const sections = Object.keys(GALLERIES).map((brand) => {
+  const list = [...rows[brand]].sort(([a], [b]) => a.localeCompare(b, "en", { numeric: true }));
+  const lines = list.map(([name, ids]) => `| ${name} | ${ids.map((id) => `\`${id}\``).join(", ")} |`);
+  return `<details><summary>${BRAND_LABELS[brand]} (${list.length})</summary>\n\n| Model | Model id |\n|---|---|\n${lines.join("\n")}\n\n</details>`;
+});
+const readme = readFileSync(`${root}README.md`, "utf8");
+const marked = /<!-- models:start -->[\s\S]*<!-- models:end -->/;
+if (!marked.test(readme)) throw new Error("README.md: models markers not found");
+writeFileSync(`${root}README.md`, readme.replace(marked, `<!-- models:start -->\n${sections.join("\n\n")}\n<!-- models:end -->`));
+console.log("README.md (models list)");

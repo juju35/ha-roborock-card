@@ -5,7 +5,8 @@
  * Lovelace cards for robot vacuums, whatever the integration: Roborock
  * (https://www.home-assistant.io/integrations/roborock/), Xiaomi Miio (https://www.home-assistant.io/integrations/xiaomi_miio/),
  * Xiaomi Home (https://github.com/XiaoMi/ha_xiaomi_home), Dreame Vacuum (https://github.com/Tasshack/dreame-vacuum),
- * Ecovacs (https://www.home-assistant.io/integrations/ecovacs/) or Dyson (https://github.com/libdyson-wg/ha-dyson).
+ * Ecovacs (https://www.home-assistant.io/integrations/ecovacs/), Dyson (https://github.com/libdyson-wg/ha-dyson) or iRobot
+ * (https://www.home-assistant.io/integrations/roomba/).
  * Entities are resolved through the entity and device registries (platform, translation_key and
  * device), so they work whatever the Home Assistant language or entity ids.
  */
@@ -17,6 +18,7 @@ const IMG_LOGO_XIAOMI = "__IMG_LOGO_XIAOMI__";
 const IMG_LOGO_DREAME = "__IMG_LOGO_DREAME__";
 const IMG_LOGO_ECOVACS = "__IMG_LOGO_ECOVACS__";
 const IMG_LOGO_DYSON = "__IMG_LOGO_DYSON__";
+const IMG_LOGO_IROBOT = "__IMG_LOGO_IROBOT__";
 // Roborock pictures: drawn illustrations, picked from the device name (robot with or without LiDAR turret,
 // with or without its dock, dark or white) or the wet-dry vacuum kind, and animated by what the device is doing
 // (`activity`): vacuum, mop, vacmop (vacuum and mop), returning, washing (the mops), drying (the mops).
@@ -35,6 +37,7 @@ const ANIM_CSS = `
   .bub { transform-box: fill-box; transform-origin: center; animation: bub 1.8s ease-out infinite; }
   .heat { animation: heat 2.2s ease-out infinite; }
   .roll { animation: roll .4s linear infinite; }
+  .evac { animation: evac 1.5s ease-in infinite; }
   .d1 { animation-delay: -.3s; } .d2 { animation-delay: -.6s; } .d3 { animation-delay: -.9s; } .d4 { animation-delay: -1.2s; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes sway { from { transform: translateX(-6px); } to { transform: translateX(6px); } }
@@ -46,6 +49,7 @@ const ANIM_CSS = `
   @keyframes bub { from { transform: translateY(0) scale(.4); opacity: 0; } 25% { opacity: .9; } to { transform: translateY(-34px) scale(1.1); opacity: 0; } }
   @keyframes heat { from { transform: translateY(6px); opacity: 0; } 35% { opacity: .9; } to { transform: translateY(-30px); opacity: 0; } }
   @keyframes roll { to { stroke-dashoffset: -12; } }
+  @keyframes evac { from { transform: translateY(0); opacity: 0; } 20% { opacity: .95; } 85% { opacity: .8; } to { transform: translateY(-78px); opacity: 0; } }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }`;
 // Robot seen from the front, slightly from above: disc of radius r centred on (cx, cy).
 const robotShape = (cx, cy, r, turret, col) => {
@@ -87,6 +91,19 @@ const heat = (cx, y, w) =>
         `<path class="heat d${i + 1}" d="M${cx + f * w} ${y} q-4 -6 0 -12 q4 -6 0 -12" fill="none" stroke="#ff9f43" stroke-width="2.2" stroke-linecap="round"/>`
     )
     .join("");
+// A robot drawn on the floor (160 × 104): swaying while it cleans, dust trailing behind when it vacuums, a wet trail
+// and drops when it mops (activity vacuum / mop / vacmop; null: at rest, no animation).
+const onFloor = (robot, activity) => {
+  const cleaning = ["vacuum", "mop", "vacmop"].includes(activity);
+  const vac = activity === "vacuum" || activity === "vacmop";
+  const mop = activity === "mop" || activity === "vacmop";
+  let s = "";
+  if (mop) s += `<ellipse class="wet" cx="80" cy="84" rx="78" ry="13" fill="#3f8fd4"/>`;
+  s += `<g class="${cleaning ? "sway" : ""}">${robot}</g>`;
+  if (vac) s += [56, 72, 88, 104].map((x, i) => `<circle class="dust d${i + 1}" cx="${x}" cy="94" r="2.6" fill="#c9ccd0"/>`).join("");
+  if (mop) s += [40, 66, 94, 120].map((x, i) => `<path class="drop d${i + 1}" d="M${x} 88 q-3 4 0 6 q3 -2 0 -6z" fill="#3f8fd4"/>`).join("");
+  return svgDoc(160, 104, s, "", cleaning);
+};
 // Robot alone or in front of its dock, animated by `activity`.
 const robotSvg = ({ turret = true, white = false, dock = true, activity = null } = {}) => {
   const col = ROBOT_COLORS[white ? "white" : "dark"];
@@ -94,15 +111,9 @@ const robotSvg = ({ turret = true, white = false, dock = true, activity = null }
   // Cleaning: the robot is out on the floor, drawn alone whatever its dock.
   if (!dock || cleaning) {
     const vac = activity === "vacuum" || activity === "vacmop";
-    const mop = activity === "mop" || activity === "vacmop";
-    let s = "";
-    if (mop) s += `<ellipse class="wet" cx="80" cy="84" rx="78" ry="13" fill="#3f8fd4"/>`;
     let robot = robotShape(80, 50, 72, turret, col);
     if (vac) robot += brush(26, 75, 10) + brush(134, 75, 10);
-    s += `<g class="${cleaning ? "sway" : ""}">${robot}</g>`;
-    if (vac) s += [56, 72, 88, 104].map((x, i) => `<circle class="dust d${i + 1}" cx="${x}" cy="94" r="2.6" fill="#c9ccd0"/>`).join("");
-    if (mop) s += [40, 66, 94, 120].map((x, i) => `<path class="drop d${i + 1}" d="M${x} 88 q-3 4 0 6 q3 -2 0 -6z" fill="#3f8fd4"/>`).join("");
-    return svgDoc(160, 104, s, "", cleaning);
+    return onFloor(robot, activity);
   }
   const [dTop, dBot, panel, seam] = white
     ? ["#fafaf8", "#d7d8d5", "#ecece9", "#c4c5c2"]
@@ -149,6 +160,73 @@ const dysonSvg = ({ visnav = false, white = false, activity = null } = {}) => {
   if (cleaning) s += [62, 74, 86, 98].map((x, i) => `<circle class="dust d${i + 1}" cx="${x}" cy="98" r="2.6" fill="#c9ccd0"/>`).join("");
   return svgDoc(160, 104, s, "", cleaning || activity === "returning");
 };
+// iRobot: Roomba (round, no LiDAR turret, its CLEAN button with a light ring on top and a single side brush; the
+// s series D-shaped, the j series with a front camera) or Braava jet (a rounded square mopping robot with its water
+// tank), alone or in front of a slim Clean Base (the "+" models). Vacuuming: the robot sways, its side brush spins and
+// dust trails behind; mopping (Braava, Combo): wet trail and spray; returning: it slides in front of its base;
+// emptying (Clean Base): dust rises up the base's duct.
+const roombaShape = (cx, cy, r, col, { shape = "round", camera = false, ring = "#bfe9ff" } = {}) => {
+  const ry = r * 0.3, h = r * 0.2;
+  let s = `<ellipse cx="${cx}" cy="${cy + h + ry * 0.35}" rx="${r * 0.98}" ry="${ry * 0.7}" opacity=".22"/>`;
+  if (shape === "square") {
+    // Braava jet: a rounded square seen from above (deeper than a disc), its CLEAN button in the middle of the
+    // lid, the spray nozzle on the front and the cleaning pad under it.
+    const w = r * 0.86, d = r * 0.46;
+    s = `<ellipse cx="${cx}" cy="${cy + d + h * 0.9}" rx="${w * 1.05}" ry="${ry * 0.6}" opacity=".22"/>`;
+    s += `<rect x="${cx - w * 1.02}" y="${cy + d - h * 0.2}" width="${w * 2.04}" height="${h * 1.35}" rx="${h * 0.5}" fill="#9fd3ff" opacity=".85"/>`;
+    s += `<rect x="${cx - w}" y="${cy - d}" width="${2 * w}" height="${2 * d + h}" rx="${d * 0.45}" fill="${col.side}"/>`;
+    s += `<rect x="${cx - w}" y="${cy - d}" width="${2 * w}" height="${2 * d}" rx="${d * 0.45}" fill="${col.top}"/>`;
+    s += `<rect x="${cx - w * 0.92}" y="${cy - d * 0.92}" width="${w * 1.84}" height="${d * 1.84}" rx="${d * 0.4}" fill="none" stroke="${col.rim}" stroke-width="${r * 0.02}"/>`;
+    s += `<rect x="${cx - w * 0.35}" y="${cy - d * 0.72}" width="${w * 0.7}" height="${d * 0.16}" rx="${d * 0.08}" fill="${col.side}"/>`;
+    s += `<ellipse cx="${cx}" cy="${cy + d * 0.1}" rx="${r * 0.15}" ry="${r * 0.11}" fill="none" stroke="${ring}" stroke-width="${r * 0.03}" opacity=".9"/>`;
+    s += `<ellipse cx="${cx}" cy="${cy + d * 0.1}" rx="${r * 0.09}" ry="${r * 0.065}" fill="#8a8f96"/>`;
+    s += `<rect x="${cx - r * 0.09}" y="${cy + d + h * 0.32}" width="${r * 0.18}" height="${h * 0.38}" rx="${h * 0.19}" fill="${col.lens}"/>`;
+    return s;
+  }
+  if (shape === "d") {
+    // s series: round back, flat front.
+    const fy = cy + ry * 0.62;
+    s += `<path d="M${cx - r} ${fy - ry * 0.25} v${h} q0 ${ry * 0.25} ${ry * 0.4} ${ry * 0.25} h${2 * r - ry * 0.8} q${ry * 0.4} 0 ${ry * 0.4} ${-ry * 0.25} v${-h} z" fill="${col.side}"/>`;
+    s += `<path d="M${cx - r} ${fy - ry * 0.25} V${cy} A${r} ${ry} 0 0 1 ${cx + r} ${cy} V${fy - ry * 0.25} q0 ${ry * 0.25} ${-ry * 0.4} ${ry * 0.25} H${cx - r + ry * 0.4} q${-ry * 0.4} 0 ${-ry * 0.4} ${-ry * 0.25} z" fill="${col.top}"/>`;
+    s += `<rect x="${cx - r * 0.5}" y="${fy + h * 0.3}" width="${r}" height="${h * 0.3}" rx="${h * 0.15}" fill="#b07a4e" opacity=".85"/>`;
+  } else {
+    s += `<path d="M${cx - r} ${cy} v${h} a${r} ${ry} 0 0 0 ${2 * r} 0 v${-h} z" fill="${col.side}"/>`;
+    s += `<ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${ry}" fill="${col.top}"/>`;
+    s += `<ellipse cx="${cx}" cy="${cy}" rx="${r * 0.66}" ry="${ry * 0.66}" fill="none" stroke="${col.rim}" stroke-width="${r * 0.025}"/>`;
+  }
+  // CLEAN button and its light ring.
+  s += `<ellipse cx="${cx}" cy="${cy - ry * 0.05}" rx="${r * 0.22}" ry="${ry * 0.22}" fill="none" stroke="${ring}" stroke-width="${r * 0.03}" opacity=".9"/>`;
+  s += `<ellipse cx="${cx}" cy="${cy - ry * 0.05}" rx="${r * 0.15}" ry="${ry * 0.15}" fill="${col.lens}"/>`;
+  // j series: the front camera, on the bumper.
+  if (camera) s += `<circle cx="${cx}" cy="${cy + ry + h * 0.5}" r="${h * 0.26}" fill="${col.lens}" stroke="#6fa8ff" stroke-width="${h * 0.07}"/>`;
+  return s;
+};
+const roombaSvg = ({ shape = "round", camera = false, white = false, base = false, combo = false, activity = null } = {}) => {
+  const col = ROBOT_COLORS[white ? "white" : "dark"];
+  const braava = shape === "square";
+  const cleaning = ["vacuum", "mop", "vacmop"].includes(activity);
+  if (!base || cleaning) {
+    // What it cleans comes from the robot: a Braava mops, a Combo vacuums and mops, a Roomba vacuums.
+    const act = cleaning ? (braava ? "mop" : combo ? "vacmop" : "vacuum") : null;
+    let robot = roombaShape(80, 50, 72, col, { shape, camera });
+    if ((act === "vacuum" || act === "vacmop") && !braava) robot += brush(128, 76, 11);
+    return onFloor(robot, act);
+  }
+  // Clean Base: a slim tower (wider for the Combo, its water tank on the side), the robot docked in front.
+  const w = combo ? 64 : 50, x = 80 - w / 2;
+  const [body, edge, lid, duct] = white ? ["#f2f2f0", "#cfd0cd", "#e3e3e0", "#c4c5c2"] : ["#363a40", "#4a4e54", "#464a51", "#1d1f22"];
+  let s = `<ellipse cx="80" cy="152" rx="66" ry="6" opacity=".22"/>`;
+  s += `<path d="M18 140 L30 128 H130 L142 140 Q142 146 136 146 H24 Q18 146 18 140 Z" fill="${white ? "#e6e6e3" : "#2b2e33"}"/>`;
+  s += `<rect x="${x}" y="10" width="${w}" height="122" rx="9" fill="${body}" stroke="${edge}" stroke-width="1.5"/>`;
+  s += `<rect x="${x + 4}" y="14" width="${w - 8}" height="20" rx="6" fill="${lid}"/>`;
+  // Evacuation duct up the front of the base.
+  s += `<rect x="74" y="40" width="12" height="80" rx="6" fill="${duct}" opacity=".9"/>`;
+  if (combo) s += `<rect x="${x + w - 15}" y="48" width="8" height="46" rx="4" fill="#7cc4f2" opacity=".7"/>`;
+  s += `<circle cx="80" cy="26" r="2.2" fill="${activity === "emptying" ? "#2fa3ff" : "#64a70b"}"/>`;
+  if (activity === "emptying") s += [0, 1, 2, 3, 4].map((i) => `<circle class="evac d${i}" cx="${78 + (i % 3) * 2}" cy="116" r="${2 + (i % 2) * 0.8}" fill="#c9ccd0"/>`).join("");
+  s += `<g class="${activity === "returning" ? "home" : ""}">${roombaShape(80, 122, 52, col, { shape, camera })}</g>`;
+  return svgDoc(160, 160, s, "", activity === "returning" || activity === "emptying");
+};
 const wetdrySvg = ({ white = true, activity = null } = {}) => {
   const [body, edge, accent] = white ? ["#f2f2f0", "#c9cac7", "#3a3d42"] : ["#4a4e54", "#26282c", "#9aa0a6"];
   const cleaning = ["vacuum", "mop", "vacmop"].includes(activity);
@@ -179,6 +257,25 @@ const IMAGES = {
 };
 // `color` option → forced color of the picture: true (white), false (dark), undefined (per model).
 const colorOf = (color) => (color === "white" ? true : color === "dark" ? false : undefined);
+// iRobot (roomba integration): the model is the robot's SKU — series letter, three digits, three digits of region
+// (020 Europe, 840 / 820 America…): R980020 → Roomba 980, i755020 → Roomba i7+ (5 or 7 as second digit: with its
+// Clean Base), c975020 → Roomba Combo j9+, m611020 → Braava jet m6. null when the model is not an iRobot SKU.
+const irobotName = (model) => {
+  const m = /^([reijscm])(\d)(\d)(\d)\d{3}$/.exec(String(model || "").toLowerCase());
+  if (!m) return null;
+  const [, l, d1, d2, d3] = m;
+  const plus = d2 === "5" || d2 === "7" ? "+" : "";
+  if (l === "r") return `Roomba ${d1}${d2}${d3}`;
+  if (l === "e") return `Roomba e${d1}`;
+  if (l === "m") return `Braava jet m${d1}`;
+  return l === "c" ? `Roomba Combo j${d1}${plus}` : `Roomba ${l}${d1}${plus}`;
+};
+// The iRobot models offered in the editor and recognized out of the box (European SKUs; the others are named by
+// irobotName all the same).
+const IROBOT_SKUS = [
+  "r675020", "r694020", "r696020", "r960020", "r974020", "r980020", "e515020", "i315020", "i355020", "i515020", "i555020",
+  "i715020", "i755020", "s915020", "s955020", "j715020", "j755020", "j955020", "c755020", "c975020", "m611020",
+];
 // Commercial names of the common Roborock models, by the model id the integrations report (Roborock, Xiaomi Miio
 // and Xiaomi Home alike): the picture and the logo then follow the model even when the device was renamed
 // (« DustBusters »). Sources: python-roborock (const.py, device_info.yaml), python-miio, the tested vacuums of
@@ -303,6 +400,8 @@ const MODEL_NAMES = {
   n223: "360 Eye",
   276: "360 Heurist",
   277: "360 Vis Nav",
+  // iRobot: the SKU as the model.
+  ...Object.fromEntries(IROBOT_SKUS.map((sku) => [sku, irobotName(sku)])),
 };
 // Brand of a model id, for the logo: Xiaomi for the Mi / Xiaomi robots (built by Roborock for the first ones),
 // Roborock for the other Roborock models, null when unknown (the logo of the integration is shown).
@@ -315,10 +414,11 @@ const brandOf = (model) => {
   if (/^(roborock|rockrobo)\./.test(m)) return "roborock";
   if (/^(deebot|ecovacs)\b/.test(m)) return "ecovacs";
   if (DYSON_MODELS.has(m)) return "dyson";
+  if (irobotName(m)) return "irobot";
   return /^dreame\./.test(m) ? "dreame" : null;
 };
 // Label of the brand of a model, for the editor presets.
-const BRAND_LABELS = { roborock: "Roborock", xiaomi: "Xiaomi", dreame: "Dreame", ecovacs: "Ecovacs", dyson: "Dyson" };
+const BRAND_LABELS = { roborock: "Roborock", xiaomi: "Xiaomi", dreame: "Dreame", ecovacs: "Ecovacs", dyson: "Dyson", irobot: "iRobot" };
 // Model presets of the `image` option (the model id as value), one per commercial name, by brand then name.
 const MODEL_PRESETS = Object.entries(MODEL_NAMES)
   .filter(([, name], i, all) => all.findIndex(([, n]) => n === name) === i)
@@ -327,7 +427,10 @@ const MODEL_PRESETS = Object.entries(MODEL_NAMES)
 // Device of a model preset, drawn like an automatic picture (without the dock the integration reports).
 const presetDevice = (model) => ({ kind: /\.(wdv|wetdryvac)\./.test(model) ? "wetdry" : "robot", model, dock: {} });
 // Name the picture is drawn from: the device name and the commercial name of its model.
-const modelName = (dev) => [dev.rawName || dev.name, MODEL_NAMES[String(dev.model || "").toLowerCase()]].filter(Boolean).join(" ");
+const modelName = (dev) => {
+  const m = String(dev.model || "").toLowerCase();
+  return [dev.rawName || dev.name, MODEL_NAMES[m] || irobotName(m)].filter(Boolean).join(" ");
+};
 // Automatic picture: Saros robots, the E / C1 series and the Mi Essential / 1C have no LiDAR turret, the Q series
 // (Q5…Q10, Qrevo), the Mi / Xiaomi and the Dreame robots are white, the dock is drawn when the integration reports one (or the
 // model name implies it: Ultra, Plus / +, Saros, Qrevo, Omni, Self-Cleaning, G10 / G30); Dyad wet-dry vacuums are dark.
@@ -336,6 +439,17 @@ const autoSvg = (dev, activity = null, white = undefined) => {
   if (dev.kind === "wetdry") return wetdrySvg({ white: white ?? !/dyad/i.test(name), activity });
   if (dev.kind !== "robot") return null;
   if (brandOf(dev.model) === "dyson" || dev.platform === "dyson_local") return dysonSvg({ visnav: /vis nav/i.test(name), white, activity });
+  if (brandOf(dev.model) === "irobot" || dev.platform === "roomba") {
+    const braava = /braava|\bm6\b/i.test(name);
+    return roombaSvg({
+      shape: braava ? "square" : /\bs9/i.test(name) ? "d" : "round",
+      camera: /\bj\d/i.test(name),
+      white: white ?? braava,
+      base: /\+|clean base/i.test(name),
+      combo: /combo/i.test(name),
+      activity,
+    });
+  }
   return robotSvg({
     turret: !/saros|essential|\b(e\d|c1|1c)\b/i.test(name),
     white: white ?? (/\bq\s?(revo|\d)|\bmi robot/i.test(name) || ["xiaomi", "dreame", "ecovacs"].includes(brandOf(dev.model))),
@@ -369,6 +483,7 @@ const BRANDS = {
   dreame: { logo: IMG_LOGO_DREAME, name: "Dreame", site: "https://www.dreametech.com", accent: ["#8a6a3c", "#c9a46e"] },
   ecovacs: { logo: IMG_LOGO_ECOVACS, name: "Ecovacs", site: "https://www.ecovacs.com", accent: ["#0b6bc4", "#3d9be9"] },
   dyson: { logo: IMG_LOGO_DYSON, name: "Dyson", site: "https://www.dyson.com", accent: ["#4a4a4a", "#b8b8b8"] },
+  irobot: { logo: IMG_LOGO_IROBOT, name: "iRobot", site: "https://www.irobot.com", accent: ["#4a8209", "#64a70b"] },
 };
 const brandFor = (dev) => BRANDS[brandOf(dev.model)] || BRANDS[PLATFORMS[dev.platform]] || BRANDS.roborock;
 // Accent of the device's brand for the current theme, overriding the default red of the shared styles.
@@ -381,6 +496,7 @@ const PLATFORMS = {
   dreame_vacuum: "dreame",
   ecovacs: "ecovacs",
   dyson_local: "dyson",
+  roomba: "irobot",
 };
 // Xiaomi Miio translation_key → the Roborock integration's, so the cards read both the same way.
 // Their last clean "duration" / "area" are left aside: "clean_time" / "clean_area" hold the current
@@ -436,7 +552,14 @@ const ECOVACS_KEYS = {
   work_mode: "cleaning_mode",
   station_state: "ecovacs_station",
 };
-const KEY_MAPS = { xiaomi_miio: MIIO_KEYS, dreame_vacuum: DREAME_KEYS, ecovacs: ECOVACS_KEYS };
+// iRobot (roomba) translation_key → the Roborock integration's. Its battery sensor has no translation_key (found by
+// its device class); the current clean is in the attributes of the vacuum.
+const ROOMBA_KEYS = {
+  total_missions: "total_cleaning_count",
+  total_cleaned_area: "total_cleaning_area",
+  last_mission: "last_clean_start",
+};
+const KEY_MAPS = { xiaomi_miio: MIIO_KEYS, dreame_vacuum: DREAME_KEYS, ecovacs: ECOVACS_KEYS, roomba: ROOMBA_KEYS };
 const PENDING_MS = 45000;
 const DEFAULT_COLLAPSED = ["stats", "dock"];
 
@@ -532,12 +655,14 @@ const STRINGS = {
     dirty_water: "Dirty water",
     cleaning_fluid: "Detergent",
     water_shortage: "Water tank empty",
+    bin_full: "Bin full",
+    robot_tank: "Robot tank",
     drying: "Drying",
     dust_mode: "Auto-empty",
     ok: "OK",
     empty: "Empty",
     full: "Full",
-    no_device: "No robot vacuum found. Is a supported integration (Roborock, Xiaomi, Dreame, Ecovacs, Dyson) installed?",
+    no_device: "No robot vacuum found. Is a supported integration (Roborock, Xiaomi, Dreame, Ecovacs, Dyson, iRobot) installed?",
     unknown_device: "Robot vacuum not found",
     no_registry: "This card needs Home Assistant 2024.8 or later.",
     // Editor
@@ -685,12 +810,14 @@ const STRINGS = {
     dirty_water: "Eau sale",
     cleaning_fluid: "Détergent",
     water_shortage: "Réservoir d'eau vide",
+    bin_full: "Bac plein",
+    robot_tank: "Réservoir du robot",
     drying: "Séchage",
     dust_mode: "Vidage auto",
     ok: "OK",
     empty: "Vide",
     full: "Plein",
-    no_device: "Aucun aspirateur trouvé. Une intégration prise en charge (Roborock, Xiaomi, Dreame, Ecovacs, Dyson) est-elle installée ?",
+    no_device: "Aucun aspirateur trouvé. Une intégration prise en charge (Roborock, Xiaomi, Dreame, Ecovacs, Dyson, iRobot) est-elle installée ?",
     unknown_device: "Aspirateur introuvable",
     no_registry: "Cette carte nécessite Home Assistant 2024.8 ou plus récent.",
     device: "Aspirateur",
@@ -836,12 +963,14 @@ const STRINGS = {
     dirty_water: "Schmutzwasser",
     cleaning_fluid: "Reinigungsmittel",
     water_shortage: "Wassertank leer",
+    bin_full: "Behälter voll",
+    robot_tank: "Robotertank",
     drying: "Trocknet",
     dust_mode: "Automatische Staubentleerung",
     ok: "OK",
     empty: "Leer",
     full: "Voll",
-    no_device: "Kein Saugroboter gefunden. Ist eine unterstützte Integration (Roborock, Xiaomi, Dreame, Ecovacs, Dyson) installiert?",
+    no_device: "Kein Saugroboter gefunden. Ist eine unterstützte Integration (Roborock, Xiaomi, Dreame, Ecovacs, Dyson, iRobot) installiert?",
     unknown_device: "Saugroboter nicht gefunden",
     no_registry: "Diese Karte benötigt Home Assistant 2024.8 oder neuer.",
 
@@ -991,12 +1120,14 @@ const STRINGS = {
     dirty_water: "Agua sucia",
     cleaning_fluid: "Detergente",
     water_shortage: "Depósito de agua vacío",
+    bin_full: "Depósito lleno",
+    robot_tank: "Depósito del robot",
     drying: "Secando",
     dust_mode: "Vaciado automático",
     ok: "OK",
     empty: "Vacío",
     full: "Lleno",
-    no_device: "No se ha encontrado ningún robot aspirador. ¿Está instalada una integración compatible (Roborock, Xiaomi, Dreame, Ecovacs, Dyson)?",
+    no_device: "No se ha encontrado ningún robot aspirador. ¿Está instalada una integración compatible (Roborock, Xiaomi, Dreame, Ecovacs, Dyson, iRobot)?",
     unknown_device: "Robot aspirador no encontrado",
     no_registry: "Esta tarjeta requiere Home Assistant 2024.8 o posterior.",
     // Editor
@@ -1656,6 +1787,10 @@ class VacuumBase extends HTMLElement {
     const e = dev.entities;
     const s = this._s(e.status) || this._s(e.a01_status) || this._s(e.q7_status);
     const vac = this._s(dev.vacuum);
+    // iRobot: the vacuum's status attribute tells the Clean Base emptying the bin (the vacuum is then "returning")
+    // and the robot charging on its base.
+    const irobot = dev.platform === "roomba" && vac && { Emptying: "emptying_the_bin", Charging: "charging", Recharging: "charging" }[vac.attributes?.status];
+    if (irobot && vac.state !== "unavailable") return { state: irobot, text: this._fmt(null, "s_", irobot), entity: vac.entity_id };
     if (vac && (vac.state === "unavailable" || !valid(s))) return { state: vac.state, text: this._fmt(vac, "s_"), entity: vac.entity_id };
     if (s) return { state: s.state, text: this._fmt(s, "s_"), entity: s.entity_id };
     return null;
@@ -1684,9 +1819,13 @@ class VacuumBase extends HTMLElement {
     if (valid(dock) && dock.state !== "ok") return { entity: dock.entity_id, text: `${this._t("dock_state")} · ${this._fmt(dock, "e_")}` };
     const water = this._s(dev.entities.water_shortage);
     if (water?.state === "on") return { entity: water.entity_id, text: this._t("water_shortage") };
-    // Xiaomi Miio: no error sensor, the vacuum carries it in its "error" attribute.
+    // Xiaomi Miio, iRobot: no error sensor, the vacuum carries it in its "error" attribute (iRobot: only while there
+    // is one, whatever the state — a missing bin does not stop the robot).
     const vac = this._s(dev.vacuum);
-    if (dev.platform !== "roborock" && vac?.state === "error" && vac.attributes?.error) return { entity: vac.entity_id, text: String(vac.attributes.error) };
+    if (dev.platform !== "roborock" && vac?.attributes?.error && (vac.state === "error" || dev.platform === "roomba"))
+      return { entity: vac.entity_id, text: String(vac.attributes.error) };
+    const bin = this._s(dev.entities.bin_full);
+    if (bin?.state === "on") return { entity: bin.entity_id, text: this._t("bin_full") };
     return null;
   }
 
@@ -1729,6 +1868,8 @@ class VacuumBase extends HTMLElement {
     // Ecovacs: the station state tells when the mops are washed or dried (the robot is then docked).
     const station = { washing_mop: "washing", drying_mop: "drying" }[this._s(dev.entities.ecovacs_station)?.state];
     if (station && !activity) activity = station;
+    // iRobot: the Clean Base emptying the bin (only drawn by the iRobot picture).
+    if (status?.state === "emptying_the_bin" && dev.platform === "roomba") activity = "emptying";
     const white = colorOf(this._config.color);
     return svgUri(preset ? IMAGES[img](activity, white) : autoSvg(model ? presetDevice(img) : dev, activity, white));
   }
@@ -2012,14 +2153,20 @@ class VacuumCard extends VacuumBase {
 
     if (statusClass(status?.state) === "active") {
       const pct = num(this._s(e.clean_percent));
-      const area = num(this._s(e.cleaning_area));
-      const time = hours(this._s(e.cleaning_time));
+      // iRobot: the current clean is in the vacuum's attributes (minutes, and m² with the metric unit system).
+      const va = this._s(dev.vacuum)?.attributes || {};
+      const area = num(this._s(e.cleaning_area)) ?? (Number.isFinite(va.cleaned_area) && va.cleaned_area > 0 ? va.cleaned_area : null);
+      const time = hours(this._s(e.cleaning_time)) ?? (Number.isFinite(va.cleaning_time) && va.cleaning_time > 0 ? va.cleaning_time / 60 : null);
       const bits = [pct ? `${this._t("progress")} ${Math.round(pct)} %` : null, area !== null ? `${fmtNum(area, 1, this._locale())} m²` : null, time !== null ? fmtHours(time) : null];
       if (bits.some(Boolean))
-        lines.push(`<div class="line clickable" data-entity="${esc(e.clean_percent || e.cleaning_area || "")}">${svgIcon(ICONS.clock)}<span>${esc(bits.filter(Boolean).join(" · "))}</span></div>`);
+        lines.push(`<div class="line clickable" data-entity="${esc(e.clean_percent || e.cleaning_area || dev.vacuum || "")}">${svgIcon(ICONS.clock)}<span>${esc(bits.filter(Boolean).join(" · "))}</span></div>`);
     }
 
     lines.push(this._errorLine(dev));
+    // iRobot Braava / Combo: water tank of the robot, in percent.
+    const tank = this._s(e.tank_level);
+    if (valid(tank) && num(tank) !== null)
+      lines.push(`<div class="line clickable" data-entity="${esc(tank.entity_id)}">${svgIcon(ICONS.water)}<span>${esc(`${this._t("robot_tank")} · ${Math.round(num(tank))} %`)}</span></div>`);
 
     if (this._config.show_modes !== false) {
       const tags = [];
@@ -2117,6 +2264,11 @@ class VacuumCard extends VacuumBase {
     flag("clean_box_empty", ICONS.water, "clean_water", "empty");
     flag("dirty_box_full", ICONS.water_off, "dirty_water", "full");
     flag("clean_fluid_empty", ICONS.fluid, "cleaning_fluid", "empty");
+    // iRobot Combo j9+: water tank of the Clean Base, in percent.
+    const dockTank = this._s(dev.entities.dock_tank_level);
+    const tankPct = valid(dockTank) ? num(dockTank) : null;
+    if (tankPct !== null)
+      tiles.push(this._tile(dockTank.entity_id, ICONS.water, this._t("clean_water"), `${Math.round(tankPct)} %`, tankPct <= 10 ? "crit" : tankPct <= 25 ? "warn" : "ok"));
     const dust = this._s(d.dust_collection_mode);
     if (valid(dust)) tiles.push(this._tile(dust.entity_id, ICONS.bin, this._t("dust_mode"), this._fmt(dust)));
     // Drying: the remaining time only refreshes on the next poll of the integration (about 30 s after
@@ -2661,12 +2813,12 @@ for (const card of [
   {
     type: "vacuum-card",
     name: "Vacuum Card",
-    description: "Monitor and control a Roborock, Xiaomi, Dreame, Ecovacs or Dyson robot vacuum or wet-dry vacuum: status, battery, routines, dock, maintenance and statistics.",
+    description: "Monitor and control a Roborock, Xiaomi, Dreame, Ecovacs, Dyson or iRobot robot vacuum or wet-dry vacuum: status, battery, routines, dock, maintenance and statistics.",
   },
   {
     type: "vacuum-mini-card",
     name: "Vacuum Mini Card",
-    description: "Compact Roborock, Xiaomi, Dreame, Ecovacs or Dyson robot vacuum overview: status, battery, current room and quick controls.",
+    description: "Compact Roborock, Xiaomi, Dreame, Ecovacs, Dyson or iRobot robot vacuum overview: status, battery, current room and quick controls.",
   },
 ]) {
   if (!window.customCards.some((c) => c.type === card.type))
