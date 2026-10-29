@@ -372,7 +372,7 @@ const BRANDS = {
 };
 const brandFor = (dev) => BRANDS[brandOf(dev.model)] || BRANDS[PLATFORMS[dev.platform]] || BRANDS.roborock;
 // Accent of the device's brand for the current theme, overriding the default red of the shared styles.
-const accentStyle = (dev, hass) => `:host { --rr-accent: ${brandFor(dev).accent[hass?.themes?.darkMode ? 1 : 0]}; }`;
+const accentStyle = (dev, hass) => `:host { --vc-accent: ${brandFor(dev).accent[hass?.themes?.darkMode ? 1 : 0]}; }`;
 // Integrations the cards read → their logo.
 const PLATFORMS = {
   roborock: "roborock",
@@ -1290,59 +1290,59 @@ const findDevice = (hass, config) => {
 // ---------------------------------------------------------------------------
 
 const BASE_STYLE = `
-  :host { --rr-accent: #ea0029; --rr-ok: var(--success-color, #43a047); --rr-warn: var(--warning-color, #ffa600);
-          --rr-crit: var(--error-color, #db4437); --rr-idle: var(--disabled-text-color, #9e9e9e); --rr-active: var(--info-color, #039be5); }
+  :host { --vc-accent: #ea0029; --vc-ok: var(--success-color, #43a047); --vc-warn: var(--warning-color, #ffa600);
+          --vc-crit: var(--error-color, #db4437); --vc-idle: var(--disabled-text-color, #9e9e9e); --vc-active: var(--info-color, #039be5); }
   ha-card { overflow: hidden; }
   .icon { width: 18px; height: 18px; fill: currentColor; flex: none; }
   .muted { color: var(--secondary-text-color); }
   .clickable { cursor: pointer; }
-  .ok { --c: var(--rr-ok); } .warn { --c: var(--rr-warn); } .crit { --c: var(--rr-crit); } .idle { --c: var(--rr-idle); } .active { --c: var(--rr-active); }
-  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--c, var(--rr-ok)); flex: none; display: inline-block; }
+  .ok { --c: var(--vc-ok); } .warn { --c: var(--vc-warn); } .crit { --c: var(--vc-crit); } .idle { --c: var(--vc-idle); } .active { --c: var(--vc-active); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--c, var(--vc-ok)); flex: none; display: inline-block; }
   .chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; white-space: nowrap;
-          background: color-mix(in srgb, var(--c, var(--rr-ok)) 15%, transparent); color: var(--c, var(--rr-ok)); flex: none; }
+          background: color-mix(in srgb, var(--c, var(--vc-ok)) 15%, transparent); color: var(--c, var(--vc-ok)); flex: none; }
   .bar { height: 4px; border-radius: 3px; background: var(--divider-color, rgba(127,127,127,.25)); overflow: hidden; }
-  .bar > div { height: 100%; border-radius: 3px; background: var(--c, var(--rr-ok)); transition: width .6s ease; }
+  .bar > div { height: 100%; border-radius: 3px; background: var(--c, var(--vc-ok)); transition: width .6s ease; }
   .header { display: flex; align-items: center; gap: 10px; padding: 12px 12px 0; }
   .logo { width: 40px; height: 40px; object-fit: contain; flex: none; }
   a.logo-link { display: flex; flex: none; }
   .titles { flex: 1; min-width: 0; }
   .name { font-size: 16px; font-weight: 500; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub { font-size: 12px; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .warning { padding: 16px; color: var(--rr-warn); }
+  .warning { padding: 16px; color: var(--vc-warn); }
   .picture { flex: none; display: flex; align-items: center; justify-content: center; }
   .picture img { max-width: 100%; max-height: 100%; object-fit: contain; }
   .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
   .line { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--secondary-text-color); min-width: 0; }
   .line span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .alert-line { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--c, var(--rr-crit)); }
+  .alert-line { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--c, var(--vc-crit)); }
   .alert-line .icon { width: 16px; height: 16px; }
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: none; cursor: pointer; font: inherit; font-size: 13px;
          font-weight: 500; padding: 6px 12px; border-radius: 18px; background: var(--secondary-background-color, rgba(127,127,127,.12));
          color: var(--primary-text-color); min-width: 0; }
-  .btn:hover { background: color-mix(in srgb, var(--rr-accent) 12%, var(--secondary-background-color, rgba(127,127,127,.12))); }
-  .btn.primary { background: color-mix(in srgb, var(--rr-accent) 16%, transparent); color: var(--rr-accent); }
-  .btn.primary:hover { background: color-mix(in srgb, var(--rr-accent) 24%, transparent); }
+  .btn:hover { background: color-mix(in srgb, var(--vc-accent) 12%, var(--secondary-background-color, rgba(127,127,127,.12))); }
+  .btn.primary { background: color-mix(in srgb, var(--vc-accent) 16%, transparent); color: var(--vc-accent); }
+  .btn.primary:hover { background: color-mix(in srgb, var(--vc-accent) 24%, transparent); }
   .btn .icon { width: 18px; height: 18px; }
   .btn.round { width: 36px; height: 36px; padding: 0; border-radius: 50%; }
   .btn.disabled { opacity: .45; cursor: default; }
   .rooms { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 12px;
            border: 1px solid var(--divider-color, rgba(127,127,127,.25)); }
   .rooms-title { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; }
-  .rooms-title .icon { width: 18px; height: 18px; color: var(--rr-accent); }
+  .rooms-title .icon { width: 18px; height: 18px; color: var(--vc-accent); }
   .rooms-msg { font-size: 13px; color: var(--secondary-text-color); }
   .room-list { display: flex; flex-wrap: wrap; gap: 6px; }
   .room { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 16px; cursor: pointer; color: var(--primary-text-color);
           background: var(--secondary-background-color, rgba(127,127,127,.12)); border: 1px solid transparent; }
-  .room.on { background: color-mix(in srgb, var(--rr-accent) 16%, transparent); color: var(--rr-accent); font-weight: 500; }
-  .room.on:hover { background: color-mix(in srgb, var(--rr-accent) 24%, transparent); }
+  .room.on { background: color-mix(in srgb, var(--vc-accent) 16%, transparent); color: var(--vc-accent); font-weight: 500; }
+  .room.on:hover { background: color-mix(in srgb, var(--vc-accent) 24%, transparent); }
   .room.all { color: var(--secondary-text-color); }
-  .room.all.on { color: var(--rr-accent); }
+  .room.all.on { color: var(--vc-accent); }
   .rooms-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
   .zoom { all: unset; flex: none; cursor: pointer; width: 24px; height: 24px; margin: -4px -4px -4px 0; border-radius: 50%;
           display: grid; place-items: center; color: var(--secondary-text-color); }
   .zoom .icon { width: 16px; height: 16px; }
-  .zoom:hover { background: color-mix(in srgb, var(--rr-idle) 16%, transparent); color: var(--primary-text-color); }
-  .zoom:focus-visible { outline: 2px solid var(--primary-color, var(--rr-accent)); outline-offset: 1px; }
+  .zoom:hover { background: color-mix(in srgb, var(--vc-idle) 16%, transparent); color: var(--primary-text-color); }
+  .zoom:focus-visible { outline: 2px solid var(--primary-color, var(--vc-accent)); outline-offset: 1px; }
 `;
 
 // In-card confirmation popup, as in ha-system-monitor-card and ha-iptv: a backdrop over the card with a
@@ -1915,7 +1915,7 @@ const FULL_STYLE = `
   .batt .pct { font-size: 30px; font-weight: 400; line-height: 1; }
   .batt .pct small { font-size: 14px; margin-left: 2px; color: var(--secondary-text-color); }
   .batt .icon { color: var(--c); }
-  .batt .bolt { color: var(--rr-ok); width: 20px; height: 20px; }
+  .batt .bolt { color: var(--vc-ok); width: 20px; height: 20px; }
   .line .icon { width: 16px; height: 16px; }
   .tags { display: flex; flex-wrap: wrap; gap: 4px; }
   .tag { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 6px; border-radius: 8px;
@@ -1932,7 +1932,7 @@ const FULL_STYLE = `
   .section-title.toggle[aria-expanded="false"] .chevron { transform: rotate(-90deg); }
   .routines { display: flex; flex-wrap: wrap; gap: 6px; }
   .routines .btn { font-weight: 400; padding: 6px 12px 6px 8px; }
-  .routines .btn .icon { color: var(--rr-accent); }
+  .routines .btn .icon { color: var(--vc-accent); }
   .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 6px; }
   .tiles.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tile { display: flex; flex-direction: column; gap: 2px; padding: 6px 10px; border-radius: 10px; min-width: 0;
@@ -1950,16 +1950,16 @@ const FULL_STYLE = `
   .cons.with-reset { grid-template-columns: 18px minmax(0, 1fr) 90px 56px 28px; }
   .reset { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: none; border-radius: 50%;
            background: transparent; color: var(--secondary-text-color); cursor: pointer; padding: 0; }
-  .reset:hover { background: var(--secondary-background-color, rgba(127,127,127,.12)); color: var(--rr-accent); }
+  .reset:hover { background: var(--secondary-background-color, rgba(127,127,127,.12)); color: var(--vc-accent); }
   .reset .icon { width: 18px; height: 18px; }
   .map img { width: 100%; border-radius: 10px; display: block; background: var(--secondary-background-color, rgba(127,127,127,.08)); }
   .map .crop { overflow: hidden; border-radius: 10px; }
   .map { cursor: zoom-in; }
   .dock-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .dock-actions .btn { flex: 1 1 auto; }
-  .dock-actions .btn .icon { color: var(--rr-accent); }
-  .dock-actions .btn.running { background: color-mix(in srgb, var(--rr-active) 16%, transparent); color: var(--rr-active); }
-  .dock-actions .btn.running .icon { color: var(--rr-active); }
+  .dock-actions .btn .icon { color: var(--vc-accent); }
+  .dock-actions .btn.running { background: color-mix(in srgb, var(--vc-active) 16%, transparent); color: var(--vc-active); }
+  .dock-actions .btn.running .icon { color: var(--vc-active); }
   .map .crop img { max-width: none; border-radius: 0; background: none; }
 `;
 

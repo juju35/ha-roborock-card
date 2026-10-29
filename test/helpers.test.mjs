@@ -3,49 +3,49 @@ import { test } from "node:test";
 import { devices, entities, states } from "../scripts/mock-states.mjs";
 import { load } from "./load.mjs";
 
-const rr = load();
+const vc = load();
 
 test("fmtHours carries rounded minutes over to the hours", () => {
-  assert.equal(rr.fmtHours(1.995), "2 h");
-  assert.equal(rr.fmtHours(9.996), "10 h");
-  assert.equal(rr.fmtHours(0.999), "1 h");
-  assert.equal(rr.fmtHours(0.9999), "1 h");
+  assert.equal(vc.fmtHours(1.995), "2 h");
+  assert.equal(vc.fmtHours(9.996), "10 h");
+  assert.equal(vc.fmtHours(0.999), "1 h");
+  assert.equal(vc.fmtHours(0.9999), "1 h");
 });
 
 test("fmtHours keeps its other formats", () => {
-  assert.equal(rr.fmtHours(null), "—");
-  assert.equal(rr.fmtHours(0), "0 h");
-  assert.equal(rr.fmtHours(0.001), "1 min");
-  assert.equal(rr.fmtHours(0.5), "30 min");
-  assert.equal(rr.fmtHours(1), "1 h");
-  assert.equal(rr.fmtHours(2.5), "2 h 30");
-  assert.equal(rr.fmtHours(1.05), "1 h 03");
-  assert.equal(rr.fmtHours(12.4), "12 h");
+  assert.equal(vc.fmtHours(null), "—");
+  assert.equal(vc.fmtHours(0), "0 h");
+  assert.equal(vc.fmtHours(0.001), "1 min");
+  assert.equal(vc.fmtHours(0.5), "30 min");
+  assert.equal(vc.fmtHours(1), "1 h");
+  assert.equal(vc.fmtHours(2.5), "2 h 30");
+  assert.equal(vc.fmtHours(1.05), "1 h 03");
+  assert.equal(vc.fmtHours(12.4), "12 h");
 });
 
 test("hours converts duration units", () => {
   const s = (state, unit) => ({ state, attributes: { unit_of_measurement: unit } });
-  assert.equal(rr.hours(s("90", "min")), 1.5);
-  assert.equal(rr.hours(s("7200", "s")), 2);
-  assert.equal(rr.hours(s("1", "d")), 24);
-  assert.equal(rr.hours(s("3", "h")), 3);
-  assert.equal(rr.hours(s("unknown", "h")), null);
+  assert.equal(vc.hours(s("90", "min")), 1.5);
+  assert.equal(vc.hours(s("7200", "s")), 2);
+  assert.equal(vc.hours(s("1", "d")), 24);
+  assert.equal(vc.hours(s("3", "h")), 3);
+  assert.equal(vc.hours(s("unknown", "h")), null);
 });
 
 test("statusClass maps states to colors", () => {
-  assert.equal(rr.statusClass("error"), "crit");
-  assert.equal(rr.statusClass("paused"), "warn");
-  assert.equal(rr.statusClass("segment_cleaning"), "active");
-  assert.equal(rr.statusClass("charging"), "ok");
-  assert.equal(rr.statusClass("idle"), "idle");
+  assert.equal(vc.statusClass("error"), "crit");
+  assert.equal(vc.statusClass("paused"), "warn");
+  assert.equal(vc.statusClass("segment_cleaning"), "active");
+  assert.equal(vc.statusClass("charging"), "ok");
+  assert.equal(vc.statusClass("idle"), "idle");
 });
 
 test("esc escapes text and attribute values", () => {
-  assert.equal(rr.esc(`<b title="x">'&`), "&lt;b title=&quot;x&quot;&gt;&#39;&amp;");
+  assert.equal(vc.esc(`<b title="x">'&`), "&lt;b title=&quot;x&quot;&gt;&#39;&amp;");
 });
 
 test("resolve merges the dock into its robot", () => {
-  const model = rr.resolve({ entities, devices, states });
+  const model = vc.resolve({ entities, devices, states });
   const saros = model.devices.find((d) => d.id === "saros");
   assert.equal(saros.vacuum, "vacuum.aspirateur");
   assert.ok(Object.keys(saros.dock).length > 0);
@@ -53,7 +53,7 @@ test("resolve merges the dock into its robot", () => {
 });
 
 test("the device picture follows the model, the image option overrides it", () => {
-  const { autoSvg, IMAGES, robotSvg, wetdrySvg } = rr;
+  const { autoSvg, IMAGES, robotSvg, wetdrySvg } = vc;
   const robot = (name, dock = {}) => autoSvg({ kind: "robot", rawName: name, dock });
   assert.equal(robot("Roborock Saros 20"), robotSvg({ turret: false }));
   assert.equal(robot("Roborock S8 MaxV Ultra"), robotSvg());
@@ -86,27 +86,27 @@ test("the device picture follows the model, the image option overrides it", () =
   assert.equal(byModel("dreame.vacuum.mc1808"), robotSvg({ turret: false, white: true, dock: false })); // Mi 1C
   assert.equal(byModel("mijia.vacuum.v2"), robotSvg({ turret: false, white: true, dock: false })); // Essential G1
   assert.equal(byModel("dreame.vacuum.p2041o"), robotSvg({ white: true })); // Mop 2 Pro+, with its dock
-  assert.equal(rr.brandOf("viomi.vacuum.v8"), "xiaomi");
-  assert.equal(rr.brandOf("dreame.vacuum.p2009"), "dreame");
-  assert.equal(rr.brandOf("viomi.vacuum.v99"), null);
-  assert.equal(rr.brandOf("dreame.vacuum.p2114a"), "xiaomi"); // Mi Robot Vacuum X10+
+  assert.equal(vc.brandOf("viomi.vacuum.v8"), "xiaomi");
+  assert.equal(vc.brandOf("dreame.vacuum.p2009"), "dreame");
+  assert.equal(vc.brandOf("viomi.vacuum.v99"), null);
+  assert.equal(vc.brandOf("dreame.vacuum.p2114a"), "xiaomi"); // Mi Robot Vacuum X10+
   assert.equal(byModel("dreame.vacuum.p2114a"), robotSvg({ white: true })); // with its station
   assert.equal(byModel("xiaomi.vacuum.c102cn"), robotSvg({ white: true })); // Mijia Omni 2
   assert.equal(byModel("roborock.vacuum.a187"), robotSvg({ white: true })); // Qrevo Edge
   // Dyson 360: its own drawing (drum on tracks, 360° camera), Vis Nav wider with a purple band.
-  assert.equal(byModel("n223"), rr.dysonSvg()); // 360 Eye
-  assert.equal(byModel("277"), rr.dysonSvg({ visnav: true })); // 360 Vis Nav
-  assert.match(rr.dysonSvg({ activity: "vacuum" }), /class="roll"/);
-  assert.match(rr.dysonSvg({ activity: "returning" }), /class="home"/);
-  assert.doesNotMatch(rr.dysonSvg(), /<style>/);
+  assert.equal(byModel("n223"), vc.dysonSvg()); // 360 Eye
+  assert.equal(byModel("277"), vc.dysonSvg({ visnav: true })); // 360 Vis Nav
+  assert.match(vc.dysonSvg({ activity: "vacuum" }), /class="roll"/);
+  assert.match(vc.dysonSvg({ activity: "returning" }), /class="home"/);
+  assert.doesNotMatch(vc.dysonSvg(), /<style>/);
   // One editor preset per commercial name, labelled with the brand.
-  const labels = rr.MODEL_PRESETS.map((p) => p.label);
+  const labels = vc.MODEL_PRESETS.map((p) => p.label);
   assert.equal(new Set(labels).size, labels.length);
   assert.ok(labels.includes("Roborock Q5 Pro") && labels.includes("Xiaomi Mi Robot Vacuum 1S") && labels.includes("Roborock F25 Ultra"));
 });
 
 test("the picture animation follows the status, the cleaning mode and the dock drying", () => {
-  const { activityOf, robotSvg } = rr;
+  const { activityOf, robotSvg } = vc;
   assert.equal(activityOf("segment_cleaning", "vacuum"), "vacuum");
   assert.equal(activityOf("cleaning", "vac_and_mop"), "vacmop");
   assert.equal(activityOf("zoned_cleaning", "mop"), "mop");
@@ -128,11 +128,11 @@ test("the picture animation follows the status, the cleaning mode and the dock d
 });
 
 test("every language has exactly the English keys and placeholders", () => {
-  const en = Object.keys(rr.STRINGS.en).sort();
+  const en = Object.keys(vc.STRINGS.en).sort();
   const vars = (s) => (String(s).match(/\{\w+\}/g) || []).sort().join();
   for (const l of ["fr", "de", "es"]) {
-    assert.ok(rr.STRINGS[l], `missing language ${l}`);
-    assert.deepEqual(Object.keys(rr.STRINGS[l]).sort(), en, `keys of ${l}`);
-    for (const k of en) assert.equal(vars(rr.STRINGS[l][k]), vars(rr.STRINGS.en[k]), `placeholders of ${l}.${k}`);
+    assert.ok(vc.STRINGS[l], `missing language ${l}`);
+    assert.deepEqual(Object.keys(vc.STRINGS[l]).sort(), en, `keys of ${l}`);
+    for (const k of en) assert.equal(vars(vc.STRINGS[l][k]), vars(vc.STRINGS.en[k]), `placeholders of ${l}.${k}`);
   }
 });
