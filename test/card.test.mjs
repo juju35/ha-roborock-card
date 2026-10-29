@@ -490,3 +490,61 @@ test("the mini card draws no empty room band when the room list belongs to anoth
   card.hass = makeHass();
   assert.doesNotMatch(card.shadowRoot.innerHTML, /class="rooms-wrap"/);
 });
+
+// A click on the enlarged map as the browser delivers it: the document capture listeners first (the cards' outside
+// click handlers), then the overlay's own listener, which closes it.
+const MAP_ID = "camera.dustbusters_map";
+const clickZoomedMap = (...captureListeners) => {
+  const overlay = vc.document.body.children.at(-1);
+  const box = overlay.children[0];
+  const ev = { composedPath: () => [box.children[0], box, overlay, vc.document.body] };
+  for (const fn of captureListeners) fn(ev);
+  overlay.listeners.click(ev);
+};
+
+test("closing the enlarged map by a click keeps the unfolded sections of the full card", () => {
+  const card = newCard(makeHass());
+  card.connectedCallback();
+  click(card, { action: "toggle_section", section: "stats" });
+  card._zoomMap(MAP_ID);
+  assert.equal(vc.document.body.children.length, 1);
+  clickZoomedMap(card._onOutside);
+  assert.equal(vc.document.body.children.length, 0, "the map is closed");
+  assert.equal(card._toggled.size, 1, "the section stays unfolded");
+  // Once the map is closed, a click elsewhere on the page folds the sections again.
+  card._onOutside({ composedPath: () => [{ tagName: "DIV" }] });
+  assert.equal(card._toggled.size, 0);
+  card.disconnectedCallback();
+});
+
+test("closing the enlarged map by a click leaves the mini card in its detailed view", () => {
+  const mini = newMini(makeHass());
+  click(mini, { action: "zoom" });
+  mini._zoomMap(MAP_ID);
+  clickZoomedMap(mini._onOutside, mini._onUnzoom);
+  assert.equal(vc.document.body.children.length, 0);
+  assert.equal(mini._zoomed, true);
+  assert.match(mini.shadowRoot.innerHTML, /class="section-title/);
+  mini.disconnectedCallback();
+});
+
+test("a map closed with Escape or detached with the card no longer counts as part of the card", () => {
+  const mini = newMini(makeHass());
+  click(mini, { action: "zoom" });
+  mini._zoomMap(MAP_ID);
+  // Opening it again replaces the overlay: only the new one is on the page and recognised.
+  mini._zoomMap(MAP_ID);
+  assert.equal(vc.document.body.children.length, 1);
+  const overlay = vc.document.body.children[0];
+  vc.window.fire("keydown", { key: "Escape" });
+  assert.equal(vc.document.body.children.length, 0);
+  assert.equal(mini._zoomOverlay ?? null, null);
+  // A stale path through the removed overlay is an outside click again.
+  mini._onUnzoom({ composedPath: () => [overlay, vc.document.body] });
+  assert.equal(mini._zoomed, false);
+  click(mini, { action: "zoom" });
+  mini._zoomMap(MAP_ID);
+  mini.disconnectedCallback();
+  assert.equal(vc.document.body.children.length, 0);
+  assert.equal(mini._zoomOverlay ?? null, null);
+});
