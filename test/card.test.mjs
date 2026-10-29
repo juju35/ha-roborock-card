@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { devices, entities, states } from "../scripts/mock-states.mjs";
 import { load } from "./load.mjs";
 
-const rr = load();
+const vc = load();
 
 const makeHass = (st = states) => {
   const calls = [];
@@ -11,7 +11,7 @@ const makeHass = (st = states) => {
 };
 
 const newCard = (hass) => {
-  const card = new rr.VacuumCard();
+  const card = new vc.VacuumCard();
   card.setConfig({ device: "saros", show_map: "never" });
   card.hass = hass;
   return card;
@@ -109,20 +109,20 @@ test("detaching the card clears the pending timer and closes the zoomed map", ()
 test("the relative time formatter is built once per language", () => {
   const hass = makeHass();
   const iso = new Date(Date.now() - 2 * 3600e3).toISOString();
-  rr.ago(hass, {}, iso);
-  const fmt = rr.RTF.en;
+  vc.ago(hass, {}, iso);
+  const fmt = vc.RTF.en;
   assert.ok(fmt);
-  rr.ago(hass, {}, iso);
-  assert.equal(rr.RTF.en, fmt);
-  rr.ago(hass, { language: "fr" }, iso);
-  assert.ok(rr.RTF.fr && rr.RTF.fr !== fmt);
+  vc.ago(hass, {}, iso);
+  assert.equal(vc.RTF.en, fmt);
+  vc.ago(hass, { language: "fr" }, iso);
+  assert.ok(vc.RTF.fr && vc.RTF.fr !== fmt);
 });
 
 test("the full and mini cards share the room, error and picture blocks", () => {
   const err = "sensor.aspirateur_erreur";
   const hass = makeHass({ ...states, [err]: { ...states[err], state: "main_brush_jammed" } });
   const full = newCard(hass);
-  const mini = new rr.VacuumMiniCard();
+  const mini = new vc.VacuumMiniCard();
   mini.setConfig({ device: "saros" });
   mini.hass = hass;
   for (const html of [full.shadowRoot.innerHTML, mini.shadowRoot.innerHTML]) {
@@ -141,7 +141,7 @@ test("Escape still closes the popup after a re-render took the focus away", () =
   const batt = "sensor.aspirateur_batterie";
   card.hass = { ...hass, states: { ...states, [batt]: { ...states[batt], state: "42" } } };
   assert.match(card.shadowRoot.innerHTML, /dialog-open/);
-  rr.window.fire("keydown", { key: "Escape", stopPropagation() {} });
+  vc.window.fire("keydown", { key: "Escape", stopPropagation() {} });
   assert.doesNotMatch(card.shadowRoot.innerHTML, /dialog-open/);
   assert.equal(hass.calls.length, 0);
 });
@@ -162,7 +162,7 @@ test("the second click of a double click on OK does not reach the card under the
 });
 
 test("inlined pictures are not written into the HTML of every render", () => {
-  const card = new rr.VacuumCard();
+  const card = new vc.VacuumCard();
   card.setConfig({ device: "saros", show_map: "never", image: "data:image/png;base64,AAAA" });
   card.hass = makeHass();
   assert.doesNotMatch(card.shadowRoot.innerHTML, /data:image\/png/);
@@ -192,13 +192,13 @@ test("Escape still closes the popup after the card is detached and attached agai
   card.disconnectedCallback();
   card.connectedCallback();
   assert.match(card.shadowRoot.innerHTML, /dialog-open/);
-  rr.window.fire("keydown", { key: "Escape", stopPropagation() {} });
+  vc.window.fire("keydown", { key: "Escape", stopPropagation() {} });
   assert.doesNotMatch(card.shadowRoot.innerHTML, /dialog-open/);
   assert.equal(hass.calls.length, 0);
 });
 
 const newMini = (hass, config = {}) => {
-  const mini = new rr.VacuumMiniCard();
+  const mini = new vc.VacuumMiniCard();
   mini.setConfig({ device: "saros", show_map: "never", ...config });
   mini.hass = hass;
   mini.connectedCallback();
@@ -258,7 +258,7 @@ test("zoom: false removes the detail button", () => {
 });
 
 test("Xiaomi Miio: only the vacuum is listed, its keys read like the Roborock ones", () => {
-  const model = rr.resolve(makeHass());
+  const model = vc.resolve(makeHass());
   assert.ok(!model.devices.some((d) => d.id === "purifier"));
   const q5 = model.devices.find((d) => d.id === "q5");
   assert.equal(q5.platform, "xiaomi_miio");
@@ -273,7 +273,7 @@ test("Xiaomi Miio: only the vacuum is listed, its keys read like the Roborock on
 
 test("Xiaomi Miio: the card shows the Xiaomi logo of a Mi robot, maintenance and statistics, Start cleans right away", () => {
   const hass = makeHass();
-  const card = new rr.VacuumCard();
+  const card = new vc.VacuumCard();
   card.setConfig({ device: "q5", show_map: "always", map_entity: "camera.dustbusters_map", collapsed: [] });
   card.hass = hass;
   const html = card.shadowRoot.innerHTML;
@@ -297,7 +297,7 @@ const logoOf = (platform, model) => {
   const ent = { ...entities, "vacuum.x": { entity_id: "vacuum.x", device_id: "x", platform, translation_key: null } };
   const dev = { ...devices, x: { id: "x", name: "Robot", model, identifiers: [[platform, "x"]] } };
   const st = { ...states, "vacuum.x": { entity_id: "vacuum.x", state: "docked", attributes: {} } };
-  const card = new rr.VacuumCard();
+  const card = new vc.VacuumCard();
   card.setConfig({ device: "x" });
   card.hass = { ...makeHass(st), entities: ent, devices: dev };
   return card.shadowRoot.innerHTML.match(/title="([^"]+)"><img/)?.[1];
@@ -316,19 +316,19 @@ test("the logo follows the brand of the model, else the integration", () => {
 });
 
 test("the color option paints the F25 Ultra black", () => {
-  const card = new rr.VacuumCard();
+  const card = new vc.VacuumCard();
   card.setConfig({ device: "Roborock F25 Ultra", color: "dark" });
   card.hass = makeHass();
-  const dev = rr.resolve(card._hass).devices.find((d) => d.id === "f25");
-  assert.equal(card._picture(dev, card._status(dev)), `data:image/svg+xml,${encodeURIComponent(rr.wetdrySvg({ white: false }))}`);
+  const dev = vc.resolve(card._hass).devices.find((d) => d.id === "f25");
+  assert.equal(card._picture(dev, card._status(dev)), `data:image/svg+xml,${encodeURIComponent(vc.wetdrySvg({ white: false }))}`);
 });
 
 test("a model id as image option draws that model, with the color option", () => {
-  const card = new rr.VacuumCard();
+  const card = new vc.VacuumCard();
   card.setConfig({ device: "saros", image: "roborock.wetdryvac.a56", color: "white" });
   card.hass = makeHass();
-  const dev = rr.resolve(card._hass).devices.find((d) => d.id === "saros");
-  assert.equal(card._picture(dev, null), `data:image/svg+xml,${encodeURIComponent(rr.wetdrySvg({ white: true }))}`);
+  const dev = vc.resolve(card._hass).devices.find((d) => d.id === "saros");
+  assert.equal(card._picture(dev, null), `data:image/svg+xml,${encodeURIComponent(vc.wetdrySvg({ white: true }))}`);
 });
 
 test("Dreame Vacuum: vacuum discovered, keys mapped, Dreame logo, map camera; Xiaomi-sold model keeps the Xiaomi logo", () => {
@@ -349,13 +349,13 @@ test("Dreame Vacuum: vacuum discovered, keys mapped, Dreame logo, map camera; Xi
   add("camera.l10_map", "map", "idle", { entity_picture: "/api/camera_proxy/camera.l10_map" });
   const devs = { ...devices, dr: { id: "dr", name: "Dreame L10", model: "dreame.vacuum.p2029", identifiers: [["dreame_vacuum", "dr"]] } };
   const hass = { ...makeHass(st), entities: ent, devices: devs };
-  const dev = rr.resolve(hass).devices.find((d) => d.id === "dr");
+  const dev = vc.resolve(hass).devices.find((d) => d.id === "dr");
   assert.equal(dev.vacuum, "vacuum.l10");
   assert.equal(dev.entities.sensor_time_left, "sensor.l10_sensor_dirty_time_left");
   assert.equal(dev.entities.reset_air_filter_consumable, "button.l10_reset_filter");
   assert.equal(dev.entities.total_cleaning_count, "sensor.l10_cleaning_count");
   assert.equal(dev.entities.battery, "sensor.l10_battery_level");
-  const card = new rr.VacuumCard();
+  const card = new vc.VacuumCard();
   card.setConfig({ device: "dr", show_map: "always" });
   card.hass = hass;
   const html = card.shadowRoot.innerHTML;
@@ -363,51 +363,51 @@ test("Dreame Vacuum: vacuum discovered, keys mapped, Dreame logo, map camera; Xi
   assert.match(html, /data-map="camera\.l10_map"/);
   assert.doesNotMatch(html, /class="alert-line/); // "no_error" is no error
   devs.dr = { ...devs.dr, model: "dreame.vacuum.p2114a" }; // Mi Robot Vacuum X10+
-  const card2 = new rr.VacuumCard();
+  const card2 = new vc.VacuumCard();
   card2.setConfig({ device: "dr" });
   card2.hass = { ...hass, devices: { ...devs } };
   assert.match(card2.shadowRoot.innerHTML, /title="Xiaomi"/);
 });
 
 test("vacuum-card is the card; roborock-card and robot-vacuum-card stay as aliases", () => {
-  const get = (t) => rr.window.customElements.get(t);
-  assert.ok(get("vacuum-card") === rr.VacuumCard && get("vacuum-mini-card") === rr.VacuumMiniCard);
+  const get = (t) => vc.window.customElements.get(t);
+  assert.ok(get("vacuum-card") === vc.VacuumCard && get("vacuum-mini-card") === vc.VacuumMiniCard);
   for (const t of ["roborock-card", "robot-vacuum-card"]) {
     const card = new (get(t))();
     card.setConfig({ device: "saros", show_map: "never" });
     card.hass = makeHass();
-    assert.ok(card instanceof rr.VacuumCard, t);
+    assert.ok(card instanceof vc.VacuumCard, t);
     assert.match(card.shadowRoot.innerHTML, /title="Roborock"/);
   }
-  for (const t of ["roborock-mini-card", "robot-vacuum-mini-card"]) assert.ok(new (get(t))() instanceof rr.VacuumMiniCard, t);
-  assert.equal(rr.window.customCards.map((c) => c.type).join(), "vacuum-card,vacuum-mini-card");
+  for (const t of ["roborock-mini-card", "robot-vacuum-mini-card"]) assert.ok(new (get(t))() instanceof vc.VacuumMiniCard, t);
+  assert.equal(vc.window.customCards.map((c) => c.type).join(), "vacuum-card,vacuum-mini-card");
   assert.ok(get("vacuum-card-editor") && get("vacuum-mini-card-editor"));
 });
 
 test("the accent color of the buttons follows the brand", () => {
-  const accent = (device, Card = rr.VacuumCard, darkMode = false) => {
+  const accent = (device, Card = vc.VacuumCard, darkMode = false) => {
     const card = new Card();
     card.setConfig({ device });
     card.hass = { ...makeHass(), themes: { darkMode } };
-    return card.shadowRoot.innerHTML.match(/:host \{ --rr-accent: (#[0-9a-f]+); \}/)?.[1];
+    return card.shadowRoot.innerHTML.match(/:host \{ --vc-accent: (#[0-9a-f]+); \}/)?.[1];
   };
   // [light theme, dark theme]: darker shades on a light card, the logo colors on a dark one.
   assert.equal(accent("saros"), "#ea0029"); // Roborock
-  assert.equal(accent("saros", rr.VacuumCard, true), "#ea0029");
+  assert.equal(accent("saros", vc.VacuumCard, true), "#ea0029");
   assert.equal(accent("q5"), "#c24c00"); // Mi Robot Vacuum 1S: Xiaomi
-  assert.equal(accent("q5", rr.VacuumCard, true), "#ff6900");
+  assert.equal(accent("q5", vc.VacuumCard, true), "#ff6900");
   assert.equal(accent("l10"), "#8a6a3c"); // L10s Ultra: Dreame
-  assert.equal(accent("l10", rr.VacuumMiniCard, true), "#c9a46e");
+  assert.equal(accent("l10", vc.VacuumMiniCard, true), "#c9a46e");
 });
 
 test("Ecovacs: keys mapped, percentage consumables with reset, error code 0 is no error, Ecovacs logo", () => {
   const hass = makeHass();
-  const dev = rr.resolve(hass).devices.find((d) => d.id === "x1");
+  const dev = vc.resolve(hass).devices.find((d) => d.id === "x1");
   assert.equal(dev.vacuum, "vacuum.studio");
   assert.equal(dev.entities.main_brush_life, "sensor.studio_brosse");
   assert.equal(dev.entities.reset_mop_consumable, "button.studio_reset_round_mop");
   assert.equal(dev.entities.total_cleaning_count, "sensor.studio_nombre");
-  const card = new rr.VacuumCard();
+  const card = new vc.VacuumCard();
   card.setConfig({ device: "x1", collapsed: [] });
   card.hass = hass;
   const html = card.shadowRoot.innerHTML;
@@ -420,22 +420,22 @@ test("Ecovacs: keys mapped, percentage consumables with reset, error code 0 is n
 });
 
 test("Dyson: vacuum only, battery from its attribute, Dyson logo", () => {
-  const card = new rr.VacuumMiniCard();
+  const card = new vc.VacuumMiniCard();
   card.setConfig({ device: "visnav" });
   card.hass = makeHass();
   const html = card.shadowRoot.innerHTML;
   assert.match(html, /title="Dyson"/);
   assert.match(html, /100 %|>100</);
-  assert.equal(rr.brandOf("277"), "dyson");
-  assert.equal(rr.brandOf("DEEBOT X1 OMNI"), "ecovacs");
+  assert.equal(vc.brandOf("277"), "dyson");
+  assert.equal(vc.brandOf("DEEBOT X1 OMNI"), "ecovacs");
 });
 
 test("Ecovacs: the station state animates the picture (mops washed / dried)", () => {
-  const card = new rr.VacuumCard();
+  const card = new vc.VacuumCard();
   card.setConfig({ device: "x1" });
   const pic = (state) => {
     card.hass = makeHass({ ...states, "sensor.studio_station": { ...states["sensor.studio_station"], state } });
-    const dev = rr.resolve(card._hass).devices.find((d) => d.id === "x1");
+    const dev = vc.resolve(card._hass).devices.find((d) => d.id === "x1");
     return decodeURIComponent(card._picture(dev, card._status(dev)));
   };
   assert.match(pic("washing_mop"), /class="bub/);
@@ -446,7 +446,47 @@ test("Ecovacs: the station state animates the picture (mops washed / dried)", ()
 test("only vacuums are listed: a Roborock Zeo washing machine is skipped", () => {
   const ent = { ...entities, "sensor.zeo_etat": { entity_id: "sensor.zeo_etat", device_id: "zeo", platform: "roborock", translation_key: "zeo_state" } };
   const dev = { ...devices, zeo: { id: "zeo", name: "Roborock Zeo One", model: "roborock.wm.a102", identifiers: [["roborock", "zeo"]] } };
-  const ids = rr.resolve({ ...makeHass(), entities: ent, devices: dev }).devices.map((d) => d.id);
+  const ids = vc.resolve({ ...makeHass(), entities: ent, devices: dev }).devices.map((d) => d.id);
   assert.ok(!ids.includes("zeo"));
   assert.ok(ids.includes("f25") && ids.includes("saros"));
+});
+
+test("a change of the map_entity camera (outside the device) re-renders the card", () => {
+  const hass = makeHass();
+  const card = new vc.VacuumCard();
+  card.setConfig({ device: "saros", show_map: "always", map_entity: "camera.dustbusters_map" });
+  card.hass = hass;
+  let renders = 0;
+  const render = card._render.bind(card);
+  card._render = () => {
+    renders++;
+    return render();
+  };
+  const cam = "camera.dustbusters_map";
+  const st = states[cam];
+  card.hass = { ...hass, states: { ...states, [cam]: { ...st, attributes: { ...st.attributes, entity_picture: "/api/camera_proxy/camera.dustbusters_map?token=new" } } } };
+  assert.equal(renders, 1);
+});
+
+test("a dock section unfolded by hand stays unfolded when a dock problem appears", () => {
+  const card = newCard(makeHass());
+  let problem = false;
+  card._dockProblem = () => problem;
+  assert.equal(card._isCollapsed("dock"), true);
+  click(card, { action: "toggle_section", section: "dock" });
+  assert.equal(card._isCollapsed("dock"), false);
+  problem = true;
+  assert.equal(card._isCollapsed("dock"), false);
+  problem = false;
+  assert.equal(card._isCollapsed("dock"), false);
+  click(card, { action: "toggle_section", section: "dock" });
+  assert.equal(card._isCollapsed("dock"), true);
+});
+
+test("the mini card draws no empty room band when the room list belongs to another vacuum", () => {
+  const card = new vc.VacuumMiniCard();
+  card.setConfig({ device: "saros" });
+  card._rooms = { entity: "vacuum.elsewhere", list: [], selected: [] };
+  card.hass = makeHass();
+  assert.doesNotMatch(card.shadowRoot.innerHTML, /class="rooms-wrap"/);
 });

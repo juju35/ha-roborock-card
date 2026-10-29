@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.3.1
+### Fixes
+- The map set with `map_entity` (Xiaomi Cloud Map Extractor, Valetudo…) now refreshes on its own: a new map or a renewed picture token no longer leaves a frozen, then broken, image.
+- A station section unfolded or folded by hand keeps that state when a station problem appears or clears.
+- Mini card: no empty band under the card when the room list belongs to another vacuum.
+- Visual editor: picking a device without a map no longer shows the previous device's map size in the crop help.
+- German: the station drying tile shows "Läuft" instead of "Reinigt"; shorter labels for total area, total time and the station brush, so they are no longer cut off; "Mopp" and "Max" used throughout.
+- Spanish: the dust emptying button reads "Vaciar polvo"; Spanish and French "mild" and "light" levels are now told apart.
+
+### Maintenance
+- Screenshots workflow: fork-safe checkout, and a clear failure when all three apt attempts fail.
+- Screenshots workflow: the Chromium download is time-boxed and retried, and after pushing refreshed screenshots the job re-runs the lint, validate and HACS checks on that commit (a GITHUB_TOKEN push does not trigger them).
+- Internal: CSS custom properties, test and script names left over from the old `roborock-card` name now use the `vc` prefix (no visual change).
+
 ## 2.3.0
 ### Changes
 - Spanish translation, and an "Español" choice in the visual editor's language list.

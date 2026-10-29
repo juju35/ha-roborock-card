@@ -138,7 +138,7 @@ async function makeGif(browser, gif, { fps = 20, seconds = 3 } = {}) {
   await page.waitForTimeout(300);
   const box = await page.locator("#root").boundingBox();
   const clip = { x: 0, y: 0, width: gif.width + 32, height: Math.ceil(box.height) + 32 };
-  const dir = mkdtempSync(join(tmpdir(), "rr-frames-"));
+  const dir = mkdtempSync(join(tmpdir(), "vc-frames-"));
   const frames = Math.round(fps * seconds);
   for (let i = 0; i < frames; i++) {
     await page.evaluate((t) => {
