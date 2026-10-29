@@ -20,6 +20,28 @@ const fakeRoot = () => ({
   },
 });
 
+// Plain element stand-in (the enlarged map overlay): children, listeners and remove() from its parent.
+const fakeNode = (tag) => ({
+  tagName: String(tag).toUpperCase(),
+  style: {},
+  children: [],
+  listeners: {},
+  parentNode: null,
+  appendChild(child) {
+    child.parentNode = this;
+    this.children.push(child);
+    return child;
+  },
+  addEventListener(type, fn) {
+    this.listeners[type] = fn;
+  },
+  remove() {
+    if (!this.parentNode) return;
+    this.parentNode.children = this.parentNode.children.filter((c) => c !== this);
+    this.parentNode = null;
+  },
+});
+
 export const load = () => {
   const registry = new Map();
   class HTMLElement {
@@ -45,9 +67,10 @@ export const load = () => {
     console: { info() {}, warn() {} },
     customElements: { get: (t) => registry.get(t), define: (t, c) => registry.set(t, c) },
     document: {
-      createElement: (t) => (registry.has(t) ? new (registry.get(t))() : { style: {} }),
+      createElement: (t) => (registry.has(t) ? new (registry.get(t))() : fakeNode(t)),
       addEventListener() {},
       removeEventListener() {},
+      body: fakeNode("body"),
     },
     setTimeout,
     clearTimeout,
@@ -64,7 +87,7 @@ export const load = () => {
   return vm.runInContext(
     `${source}
     ({ fmtHours, hours, statusClass, esc, resolve, ago, RTF, autoSvg, robotSvg, wetdrySvg, dysonSvg, roombaSvg, irobotName, IMAGES, activityOf, brandOf, BRAND_LABELS, MODEL_NAMES, MODEL_PRESETS, STRINGS, VacuumCard: customElements.get("vacuum-card"),
-       VacuumMiniCard: customElements.get("vacuum-mini-card"), window })`,
+       VacuumMiniCard: customElements.get("vacuum-mini-card"), window, document })`,
     sandbox,
   );
 };
