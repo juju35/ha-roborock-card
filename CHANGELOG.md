@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.4.3
+### Fixes
+- Dreame Vacuum: vacuums whose entity has the `dreame_vacuum` translation key are now discovered (thanks @nvcs, #42).
+
 ## 2.4.2
 ### Fixes
 - The area of the last clean, of the current clean and the total area now show the unit of their sensor: an area sensor switched to ft² in its entity settings (Ecovacs, Roborock…) was still labeled m².
