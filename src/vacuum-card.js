@@ -518,6 +518,7 @@ const MIIO_KEYS = {
 };
 // Dreame Vacuum translation_key → the Roborock integration's.
 const DREAME_KEYS = {
+  dreame_vacuum: "_vacuum",
   battery_level: "battery",
   cleaned_area: "cleaning_area",
   cleaning_progress: "clean_percent",
