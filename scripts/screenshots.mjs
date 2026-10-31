@@ -188,22 +188,38 @@ async function makeGif(browser, gif, { fps = 20, seconds = 3 } = {}) {
 //   dyson-cleaning / dyson-returning — Dyson 360 Vis Nav: tracks rolling and dust / sliding home
 //   irobot-cleaning / -returning / -emptying — Roomba j7+: single side brush and dust / sliding in front of its
 //                      Clean Base / the base emptying the bin (evac); braava-mopping — Braava jet m6: wet trail and spray
+// Each one is followed by its twin in the other theme: "-dark" for a light capture, "-light" for a dark one.
 const gifs = [
   { file: "cleaning", type: "vacuum-card", theme: "light", width: 460, config: {}, overrides: cleaning },
+  { file: "cleaning-dark", type: "vacuum-card", theme: "dark", width: 460, config: {}, overrides: cleaning },
   { file: "returning", type: "vacuum-card", theme: "light", width: 460, config: {}, overrides: returning },
+  { file: "returning-dark", type: "vacuum-card", theme: "dark", width: 460, config: {}, overrides: returning },
   { file: "mop-washing", type: "vacuum-card", theme: "light", width: 460, config: {}, overrides: washing },
+  { file: "mop-washing-dark", type: "vacuum-card", theme: "dark", width: 460, config: {}, overrides: washing },
   { file: "mop-drying", type: "vacuum-card", theme: "light", width: 460, config: {}, overrides: drying },
+  { file: "mop-drying-dark", type: "vacuum-card", theme: "dark", width: 460, config: {}, overrides: drying },
   { file: "f25-cleaning", type: "vacuum-card", theme: "light", width: 460, config: { device: "Roborock F25 Ultra" }, overrides: f25Cleaning },
+  { file: "f25-cleaning-dark", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Roborock F25 Ultra" }, overrides: f25Cleaning },
   { file: "ecovacs-cleaning", type: "vacuum-card", theme: "light", width: 460, config: { device: "Studio robot", show_map: "never" }, overrides: ecovacsCleaning },
+  { file: "ecovacs-cleaning-dark", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Studio robot", show_map: "never" }, overrides: ecovacsCleaning },
   { file: "ecovacs-returning", type: "vacuum-card", theme: "light", width: 460, config: { device: "Studio robot", show_map: "never" }, overrides: ecovacsReturning },
+  { file: "ecovacs-returning-dark", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Studio robot", show_map: "never" }, overrides: ecovacsReturning },
   { file: "ecovacs-mop-washing", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Studio robot", show_map: "never" }, overrides: ecovacsWashing },
+  { file: "ecovacs-mop-washing-light", type: "vacuum-card", theme: "light", width: 460, config: { device: "Studio robot", show_map: "never" }, overrides: ecovacsWashing },
   { file: "ecovacs-mop-drying", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Studio robot", show_map: "never" }, overrides: ecovacsDrying },
+  { file: "ecovacs-mop-drying-light", type: "vacuum-card", theme: "light", width: 460, config: { device: "Studio robot", show_map: "never" }, overrides: ecovacsDrying },
   { file: "dyson-cleaning", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Toy room robot" }, overrides: dysonCleaning },
+  { file: "dyson-cleaning-light", type: "vacuum-card", theme: "light", width: 460, config: { device: "Toy room robot" }, overrides: dysonCleaning },
   { file: "dyson-returning", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Toy room robot" }, overrides: dysonReturning },
+  { file: "dyson-returning-light", type: "vacuum-card", theme: "light", width: 460, config: { device: "Toy room robot" }, overrides: dysonReturning },
   { file: "irobot-cleaning", type: "vacuum-card", theme: "light", width: 460, config: { device: "Workshop robot" }, overrides: irobotCleaning },
+  { file: "irobot-cleaning-dark", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Workshop robot" }, overrides: irobotCleaning },
   { file: "irobot-returning", type: "vacuum-card", theme: "light", width: 460, config: { device: "Workshop robot" }, overrides: irobotReturning },
+  { file: "irobot-returning-dark", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Workshop robot" }, overrides: irobotReturning },
   { file: "irobot-emptying", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Workshop robot" }, overrides: irobotEmptying },
+  { file: "irobot-emptying-light", type: "vacuum-card", theme: "light", width: 460, config: { device: "Workshop robot" }, overrides: irobotEmptying },
   { file: "braava-mopping", type: "vacuum-card", theme: "dark", width: 460, config: { device: "Washroom robot" }, overrides: braavaMopping },
+  { file: "braava-mopping-light", type: "vacuum-card", theme: "light", width: 460, config: { device: "Washroom robot" }, overrides: braavaMopping },
 ];
 for (const g of gifs) await makeGif(browser, g);
 await browser.close();
