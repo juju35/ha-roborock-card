@@ -218,23 +218,33 @@ The picture animates to match what the device is doing and settles back to a sti
 
 While the robot is out vacuuming and mopping, it sways across the floor, its side brushes spin, and dust and water trail behind it:
 
-![cleaning animation](screenshots/cleaning.gif)
+| Light | Dark |
+|---|---|
+| ![cleaning animation](screenshots/cleaning.gif) | ![cleaning animation dark](screenshots/cleaning-dark.gif) |
 
 Heading back, it slides in from the side and settles in front of its dock:
 
-![returning animation](screenshots/returning.gif)
+| Light | Dark |
+|---|---|
+| ![returning animation](screenshots/returning.gif) | ![returning animation dark](screenshots/returning-dark.gif) |
 
 Docked and washing its mop, blue bubbles rise at the dock:
 
-![mop washing animation](screenshots/mop-washing.gif)
+| Light | Dark |
+|---|---|
+| ![mop washing animation](screenshots/mop-washing.gif) | ![mop washing animation dark](screenshots/mop-washing-dark.gif) |
 
 Docked and drying its mop, orange heat waves rise instead:
 
-![mop drying animation](screenshots/mop-drying.gif)
+| Light | Dark |
+|---|---|
+| ![mop drying animation](screenshots/mop-drying.gif) | ![mop drying animation dark](screenshots/mop-drying-dark.gif) |
 
 A wet-dry vacuum (F25 Ultra) rocks on its handle and its floor roller turns while it cleans:
 
-![F25 cleaning animation](screenshots/f25-cleaning.gif)
+| Light | Dark |
+|---|---|
+| ![F25 cleaning animation](screenshots/f25-cleaning.gif) | ![F25 cleaning animation dark](screenshots/f25-cleaning-dark.gif) |
 
 ### <img src="images/logo.svg" alt="" width="24"> Roborock
 
@@ -311,13 +321,15 @@ Drawn Ecovacs models:
 
 Animations of the DEEBOT: out vacuuming and mopping, heading back to its station, then the station washing and drying the mops — read from the integration's **Station state** sensor (`washing_mop`, `drying_mop`):
 
-| Cleaning | Returning |
-|---|---|
-| ![ecovacs cleaning animation](screenshots/ecovacs-cleaning.gif) | ![ecovacs returning animation](screenshots/ecovacs-returning.gif) |
+| | Cleaning | Returning |
+|---|---|---|
+| Light | ![ecovacs cleaning animation](screenshots/ecovacs-cleaning.gif) | ![ecovacs returning animation](screenshots/ecovacs-returning.gif) |
+| Dark | ![ecovacs cleaning animation dark](screenshots/ecovacs-cleaning-dark.gif) | ![ecovacs returning animation dark](screenshots/ecovacs-returning-dark.gif) |
 
-| Washing the mops (dark) | Drying the mops (dark) |
-|---|---|
-| ![ecovacs mop washing animation](screenshots/ecovacs-mop-washing.gif) | ![ecovacs mop drying animation](screenshots/ecovacs-mop-drying.gif) |
+| | Washing the mops | Drying the mops |
+|---|---|---|
+| Dark | ![ecovacs mop washing animation](screenshots/ecovacs-mop-washing.gif) | ![ecovacs mop drying animation](screenshots/ecovacs-mop-drying.gif) |
+| Light | ![ecovacs mop washing animation light](screenshots/ecovacs-mop-washing-light.gif) | ![ecovacs mop drying animation light](screenshots/ecovacs-mop-drying-light.gif) |
 
 ### <img src="images/dyson.png" alt="" width="24"> Dyson
 
@@ -332,11 +344,12 @@ Drawn Dyson models:
 
 <p align="center"><img src="images/models-dyson.svg" alt="Dyson device pictures" width="420"></p>
 
-The Dyson 360 robots have their own drawing — a tall drum on two tank tracks with the 360° camera on top (wider and lower for the Vis Nav, with its purple band). Vacuuming, the tracks roll and dust is sucked in; heading back, the robot slides in from the side (dark theme):
+The Dyson 360 robots have their own drawing — a tall drum on two tank tracks with the 360° camera on top (wider and lower for the Vis Nav, with its purple band). Vacuuming, the tracks roll and dust is sucked in; heading back, the robot slides in from the side:
 
-| Cleaning | Returning |
-|---|---|
-| ![dyson cleaning animation](screenshots/dyson-cleaning.gif) | ![dyson returning animation](screenshots/dyson-returning.gif) |
+| | Cleaning | Returning |
+|---|---|---|
+| Dark | ![dyson cleaning animation](screenshots/dyson-cleaning.gif) | ![dyson returning animation](screenshots/dyson-returning.gif) |
+| Light | ![dyson cleaning animation light](screenshots/dyson-cleaning-light.gif) | ![dyson returning animation light](screenshots/dyson-returning-light.gif) |
 
 ### <img src="images/irobot.png" alt="" width="24"> iRobot
 
@@ -362,13 +375,15 @@ Drawn iRobot models — Roomba round with its CLEAN button and light ring (the s
 
 Animations of the Roomba j7+: vacuuming (it sways, its single side brush spins and dust trails behind), heading back to its Clean Base, then the base emptying the bin — dust rises up its duct, read from the vacuum's `status` attribute (`Emptying Bin`):
 
-| Cleaning | Returning |
-|---|---|
-| ![irobot cleaning animation](screenshots/irobot-cleaning.gif) | ![irobot returning animation](screenshots/irobot-returning.gif) |
+| | Cleaning | Returning |
+|---|---|---|
+| Light | ![irobot cleaning animation](screenshots/irobot-cleaning.gif) | ![irobot returning animation](screenshots/irobot-returning.gif) |
+| Dark | ![irobot cleaning animation dark](screenshots/irobot-cleaning-dark.gif) | ![irobot returning animation dark](screenshots/irobot-returning-dark.gif) |
 
-| Emptying the bin (dark) | Braava jet m6 mopping (dark) |
-|---|---|
-| ![irobot emptying animation](screenshots/irobot-emptying.gif) | ![braava mopping animation](screenshots/braava-mopping.gif) |
+| | Emptying the bin | Braava jet m6 mopping |
+|---|---|---|
+| Dark | ![irobot emptying animation](screenshots/irobot-emptying.gif) | ![braava mopping animation](screenshots/braava-mopping.gif) |
+| Light | ![irobot emptying animation light](screenshots/irobot-emptying-light.gif) | ![braava mopping animation light](screenshots/braava-mopping-light.gif) |
 
 The Braava mops (wet trail and spray drops), the Combo models vacuum and mop at once, the other Roombas vacuum.
 
