@@ -253,13 +253,16 @@ Mini card zoomed in with its detail button (top right, click it again or anywher
 
 Room selector (opened by the Start button):
 
-![room selector](screenshots/card-rooms.png)
+| Light | Dark |
+|---|---|
+| ![room selector](screenshots/card-rooms.png) | ![room selector dark](screenshots/card-rooms-dark.png) |
 
 Wet-dry vacuum (F25 Ultra):
 
-| Card | Mini card |
-|---|---|
-| ![card f25](screenshots/card-f25.png) | ![mini card f25](screenshots/mini-card-f25.png) |
+| | Card | Mini card |
+|---|---|---|
+| Light | ![card f25](screenshots/card-f25.png) | ![mini card f25](screenshots/mini-card-f25.png) |
+| Dark | ![card f25 dark](screenshots/card-f25-dark.png) | ![mini card f25 dark](screenshots/mini-card-f25-dark.png) |
 
 Drawn Roborock models (a few of the ~60 recognized):
 
@@ -269,10 +272,10 @@ Drawn Roborock models (a few of the ~60 recognized):
 
 Mi Robot Vacuum 1S renamed « Robot vacuum », set up with Xiaomi Miio, map from Xiaomi Cloud Map Extractor (`map_entity`):
 
-| Card | Mini card |
-|---|---|
-| ![card xiaomi](screenshots/card-xiaomi.png) | ![mini card xiaomi](screenshots/mini-card-xiaomi.png) |
-| | ![mini card xiaomi dark](screenshots/mini-card-xiaomi-dark.png) |
+| | Card | Mini card |
+|---|---|---|
+| Light | ![card xiaomi](screenshots/card-xiaomi.png) | ![mini card xiaomi](screenshots/mini-card-xiaomi.png) |
+| Dark | ![card xiaomi dark](screenshots/card-xiaomi-dark.png) | ![mini card xiaomi dark](screenshots/mini-card-xiaomi-dark.png) |
 
 Drawn Xiaomi / Mijia models (white; the ones with a station are drawn in it):
 
@@ -282,10 +285,10 @@ Drawn Xiaomi / Mijia models (white; the ones with a station are drawn in it):
 
 L10s Ultra renamed « Upstairs robot », set up with Dreame Vacuum, with the map camera of the integration:
 
-| Card | Mini card |
-|---|---|
-| ![card dreame](screenshots/card-dreame.png) | ![mini card dreame](screenshots/mini-card-dreame.png) |
-| | ![mini card dreame light](screenshots/mini-card-dreame-light.png) |
+| | Card | Mini card |
+|---|---|---|
+| Dark | ![card dreame](screenshots/card-dreame.png) | ![mini card dreame](screenshots/mini-card-dreame.png) |
+| Light | ![card dreame light](screenshots/card-dreame-light.png) | ![mini card dreame light](screenshots/mini-card-dreame-light.png) |
 
 Drawn Dreame models:
 
@@ -297,10 +300,10 @@ Drawn Dreame models:
 
 DEEBOT X1 Omni renamed « Studio robot », set up with the Ecovacs integration, with its map image; maintenance in percent with the reset buttons of the integration:
 
-| Card | Mini card |
-|---|---|
-| ![card ecovacs](screenshots/card-ecovacs.png) | ![mini card ecovacs](screenshots/mini-card-ecovacs.png) |
-| | ![mini card ecovacs dark](screenshots/mini-card-ecovacs-dark.png) |
+| | Card | Mini card |
+|---|---|---|
+| Light | ![card ecovacs](screenshots/card-ecovacs.png) | ![mini card ecovacs](screenshots/mini-card-ecovacs.png) |
+| Dark | ![card ecovacs dark](screenshots/card-ecovacs-dark.png) | ![mini card ecovacs dark](screenshots/mini-card-ecovacs-dark.png) |
 
 Drawn Ecovacs models:
 
@@ -318,12 +321,12 @@ Animations of the DEEBOT: out vacuuming and mopping, heading back to its station
 
 ### <img src="images/dyson.png" alt="" width="24"> Dyson
 
-360 Vis Nav renamed « Toy room robot », set up with the Dyson integration (`dyson_local`): the vacuum and its battery (dark theme):
+360 Vis Nav renamed « Toy room robot », set up with the Dyson integration (`dyson_local`): the vacuum and its battery:
 
-| Card | Mini card |
-|---|---|
-| ![card dyson](screenshots/card-dyson.png) | ![mini card dyson](screenshots/mini-card-dyson.png) |
-| | ![mini card dyson light](screenshots/mini-card-dyson-light.png) |
+| | Card | Mini card |
+|---|---|---|
+| Dark | ![card dyson](screenshots/card-dyson.png) | ![mini card dyson](screenshots/mini-card-dyson.png) |
+| Light | ![card dyson light](screenshots/card-dyson-light.png) | ![mini card dyson light](screenshots/mini-card-dyson-light.png) |
 
 Drawn Dyson models:
 
@@ -341,16 +344,17 @@ The Dyson 360 robots have their own drawing — a tall drum on two tank tracks w
 
 Roomba j7+ renamed « Workshop robot », set up with the iRobot integration (`roomba`): status, battery, mission statistics and the last mission:
 
-| Card | Mini card |
-|---|---|
-| ![card irobot](screenshots/card-irobot.png) | ![mini card irobot](screenshots/mini-card-irobot.png) |
-| | ![mini card irobot dark](screenshots/mini-card-irobot-dark.png) |
+| | Card | Mini card |
+|---|---|---|
+| Light | ![card irobot](screenshots/card-irobot.png) | ![mini card irobot](screenshots/mini-card-irobot.png) |
+| Dark | ![card irobot dark](screenshots/card-irobot-dark.png) | ![mini card irobot dark](screenshots/mini-card-irobot-dark.png) |
 
-Braava jet m6 renamed « Washroom robot »: mopping behavior and the robot's water tank (dark theme):
+Braava jet m6 renamed « Washroom robot »: mopping behavior and the robot's water tank:
 
-| Card | Mini card |
-|---|---|
-| ![card braava](screenshots/card-braava.png) | ![mini card braava](screenshots/mini-card-braava.png) |
+| | Card | Mini card |
+|---|---|---|
+| Dark | ![card braava](screenshots/card-braava.png) | ![mini card braava](screenshots/mini-card-braava.png) |
+| Light | ![card braava light](screenshots/card-braava-light.png) | ![mini card braava light](screenshots/mini-card-braava-light.png) |
 
 Drawn iRobot models — Roomba round with its CLEAN button and light ring (the s9 D-shaped, the j series with its front camera), the "+" models in front of their slim Clean Base (wider for the Combo j9+, with its water tank), the Braava jet m6 a white rounded square:
 
